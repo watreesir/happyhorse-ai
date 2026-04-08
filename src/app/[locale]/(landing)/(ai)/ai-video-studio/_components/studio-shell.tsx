@@ -33,6 +33,7 @@ export function StudioShell({ copy }: StudioShellProps) {
             <MyCreationsPanel
               copy={copy.myCreations}
               statusLabels={copy.create.status}
+              errors={copy.errors}
             />
           }
         />

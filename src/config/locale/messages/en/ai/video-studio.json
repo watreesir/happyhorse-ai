@@ -7,7 +7,19 @@
     "eyebrow": "Workspace Preview",
     "title": "AI Video Studio",
     "description": "Use one focused studio to draft shots, scan inspiration, and review your latest renders without leaving the page.",
-    "note": "This first release is UI-only and currently runs with mock data."
+    "note": "Homepage handoff, prompt submission, media upload, polling, and task lists are live. Inspiration remains mock data in this release."
+  },
+  "errors": {
+    "authRequired": "Please sign in to use Video Studio.",
+    "creditsInsufficient": "Not enough credits. Add credits to continue.",
+    "permissionDenied": "This task is not available in your account.",
+    "taskUnavailable": "This task is no longer available.",
+    "rateLimited": "Too many requests. Please try again in a moment.",
+    "networkIssue": "Network issue detected. Check your connection and retry.",
+    "serverBusy": "Service is busy right now. Please try again shortly.",
+    "submitFailed": "Unable to submit this task right now.",
+    "queryFailed": "Unable to refresh task status right now.",
+    "listFailed": "Unable to load task list right now."
   },
   "tabs": {
     "create": {
@@ -22,18 +34,59 @@
   "create": {
     "workspace": {
       "panelTitle": "Workspace",
-      "panelHint": "Draft your scene setup here. Generation wiring will be connected in the next phase.",
+      "panelHint": "Use the same core controls as the homepage workspace. Prompt, media uploads, and task creation are live.",
+      "modeLabel": "Workflow",
+      "modeHint": "Provider/model are auto-selected by workflow.",
+      "modes": {
+        "text-to-video": "Text to Video",
+        "image-to-video": "Image to Video",
+        "reference-to-video": "Reference to Video",
+        "video-edit": "Video Edit"
+      },
+      "i2vModeLabel": "Image Motion Mode",
+      "i2vModes": {
+        "first-frame": "First Frame",
+        "first-last-frame": "First + Last Frame",
+        "video-continuation": "Video Continuation"
+      },
       "promptLabel": "Prompt Direction",
       "promptPlaceholder": "Describe subject, movement, lens behavior, and mood in one concise brief.",
       "promptRequired": "Please provide a prompt before submitting.",
+      "statusRetrying": "Connection is unstable. Retrying status sync...",
+      "statusSyncError": "Status sync paused after multiple failed checks. Use Refresh to continue.",
       "uploadLabel": "Reference Inputs",
-      "uploadHint": "Mock uploader in this release",
-      "uploadSlots": {
-        "primary": "Add primary frame",
-        "optional": "Add supporting media"
+      "uploadHint": "Uploads are saved to your own storage.",
+      "uploads": {
+        "addFile": "Upload",
+        "replaceFile": "Replace",
+        "removeFile": "Remove",
+        "uploading": "Uploading...",
+        "textAudio": "Optional audio track (mp3/wav)",
+        "i2vFirstFrame": "First frame image",
+        "i2vLastFrame": "Last frame image",
+        "i2vFirstClip": "First clip video",
+        "i2vAudio": "Driving audio (optional)",
+        "referenceMaterials": "Reference images/videos (up to 5)",
+        "referenceFirstFrame": "First frame image (optional)",
+        "referenceVoice": "Reference voice (optional)",
+        "editVideo": "Video to edit",
+        "editReferenceImage": "Reference image (optional)",
+        "materialLimitHint": "You can upload mixed image/video references.",
+        "materialsCount": "Materials"
       },
       "ratioLabel": "Aspect Ratio",
+      "resolutionLabel": "Resolution",
+      "durationLabel": "Duration",
+      "durationValues": [2, 5, 8, 10],
+      "editDurationValues": [0, 5, 10],
+      "resolutionValues": ["720p", "1080p"],
+      "audioSettingLabel": "Audio",
+      "audioSettings": {
+        "auto": "AI Audio",
+        "origin": "Keep Original"
+      },
       "runButton": "Prepare Draft Job",
+      "submitFromHero": "Submitted from homepage workspace. Tracking latest task...",
       "helper": "Tip: start with one clear action + camera instruction, then refine style details in the next pass.",
       "statusLabel": "Task State",
       "statuses": {
@@ -44,7 +97,15 @@
         "completed": "Task completed. Check History for latest output.",
         "failed": "Task failed. Review the error and retry."
       },
-      "submitErrorPrefix": "Submission error"
+      "submitErrorPrefix": "Submission error",
+      "validationErrors": {
+        "promptRequired": "Please provide a prompt before submitting.",
+        "imageFirstFrameRequired": "Upload a first frame image before submitting.",
+        "imageFirstLastFrameRequired": "Upload both first and last frame images.",
+        "imageFirstClipRequired": "Upload a video clip for continuation mode.",
+        "referenceMaterialRequired": "Upload at least one reference image or video.",
+        "editVideoRequired": "Upload a source video before submitting edits."
+      }
     },
     "inspiration": {
       "panelTitle": "Inspiration",
@@ -58,6 +119,8 @@
       "panelHint": "Recent activity queue in compact mode.",
       "refreshButton": "Refresh",
       "refreshingButton": "Refreshing",
+      "loading": "Loading recent tasks...",
+      "errorFallback": "Unable to load recent activity. Please refresh.",
       "empty": "No recent studio actions yet."
     },
     "status": {
@@ -72,6 +135,8 @@
     "panelHint": "A paged shelf for your recent draft exports and status checks.",
     "refreshButton": "Reload",
     "refreshingButton": "Reloading",
+    "loading": "Loading your creations...",
+    "errorFallback": "Unable to load this page right now. Please refresh.",
     "emptyTitle": "No clips on this page",
     "emptyDescription": "Create a new draft in the Create tab to populate this shelf.",
     "pageLabel": "Page",

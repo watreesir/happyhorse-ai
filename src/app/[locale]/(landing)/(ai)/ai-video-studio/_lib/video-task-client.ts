@@ -1,4 +1,5 @@
-import { AIMediaType, AITaskStatus } from '@/extensions/ai/types';
+import { AITaskStatus } from '@/extensions/ai/types';
+import { VideoStudioGeneratePayload } from '@/shared/lib/video-studio-workflow';
 
 import {
   StudioTaskLifecycle,
@@ -9,11 +10,6 @@ import {
   VideoTaskRecord,
 } from './types';
 
-const STUDIO_DEFAULT_PROVIDER =
-  process.env.NEXT_PUBLIC_STUDIO_VIDEO_PROVIDER ?? 'kie';
-const STUDIO_DEFAULT_MODEL =
-  process.env.NEXT_PUBLIC_STUDIO_VIDEO_MODEL ?? 'wan/2-7-text-to-video';
-const STUDIO_DEFAULT_SCENE = 'text-to-video';
 const POLL_INTERVAL_MS = 8_000;
 
 type ApiResponse<T> = {
@@ -207,36 +203,23 @@ export async function listVideoTasks({
   return ensureSuccess(payload, 'Unable to load video tasks');
 }
 
-export async function generateVideoTask({
-  prompt,
-  aspectRatio,
-}: {
-  prompt: string;
-  aspectRatio: string;
-}): Promise<VideoTaskRecord> {
+export async function generateVideoTask(
+  payload: VideoStudioGeneratePayload
+): Promise<VideoTaskRecord> {
   const response = await fetch('/api/ai/generate', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      mediaType: AIMediaType.VIDEO,
-      scene: STUDIO_DEFAULT_SCENE,
-      provider: STUDIO_DEFAULT_PROVIDER,
-      model: STUDIO_DEFAULT_MODEL,
-      prompt,
-      options: {
-        aspect_ratio: aspectRatio,
-      },
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     throw new Error(`request failed with status: ${response.status}`);
   }
 
-  const payload = (await response.json()) as ApiResponse<GenerateTaskPayload>;
-  const data = ensureSuccess(payload, 'Unable to create video task');
+  const responsePayload = (await response.json()) as ApiResponse<GenerateTaskPayload>;
+  const data = ensureSuccess(responsePayload, 'Unable to create video task');
 
   const taskInfo = parseJson(data.taskInfo);
   const taskResult = parseJson(data.taskResult);
@@ -244,7 +227,7 @@ export async function generateVideoTask({
   return {
     id: data.id,
     status: data.status,
-    prompt: data.prompt ?? prompt,
+    prompt: data.prompt ?? payload.prompt,
     provider: data.provider,
     model: data.model,
     scene: data.scene,

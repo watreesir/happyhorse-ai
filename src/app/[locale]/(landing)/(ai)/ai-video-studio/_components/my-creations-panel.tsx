@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
+import { toStudioErrorMessage } from '../_lib/error-messages';
 import { VIDEO_STUDIO_REFRESH_EVENT, dispatchVideoStudioRefresh } from '../_lib/events';
-import { StudioCopy } from '../_lib/types';
+import { StudioCopy, StudioErrorCopy } from '../_lib/types';
 import {
   listVideoTasks,
   mapTaskToDraft,
@@ -18,6 +19,7 @@ import { VideoCard } from './video-card';
 type MyCreationsPanelProps = {
   copy: StudioCopy['myCreations'];
   statusLabels: StudioCopy['create']['status'];
+  errors: StudioErrorCopy;
 };
 
 const PAGE_SIZE = 6;
@@ -45,7 +47,11 @@ function buildVisiblePages(currentPage: number, totalPages: number) {
   return visible;
 }
 
-export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) {
+export function MyCreationsPanel({
+  copy,
+  statusLabels,
+  errors,
+}: MyCreationsPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -53,8 +59,16 @@ export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) 
   const [items, setItems] = useState<ReturnType<typeof mapTaskToDraft>[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const inFlightRef = useRef(false);
+  const pendingRequestRef = useRef<{ page: number; refreshing: boolean } | null>(null);
 
   const loadCreations = useCallback(async (page: number, refreshing = false) => {
+    if (inFlightRef.current) {
+      pendingRequestRef.current = { page, refreshing: true };
+      return;
+    }
+
+    inFlightRef.current = true;
     if (refreshing) {
       setIsRefreshing(true);
     } else {
@@ -63,9 +77,14 @@ export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) 
 
     try {
       let response = await listVideoTasks({ page, limit: PAGE_SIZE });
-      const hasActive = await refreshPendingTasks(response.items);
+      const hasActive = await refreshPendingTasks(response.items, PAGE_SIZE);
       if (hasActive) {
         response = await listVideoTasks({ page, limit: PAGE_SIZE });
+      }
+
+      const responsePage = response.pagination.page;
+      if (responsePage !== page) {
+        setCurrentPage(responsePage);
       }
 
       setItems(response.items.map((item, index) => mapTaskToDraft(item, index)));
@@ -73,13 +92,21 @@ export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) 
       setTotalPages(response.pagination.totalPages);
       setError(null);
     } catch (fetchError: any) {
-      setError(fetchError?.message || 'Unable to load creation tasks');
+      const message = toStudioErrorMessage(fetchError, errors, 'listFailed');
+      setError(message === errors.listFailed ? copy.errorFallback : message);
       setItems([]);
     } finally {
+      inFlightRef.current = false;
       setIsLoading(false);
       setIsRefreshing(false);
+
+      if (pendingRequestRef.current) {
+        const pendingRequest = pendingRequestRef.current;
+        pendingRequestRef.current = null;
+        void loadCreations(pendingRequest.page, pendingRequest.refreshing);
+      }
     }
-  }, []);
+  }, [copy.errorFallback, errors]);
 
   const visiblePages = useMemo(
     () => buildVisiblePages(currentPage, totalPages),
@@ -94,10 +121,11 @@ export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) 
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ reason?: string }>).detail;
       const shouldJumpFirstPage = detail?.reason === 'submit' || detail?.reason === 'status';
-      const targetPage = shouldJumpFirstPage ? 1 : currentPage;
       if (shouldJumpFirstPage && currentPage !== 1) {
         setCurrentPage(1);
+        return;
       }
+      const targetPage = shouldJumpFirstPage ? 1 : currentPage;
       void loadCreations(targetPage, true);
     };
 
@@ -108,7 +136,6 @@ export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) 
 
   const handleRefresh = () => {
     dispatchVideoStudioRefresh('creations-refresh');
-    void loadCreations(currentPage, true);
   };
 
   return (
@@ -135,6 +162,9 @@ export function MyCreationsPanel({ copy, statusLabels }: MyCreationsPanelProps) 
 
       {isLoading ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <p className="col-span-full text-xs text-zinc-500 dark:text-zinc-400">
+            {copy.loading}
+          </p>
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={`creation-skeleton-${index}`}

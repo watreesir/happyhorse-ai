@@ -2,6 +2,21 @@ export type StudioTab = 'create' | 'my-creations';
 
 export type VideoStatus = 'ready' | 'rendering' | 'queued' | 'failed';
 
+export type StudioMode =
+  | 'text-to-video'
+  | 'image-to-video'
+  | 'reference-to-video'
+  | 'video-edit';
+
+export type StudioI2VMode =
+  | 'first-frame'
+  | 'first-last-frame'
+  | 'video-continuation';
+
+export type StudioResolution = '720p' | '1080p';
+
+export type StudioAudioSetting = 'auto' | 'origin';
+
 export type VideoPalette =
   | 'copper'
   | 'teal'
@@ -57,6 +72,19 @@ export type VideoTaskPageData = {
   };
 };
 
+export type StudioErrorCopy = {
+  authRequired: string;
+  creditsInsufficient: string;
+  permissionDenied: string;
+  taskUnavailable: string;
+  rateLimited: string;
+  networkIssue: string;
+  serverBusy: string;
+  submitFailed: string;
+  queryFailed: string;
+  listFailed: string;
+};
+
 export type StudioCopy = {
   metadata: {
     title: string;
@@ -68,6 +96,7 @@ export type StudioCopy = {
     description: string;
     note: string;
   };
+  errors: StudioErrorCopy;
   tabs: {
     create: {
       label: string;
@@ -82,21 +111,58 @@ export type StudioCopy = {
     workspace: {
       panelTitle: string;
       panelHint: string;
+      modeLabel: string;
+      modeHint: string;
+      modes: Record<StudioMode, string>;
+      i2vModeLabel: string;
+      i2vModes: Record<StudioI2VMode, string>;
       promptLabel: string;
       promptPlaceholder: string;
       promptRequired: string;
+      statusRetrying: string;
+      statusSyncError: string;
       uploadLabel: string;
       uploadHint: string;
-      uploadSlots: {
-        primary: string;
-        optional: string;
+      uploads: {
+        addFile: string;
+        replaceFile: string;
+        removeFile: string;
+        uploading: string;
+        textAudio: string;
+        i2vFirstFrame: string;
+        i2vLastFrame: string;
+        i2vFirstClip: string;
+        i2vAudio: string;
+        referenceMaterials: string;
+        referenceFirstFrame: string;
+        referenceVoice: string;
+        editVideo: string;
+        editReferenceImage: string;
+        materialLimitHint: string;
+        materialsCount: string;
       };
       ratioLabel: string;
+      resolutionLabel: string;
+      durationLabel: string;
+      durationValues: number[];
+      editDurationValues: number[];
+      resolutionValues: StudioResolution[];
+      audioSettingLabel: string;
+      audioSettings: Record<StudioAudioSetting, string>;
       runButton: string;
+      submitFromHero: string;
       helper: string;
       statusLabel: string;
       statuses: Record<StudioTaskLifecycle, string>;
       submitErrorPrefix: string;
+      validationErrors: {
+        promptRequired: string;
+        imageFirstFrameRequired: string;
+        imageFirstLastFrameRequired: string;
+        imageFirstClipRequired: string;
+        referenceMaterialRequired: string;
+        editVideoRequired: string;
+      };
     };
     inspiration: {
       panelTitle: string;
@@ -110,6 +176,8 @@ export type StudioCopy = {
       panelHint: string;
       refreshButton: string;
       refreshingButton: string;
+      loading: string;
+      errorFallback: string;
       empty: string;
     };
     status: Record<VideoStatus, string>;
@@ -119,6 +187,8 @@ export type StudioCopy = {
     panelHint: string;
     refreshButton: string;
     refreshingButton: string;
+    loading: string;
+    errorFallback: string;
     emptyTitle: string;
     emptyDescription: string;
     pageLabel: string;

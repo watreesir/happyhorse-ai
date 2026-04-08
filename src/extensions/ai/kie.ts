@@ -234,12 +234,63 @@ export class KieProvider implements AIProvider {
       if (options.image_input && Array.isArray(options.image_input)) {
         payload.input.image_urls = options.image_input;
       }
+      if (options.video_input && Array.isArray(options.video_input)) {
+        payload.input.video_urls = options.video_input;
+        if (!payload.input.video_url && options.video_input[0]) {
+          payload.input.video_url = options.video_input[0];
+        }
+      }
       if (options.aspect_ratio) {
         payload.input.aspect_ratio = options.aspect_ratio;
+      }
+      if (options.resolution) {
+        payload.input.resolution = options.resolution;
       }
       if (options.duration) {
         payload.input.n_frames = options.duration;
       }
+      if (options.audio_url) {
+        payload.input.audio_url = options.audio_url;
+      }
+      if (options.driving_audio_url) {
+        payload.input.driving_audio_url = options.driving_audio_url;
+      }
+      if (options.first_frame_url) {
+        payload.input.first_frame_url = options.first_frame_url;
+      }
+      if (options.last_frame_url) {
+        payload.input.last_frame_url = options.last_frame_url;
+      }
+      if (options.first_clip_url) {
+        payload.input.first_clip_url = options.first_clip_url;
+      }
+      if (options.reference_image) {
+        payload.input.reference_image = options.reference_image;
+      }
+      if (options.reference_video) {
+        payload.input.reference_video = options.reference_video;
+      }
+      if (options.first_frame) {
+        payload.input.first_frame = options.first_frame;
+      }
+      if (options.reference_voice) {
+        payload.input.reference_voice = options.reference_voice;
+      }
+      if (options.video_url) {
+        payload.input.video_url = options.video_url;
+      }
+      if (options.audio_setting) {
+        payload.input.audio_setting = options.audio_setting;
+      }
+
+      // Keep unknown model-specific options to avoid blocking new workflows.
+      Object.entries(options).forEach(([key, value]) => {
+        if (typeof value === 'undefined') return;
+        if (typeof payload.input[key] === 'undefined') {
+          payload.input[key] = value;
+        }
+      });
+
       if (!payload.input.n_frames) {
         payload.input.n_frames = '10';
       }

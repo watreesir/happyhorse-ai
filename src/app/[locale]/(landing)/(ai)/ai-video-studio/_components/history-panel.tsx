@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
 
+import { toStudioErrorMessage } from '../_lib/error-messages';
 import { VIDEO_STUDIO_REFRESH_EVENT, dispatchVideoStudioRefresh } from '../_lib/events';
-import { StudioCopy, VideoDraft } from '../_lib/types';
+import { StudioCopy, StudioErrorCopy, VideoDraft } from '../_lib/types';
 import {
   listVideoTasks,
   mapTaskToDraft,
@@ -17,19 +18,28 @@ import { VideoCard } from './video-card';
 type HistoryPanelProps = {
   copy: StudioCopy['create']['history'];
   statusLabels: StudioCopy['create']['status'];
+  errors: StudioErrorCopy;
 };
 
 const HISTORY_LIMIT = 4;
 
-export function HistoryPanel({ copy, statusLabels }: HistoryPanelProps) {
+export function HistoryPanel({ copy, statusLabels, errors }: HistoryPanelProps) {
   const [items, setItems] = useState<VideoDraft[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inFlightRef = useRef(false);
+  const pendingRefreshRef = useRef(false);
 
   const loadHistory = useCallback(
     async (options?: { refreshing?: boolean }) => {
       const refreshing = options?.refreshing ?? false;
+      if (inFlightRef.current) {
+        pendingRefreshRef.current = true;
+        return;
+      }
+
+      inFlightRef.current = true;
       if (refreshing) {
         setIsRefreshing(true);
       } else {
@@ -38,7 +48,7 @@ export function HistoryPanel({ copy, statusLabels }: HistoryPanelProps) {
 
       try {
         let response = await listVideoTasks({ page: 1, limit: HISTORY_LIMIT });
-        const hasActive = await refreshPendingTasks(response.items);
+        const hasActive = await refreshPendingTasks(response.items, HISTORY_LIMIT);
         if (hasActive) {
           response = await listVideoTasks({ page: 1, limit: HISTORY_LIMIT });
         }
@@ -46,13 +56,20 @@ export function HistoryPanel({ copy, statusLabels }: HistoryPanelProps) {
         setItems(response.items.map((item, index) => mapTaskToDraft(item, index)));
         setError(null);
       } catch (fetchError: any) {
-        setError(fetchError?.message || 'Unable to load history tasks');
+        const message = toStudioErrorMessage(fetchError, errors, 'listFailed');
+        setError(message === errors.listFailed ? copy.errorFallback : message);
       } finally {
+        inFlightRef.current = false;
         setIsLoading(false);
         setIsRefreshing(false);
+
+        if (pendingRefreshRef.current) {
+          pendingRefreshRef.current = false;
+          void loadHistory({ refreshing: true });
+        }
       }
     },
-    []
+    [copy.errorFallback, errors]
   );
 
   useEffect(() => {
@@ -84,7 +101,6 @@ export function HistoryPanel({ copy, statusLabels }: HistoryPanelProps) {
 
   const handleRefresh = () => {
     dispatchVideoStudioRefresh('history-refresh');
-    void loadHistory({ refreshing: true });
   };
 
   return (
@@ -111,6 +127,7 @@ export function HistoryPanel({ copy, statusLabels }: HistoryPanelProps) {
 
       {isLoading ? (
         <div className="space-y-3">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{copy.loading}</p>
           {Array.from({ length: HISTORY_LIMIT }).map((_, index) => (
             <div
               key={`history-skeleton-${index}`}

@@ -108,25 +108,23 @@ export async function GET(request: Request) {
     const page = parsePositiveInteger(searchParams.get('page'), 1);
     const limit = Math.min(parsePositiveInteger(searchParams.get('limit'), 12), 30);
 
-    const [items, total] = await Promise.all([
-      getAITasks({
-        userId: user.id,
-        mediaType: AIMediaType.VIDEO,
-        page,
-        limit,
-      }),
-      getAITasksCount({
-        userId: user.id,
-        mediaType: AIMediaType.VIDEO,
-      }),
-    ]);
-
+    const total = await getAITasksCount({
+      userId: user.id,
+      mediaType: AIMediaType.VIDEO,
+    });
     const totalPages = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(page, totalPages);
+    const items = await getAITasks({
+      userId: user.id,
+      mediaType: AIMediaType.VIDEO,
+      page: safePage,
+      limit,
+    });
 
     return respData({
       items: items.map((item) => normalizeTask(item)),
       pagination: {
-        page,
+        page: safePage,
         limit,
         total,
         totalPages,

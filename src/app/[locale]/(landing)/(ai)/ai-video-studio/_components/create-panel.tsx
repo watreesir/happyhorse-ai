@@ -14,7 +14,7 @@ export function CreatePanel({ copy }: CreatePanelProps) {
     <section className="space-y-4">
       <div className="grid gap-4 xl:grid-cols-[minmax(17rem,0.95fr)_minmax(0,1.3fr)_minmax(14rem,0.75fr)]">
         <div className="xl:col-start-1">
-          <WorkspacePanel copy={copy.create.workspace} />
+          <WorkspacePanel copy={copy.create.workspace} errors={copy.errors} />
         </div>
 
         <div className="xl:col-start-2">
@@ -25,7 +25,11 @@ export function CreatePanel({ copy }: CreatePanelProps) {
         </div>
 
         <div className="xl:col-start-3">
-          <HistoryPanel copy={copy.create.history} statusLabels={copy.create.status} />
+          <HistoryPanel
+            copy={copy.create.history}
+            statusLabels={copy.create.status}
+            errors={copy.errors}
+          />
         </div>
       </div>
     </section>

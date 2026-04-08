@@ -7,7 +7,19 @@
     "eyebrow": "工作台预览版",
     "title": "AI Video Studio",
     "description": "在一个页面里完成提示词编排、灵感参考和结果回看，保持连续创作节奏。",
-    "note": "当前第一版仅实现页面框架，暂时使用 mock 数据。"
+    "note": "已接入首页跳转回填、提示词提交、素材上传、状态轮询、History 和 My Creations；Inspiration 仍为 mock。"
+  },
+  "errors": {
+    "authRequired": "请先登录后再使用 Video Studio。",
+    "creditsInsufficient": "当前积分不足，请先补充积分。",
+    "permissionDenied": "该任务不属于当前账号，无法查看。",
+    "taskUnavailable": "该任务暂时不可用。",
+    "rateLimited": "请求过于频繁，请稍后再试。",
+    "networkIssue": "网络连接异常，请检查后重试。",
+    "serverBusy": "服务当前较忙，请稍后再试。",
+    "submitFailed": "当前无法提交任务，请稍后重试。",
+    "queryFailed": "当前无法刷新任务状态，请稍后重试。",
+    "listFailed": "当前无法加载任务列表，请稍后重试。"
   },
   "tabs": {
     "create": {
@@ -22,18 +34,59 @@
   "create": {
     "workspace": {
       "panelTitle": "Workspace",
-      "panelHint": "这里用于搭建本次生成草稿。真实生成链路会在下一阶段接入。",
+      "panelHint": "与首页工作区保持同一套核心操作。提示词、素材上传、任务提交均为真实链路。",
+      "modeLabel": "工作流",
+      "modeHint": "provider/model 按工作流自动选择。",
+      "modes": {
+        "text-to-video": "文字生成视频",
+        "image-to-video": "图片生成视频",
+        "reference-to-video": "参考生成视频",
+        "video-edit": "视频编辑"
+      },
+      "i2vModeLabel": "图生视频模式",
+      "i2vModes": {
+        "first-frame": "首帧驱动",
+        "first-last-frame": "首尾帧控制",
+        "video-continuation": "视频续写"
+      },
       "promptLabel": "提示词方向",
       "promptPlaceholder": "用简洁描述写清主体、运动、镜头语言和氛围。",
       "promptRequired": "请先输入提示词再提交。",
+      "statusRetrying": "网络波动，正在重试状态同步...",
+      "statusSyncError": "状态同步多次失败，已暂停自动轮询。请点击刷新后重试。",
       "uploadLabel": "参考素材",
-      "uploadHint": "当前为示意上传区",
-      "uploadSlots": {
-        "primary": "添加主参考帧",
-        "optional": "添加补充素材"
+      "uploadHint": "素材将上传到你配置的存储服务。",
+      "uploads": {
+        "addFile": "上传",
+        "replaceFile": "替换",
+        "removeFile": "移除",
+        "uploading": "上传中...",
+        "textAudio": "可选音频轨道（mp3/wav）",
+        "i2vFirstFrame": "首帧图片",
+        "i2vLastFrame": "末帧图片",
+        "i2vFirstClip": "首段视频",
+        "i2vAudio": "驱动音频（可选）",
+        "referenceMaterials": "参考图片/视频（最多 5 个）",
+        "referenceFirstFrame": "首帧图片（可选）",
+        "referenceVoice": "参考声音（可选）",
+        "editVideo": "待编辑视频",
+        "editReferenceImage": "参考图片（可选）",
+        "materialLimitHint": "支持混合上传图片和视频素材。",
+        "materialsCount": "素材数"
       },
       "ratioLabel": "画幅比例",
+      "resolutionLabel": "分辨率",
+      "durationLabel": "时长",
+      "durationValues": [2, 5, 8, 10],
+      "editDurationValues": [0, 5, 10],
+      "resolutionValues": ["720p", "1080p"],
+      "audioSettingLabel": "音频",
+      "audioSettings": {
+        "auto": "AI 音频",
+        "origin": "保留原音"
+      },
       "runButton": "创建草稿任务",
+      "submitFromHero": "任务已从首页工作区提交，正在同步最新状态...",
       "helper": "建议先写清动作与镜头，再逐步补充风格和细节词。",
       "statusLabel": "任务状态",
       "statuses": {
@@ -44,7 +97,15 @@
         "completed": "任务已完成，可在 History 查看。",
         "failed": "任务失败，请检查错误后重试。"
       },
-      "submitErrorPrefix": "提交错误"
+      "submitErrorPrefix": "提交错误",
+      "validationErrors": {
+        "promptRequired": "请先输入提示词再提交。",
+        "imageFirstFrameRequired": "请先上传首帧图片。",
+        "imageFirstLastFrameRequired": "请同时上传首帧和末帧图片。",
+        "imageFirstClipRequired": "视频续写模式需要上传首段视频。",
+        "referenceMaterialRequired": "请至少上传一个参考图片或参考视频。",
+        "editVideoRequired": "请先上传待编辑视频。"
+      }
     },
     "inspiration": {
       "panelTitle": "Inspiration",
@@ -58,6 +119,8 @@
       "panelHint": "紧凑展示最近任务状态。",
       "refreshButton": "刷新",
       "refreshingButton": "刷新中",
+      "loading": "正在加载最近任务...",
+      "errorFallback": "最近记录加载失败，请点击刷新重试。",
       "empty": "暂无最近记录。"
     },
     "status": {
@@ -72,6 +135,8 @@
     "panelHint": "分页展示你的近期草稿输出，便于快速复盘。",
     "refreshButton": "重新加载",
     "refreshingButton": "加载中",
+    "loading": "正在加载你的作品...",
+    "errorFallback": "本页加载失败，请点击刷新重试。",
     "emptyTitle": "本页暂无内容",
     "emptyDescription": "可先到 Create 页面创建草稿任务。",
     "pageLabel": "页码",

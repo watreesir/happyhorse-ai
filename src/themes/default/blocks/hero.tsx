@@ -1,22 +1,40 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
+import { useRouter } from '@/core/i18n/navigation';
+import { AITaskStatus } from '@/extensions/ai/types';
+import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
+import {
+  VIDEO_STUDIO_DEFAULT_DRAFT,
+  VIDEO_STUDIO_DRAFT_SESSION_KEY,
+  VideoStudioDraft,
+  VideoStudioDraftError,
+  VideoStudioMode,
+  VideoStudioUploadedAsset,
+  buildStudioQueryFromDraft,
+  buildVideoTaskPayloadFromDraft,
+} from '@/shared/lib/video-studio-workflow';
 import { Section } from '@/shared/types/blocks/landing';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type MainTab =
-  | 'text-to-video'
-  | 'image-to-video'
-  | 'reference-to-video'
-  | 'video-edit';
+type MainTab = VideoStudioMode;
 type I2VMode = 'first-frame' | 'first-last-frame' | 'video-continuation';
 type Resolution = '720p' | '1080p';
 type Ratio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
 type AudioSetting = 'auto' | 'origin';
+
+type GenerateResponsePayload = {
+  code: number;
+  message?: string;
+  data?: {
+    id: string;
+    status: string;
+  };
+};
 
 interface HeroTab {
   key: string;
@@ -68,18 +86,36 @@ const RATIOS: { key: Ratio; label: string; icon: string }[] = [
 function UploadZone({
   label,
   optional = false,
-  hasFile = false,
+  file,
+  uploading = false,
+  accept,
+  multiple = false,
+  onUpload,
   onClear,
   className,
 }: {
   label: string;
   optional?: boolean;
-  hasFile?: boolean;
+  file: VideoStudioUploadedAsset | VideoStudioUploadedAsset[] | null;
+  uploading?: boolean;
+  accept: string;
+  multiple?: boolean;
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onClear?: () => void;
   className?: string;
 }) {
+  const hasFile = Array.isArray(file) ? file.length > 0 : Boolean(file?.url);
+  const fileLabel = Array.isArray(file)
+    ? file.length > 1
+      ? `${file.length} files`
+      : file[0]?.name
+    : file?.name;
+
+  const inputId = `hero-upload-${label.replace(/\s+/g, '-').toLowerCase()}`;
+
   return (
-    <div
+    <label
+      htmlFor={inputId}
       className={cn(
         'flex min-h-[60px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-3 py-3 transition-all duration-200',
         hasFile
@@ -90,13 +126,17 @@ function UploadZone({
     >
       {hasFile ? (
         <div className="flex items-center gap-2">
-          <span className="text-primary text-xs font-medium">✓ {label}</span>
+          <span className="text-primary max-w-[150px] truncate text-xs font-medium">
+            ✓ {fileLabel || label}
+          </span>
           {onClear && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onClear();
               }}
+              type="button"
               className="text-foreground/38 hover:text-foreground/72 dark:text-white/40 dark:hover:text-white/80"
             >
               ×
@@ -106,10 +146,10 @@ function UploadZone({
       ) : (
         <div className="flex flex-col items-center gap-1">
           <span className="text-foreground/28 text-lg leading-none dark:text-white/20">
-            +
+            {uploading ? '…' : '+'}
           </span>
           <p className="text-foreground/52 text-center text-xs dark:text-white/40">
-            {label}
+            {uploading ? 'Uploading...' : label}
             {optional && (
               <span className="text-foreground/34 ml-1 dark:text-white/25">
                 (optional)
@@ -118,7 +158,15 @@ function UploadZone({
           </p>
         </div>
       )}
-    </div>
+      <input
+        id={inputId}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        onChange={onUpload}
+        className="hidden"
+      />
+    </label>
   );
 }
 
@@ -145,8 +193,7 @@ function SettingsPanel({
   audioSetting: AudioSetting;
   setAudioSetting: (v: AudioSetting) => void;
 }) {
-  const maxDuration =
-    tab === 'reference-to-video' || tab === 'video-edit' ? 10 : 15;
+  const maxDuration = 10;
   const showRatio = tab !== 'image-to-video';
   const showAudio = tab === 'video-edit';
 
@@ -276,7 +323,7 @@ function ParamChip({
   children,
 }: {
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -305,26 +352,46 @@ export function Hero({
   const defaultTab = ((section as any).default_tab ||
     tabs[0]?.key ||
     'text-to-video') as MainTab;
+  const router = useRouter();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<MainTab>(defaultTab);
   const [prompt, setPrompt] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusHint, setStatusHint] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+
+  // Text to Video
+  const [textAudio, setTextAudio] = useState<VideoStudioUploadedAsset | null>(
+    null
+  );
 
   // Image to Video
   const [i2vMode, setI2vMode] = useState<I2VMode>('first-frame');
-  const [i2vFirstFrame, setI2vFirstFrame] = useState(false);
-  const [i2vLastFrame, setI2vLastFrame] = useState(false);
-  const [i2vClip, setI2vClip] = useState(false);
+  const [i2vFirstFrame, setI2vFirstFrame] =
+    useState<VideoStudioUploadedAsset | null>(null);
+  const [i2vLastFrame, setI2vLastFrame] =
+    useState<VideoStudioUploadedAsset | null>(null);
+  const [i2vClip, setI2vClip] = useState<VideoStudioUploadedAsset | null>(null);
+  const [i2vAudio, setI2vAudio] = useState<VideoStudioUploadedAsset | null>(null);
 
   // Reference to Video
-  const [refMaterials, setRefMaterials] = useState(false);
-  const [refFirstFrame, setRefFirstFrame] = useState(false);
-  const [refVoice, setRefVoice] = useState(false);
+  const [refMaterials, setRefMaterials] = useState<VideoStudioUploadedAsset[]>(
+    []
+  );
+  const [refFirstFrame, setRefFirstFrame] =
+    useState<VideoStudioUploadedAsset | null>(null);
+  const [refVoice, setRefVoice] = useState<VideoStudioUploadedAsset | null>(
+    null
+  );
 
   // Video Edit
-  const [editVideo, setEditVideo] = useState(false);
-  const [editRefImage, setEditRefImage] = useState(false);
+  const [editVideo, setEditVideo] = useState<VideoStudioUploadedAsset | null>(
+    null
+  );
+  const [editRefImage, setEditRefImage] =
+    useState<VideoStudioUploadedAsset | null>(null);
 
   // Shared params
   const [duration, setDuration] = useState(5);
@@ -349,17 +416,186 @@ export function Hero({
 
   useEffect(() => {
     setActiveTab(defaultTab);
-    setPrompt('');
+    setPrompt((prev) => prev || '');
     setSettingsOpen(false);
     setDuration(defaultTab === 'video-edit' ? 0 : 5);
   }, [defaultTab]);
 
   function switchTab(key: string) {
     setActiveTab(key as MainTab);
-    setPrompt('');
     setSettingsOpen(false);
-    setDuration(key === 'video-edit' ? 0 : 5);
+    if (key === 'video-edit') {
+      setDuration((prev) => (prev === 0 || prev === 5 || prev === 10 ? prev : 0));
+    } else {
+      setDuration((prev) => (prev === 0 ? 5 : prev));
+    }
   }
+
+  const setUploadingState = (key: string, value: boolean) => {
+    setUploading((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const uploadSingle = async (
+    key: string,
+    event: ChangeEvent<HTMLInputElement>,
+    onUploaded: (asset: VideoStudioUploadedAsset | null) => void
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setUploadingState(key, true);
+    setStatusHint(null);
+    try {
+      const uploaded = await uploadStudioMediaFiles([file]);
+      onUploaded(uploaded[0] ?? null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'upload failed';
+      setStatusHint(message);
+    } finally {
+      setUploadingState(key, false);
+    }
+  };
+
+  const uploadMultiple = async (
+    key: string,
+    event: ChangeEvent<HTMLInputElement>,
+    onUploaded: (assets: VideoStudioUploadedAsset[]) => void,
+    maxCount?: number
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (files.length === 0) return;
+
+    setUploadingState(key, true);
+    setStatusHint(null);
+    try {
+      const uploaded = await uploadStudioMediaFiles(
+        typeof maxCount === 'number' ? files.slice(0, maxCount) : files
+      );
+      onUploaded(uploaded);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'upload failed';
+      setStatusHint(message);
+    } finally {
+      setUploadingState(key, false);
+    }
+  };
+
+  const mapStatusToLifecycle = (status: string | undefined) => {
+    if (status === AITaskStatus.SUCCESS) return 'completed' as const;
+    if (status === AITaskStatus.PROCESSING) return 'processing' as const;
+    if (status === AITaskStatus.PENDING) return 'queued' as const;
+    return 'failed' as const;
+  };
+
+  const createDraft = (
+    submission: VideoStudioDraft['submission']
+  ): VideoStudioDraft => {
+    return {
+      ...VIDEO_STUDIO_DEFAULT_DRAFT,
+      id: `hero-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      source: 'hero',
+      mode: activeTab,
+      prompt,
+      ratio,
+      resolution,
+      duration,
+      i2vMode,
+      audioSetting,
+      textAudio,
+      imageAudio: i2vAudio,
+      imageFirstFrame: i2vFirstFrame,
+      imageLastFrame: i2vLastFrame,
+      imageFirstClip: i2vClip,
+      referenceMaterials: refMaterials,
+      referenceFirstFrame: refFirstFrame,
+      referenceVoice: refVoice,
+      editVideo,
+      editReferenceImage: editRefImage,
+      submission,
+    };
+  };
+
+  const redirectToStudio = (draft: VideoStudioDraft) => {
+    sessionStorage.setItem(VIDEO_STUDIO_DRAFT_SESSION_KEY, JSON.stringify(draft));
+    const params = buildStudioQueryFromDraft(draft);
+    if (draft.submission?.taskId) {
+      params.set('taskId', draft.submission.taskId);
+      params.set('handoffStatus', draft.submission.lifecycle);
+    }
+    router.push(`/ai-video-studio?${params.toString()}`);
+  };
+
+  const formatDraftValidationError = (error: VideoStudioDraftError) => {
+    if (error.code === 'PROMPT_REQUIRED') {
+      return 'Please add a prompt before generating.';
+    }
+    if (error.code === 'IMAGE_FIRST_FRAME_REQUIRED') {
+      return 'Upload a first frame image before generating.';
+    }
+    if (error.code === 'IMAGE_FIRST_LAST_FRAME_REQUIRED') {
+      return 'Upload both first and last frame images.';
+    }
+    if (error.code === 'IMAGE_FIRST_CLIP_REQUIRED') {
+      return 'Upload a clip for continuation mode.';
+    }
+    if (error.code === 'REFERENCE_MATERIAL_REQUIRED') {
+      return 'Upload at least one reference image or video.';
+    }
+    return 'Upload a source video before editing.';
+  };
+
+  const handleGenerate = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatusHint(null);
+
+    try {
+      const draft = createDraft(null);
+      const payload = buildVideoTaskPayloadFromDraft(draft);
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`request failed with status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as GenerateResponsePayload;
+      if (result.code !== 0 || !result.data?.id) {
+        throw new Error(result.message || 'generate failed');
+      }
+
+      const handoff = createDraft({
+        taskId: result.data.id,
+        lifecycle: mapStatusToLifecycle(result.data.status),
+        errorMessage: null,
+      });
+      redirectToStudio(handoff);
+    } catch (error) {
+      const message =
+        error instanceof VideoStudioDraftError
+          ? formatDraftValidationError(error)
+          : error instanceof Error
+            ? error.message
+            : 'generate failed';
+
+      const failedDraft = createDraft({
+        taskId: null,
+        lifecycle: 'failed',
+        errorMessage: message,
+      });
+      redirectToStudio(failedDraft);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Title highlight rendered with the active brand accent.
   const highlightText = section.highlight_text ?? '';
@@ -370,6 +606,7 @@ export function Hero({
 
   const durationLabel = duration === 0 ? 'Full' : `${duration}s`;
   const showRatio = activeTab !== 'image-to-video';
+  const hasUploading = Object.values(uploading).some(Boolean);
   const placeholder =
     tabs.find((t) => t.key === activeTab)?.placeholder ??
     'Describe your video...';
@@ -469,6 +706,20 @@ export function Hero({
 
         {/* ── Input card ────────────────────────────────────────────────────── */}
         <div className="border-foreground/10 bg-background/72 mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
+          {activeTab === 'text-to-video' && (
+            <div className="mb-3">
+              <UploadZone
+                label="Optional audio track (mp3 / wav)"
+                optional
+                file={textAudio}
+                uploading={Boolean(uploading.textAudio)}
+                accept="audio/*"
+                onUpload={(event) => void uploadSingle('textAudio', event, setTextAudio)}
+                onClear={() => setTextAudio(null)}
+              />
+            </div>
+          )}
+
           {/* Image to Video — sub-modes */}
           {activeTab === 'image-to-video' && (
             <div className="mb-3 space-y-3">
@@ -478,9 +729,9 @@ export function Hero({
                     key={m.key}
                     onClick={() => {
                       setI2vMode(m.key);
-                      setI2vFirstFrame(false);
-                      setI2vLastFrame(false);
-                      setI2vClip(false);
+                      setI2vFirstFrame(null);
+                      setI2vLastFrame(null);
+                      setI2vClip(null);
                     }}
                     className={cn(
                       'rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
@@ -496,31 +747,58 @@ export function Hero({
               {i2vMode === 'first-frame' && (
                 <UploadZone
                   label="Upload first frame image"
-                  hasFile={i2vFirstFrame}
-                  onClear={() => setI2vFirstFrame(false)}
+                  file={i2vFirstFrame}
+                  uploading={Boolean(uploading.i2vFirstFrame)}
+                  accept="image/*"
+                  onUpload={(event) =>
+                    void uploadSingle('i2vFirstFrame', event, setI2vFirstFrame)
+                  }
+                  onClear={() => setI2vFirstFrame(null)}
                 />
               )}
               {i2vMode === 'first-last-frame' && (
                 <div className="grid grid-cols-2 gap-2">
                   <UploadZone
                     label="First frame image"
-                    hasFile={i2vFirstFrame}
-                    onClear={() => setI2vFirstFrame(false)}
+                    file={i2vFirstFrame}
+                    uploading={Boolean(uploading.i2vFirstFrame)}
+                    accept="image/*"
+                    onUpload={(event) =>
+                      void uploadSingle('i2vFirstFrame', event, setI2vFirstFrame)
+                    }
+                    onClear={() => setI2vFirstFrame(null)}
                   />
                   <UploadZone
                     label="Last frame image"
-                    hasFile={i2vLastFrame}
-                    onClear={() => setI2vLastFrame(false)}
+                    file={i2vLastFrame}
+                    uploading={Boolean(uploading.i2vLastFrame)}
+                    accept="image/*"
+                    onUpload={(event) =>
+                      void uploadSingle('i2vLastFrame', event, setI2vLastFrame)
+                    }
+                    onClear={() => setI2vLastFrame(null)}
                   />
                 </div>
               )}
               {i2vMode === 'video-continuation' && (
                 <UploadZone
                   label="Upload video clip (mp4 / mov)"
-                  hasFile={i2vClip}
-                  onClear={() => setI2vClip(false)}
+                  file={i2vClip}
+                  uploading={Boolean(uploading.i2vClip)}
+                  accept="video/*"
+                  onUpload={(event) => void uploadSingle('i2vClip', event, setI2vClip)}
+                  onClear={() => setI2vClip(null)}
                 />
               )}
+              <UploadZone
+                label="Optional driving audio (mp3 / wav)"
+                optional
+                file={i2vAudio}
+                uploading={Boolean(uploading.i2vAudio)}
+                accept="audio/*"
+                onUpload={(event) => void uploadSingle('i2vAudio', event, setI2vAudio)}
+                onClear={() => setI2vAudio(null)}
+              />
             </div>
           )}
 
@@ -529,21 +807,37 @@ export function Hero({
             <div className="mb-3 space-y-2">
               <UploadZone
                 label="Add reference images or videos (up to 5)"
-                hasFile={refMaterials}
-                onClear={() => setRefMaterials(false)}
+                file={refMaterials}
+                uploading={Boolean(uploading.refMaterials)}
+                accept="image/*,video/*"
+                multiple
+                onUpload={(event) =>
+                  void uploadMultiple('refMaterials', event, (assets) => {
+                    setRefMaterials((prev) => [...prev, ...assets].slice(0, 5));
+                  })
+                }
+                onClear={() => setRefMaterials([])}
               />
               <div className="grid grid-cols-2 gap-2">
                 <UploadZone
                   label="First frame image"
                   optional
-                  hasFile={refFirstFrame}
-                  onClear={() => setRefFirstFrame(false)}
+                  file={refFirstFrame}
+                  uploading={Boolean(uploading.refFirstFrame)}
+                  accept="image/*"
+                  onUpload={(event) =>
+                    void uploadSingle('refFirstFrame', event, setRefFirstFrame)
+                  }
+                  onClear={() => setRefFirstFrame(null)}
                 />
                 <UploadZone
                   label="Reference voice (wav / mp3)"
                   optional
-                  hasFile={refVoice}
-                  onClear={() => setRefVoice(false)}
+                  file={refVoice}
+                  uploading={Boolean(uploading.refVoice)}
+                  accept="audio/*"
+                  onUpload={(event) => void uploadSingle('refVoice', event, setRefVoice)}
+                  onClear={() => setRefVoice(null)}
                 />
               </div>
             </div>
@@ -554,14 +848,22 @@ export function Hero({
             <div className="mb-3 space-y-2">
               <UploadZone
                 label="Upload video to edit (mp4 / mov, 2–10s)"
-                hasFile={editVideo}
-                onClear={() => setEditVideo(false)}
+                file={editVideo}
+                uploading={Boolean(uploading.editVideo)}
+                accept="video/*"
+                onUpload={(event) => void uploadSingle('editVideo', event, setEditVideo)}
+                onClear={() => setEditVideo(null)}
               />
               <UploadZone
                 label="Reference image — style or character"
                 optional
-                hasFile={editRefImage}
-                onClear={() => setEditRefImage(false)}
+                file={editRefImage}
+                uploading={Boolean(uploading.editRefImage)}
+                accept="image/*"
+                onUpload={(event) =>
+                  void uploadSingle('editRefImage', event, setEditRefImage)
+                }
+                onClear={() => setEditRefImage(null)}
               />
             </div>
           )}
@@ -656,10 +958,20 @@ export function Hero({
               </div>
 
               {/* Generate button */}
-              <button className="bg-primary text-primary-foreground hover:bg-primary/92 shrink-0 rounded-xl px-5 py-2 text-sm font-semibold shadow-lg transition-all duration-200 active:scale-95">
-                ✦ {generateLabel}
+              <button
+                onClick={handleGenerate}
+                disabled={isSubmitting || hasUploading}
+                className="bg-primary text-primary-foreground hover:bg-primary/92 shrink-0 rounded-xl px-5 py-2 text-sm font-semibold shadow-lg transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? '...' : '✦'} {generateLabel}
               </button>
             </div>
+
+            {statusHint && (
+              <p className="mt-2 text-left text-xs text-rose-500 dark:text-rose-300">
+                {statusHint}
+              </p>
+            )}
 
             {/* Settings panel */}
             {settingsOpen && (
