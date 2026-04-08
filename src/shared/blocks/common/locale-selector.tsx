@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Check, Globe, Languages } from 'lucide-react';
 import { useLocale } from 'next-intl';
-import { useSearchParams } from 'next/navigation';
 
 import { usePathname, useRouter } from '@/core/i18n/navigation';
 import { localeNames } from '@/config/locale';
@@ -15,11 +15,14 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { cacheSet } from '@/shared/lib/cache';
+import { cn } from '@/shared/lib/utils';
 
 export function LocaleSelector({
   type = 'icon',
+  className,
 }: {
   type?: 'icon' | 'button';
+  className?: string;
 }) {
   const currentLocale = useLocale();
   const router = useRouter();
@@ -49,9 +52,10 @@ export function LocaleSelector({
       <Button
         variant={type === 'icon' ? 'ghost' : 'outline'}
         size={type === 'icon' ? 'icon' : 'sm'}
-        className={
-          type === 'icon' ? 'h-auto w-auto p-0' : 'hover:bg-primary/10'
-        }
+        className={cn(
+          type === 'icon' ? 'h-auto w-auto p-0' : 'hover:bg-primary/10',
+          className
+        )}
         disabled
       >
         {type === 'icon' ? (
@@ -70,11 +74,19 @@ export function LocaleSelector({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {type === 'icon' ? (
-          <Button variant="ghost" size="icon" className="h-auto w-auto p-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn('h-auto w-auto p-0', className)}
+          >
             <Languages size={18} />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" className="hover:bg-primary/10">
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn('hover:bg-primary/10', className)}
+          >
             <Globe size={16} />
             {localeNames[currentLocale]}
           </Button>

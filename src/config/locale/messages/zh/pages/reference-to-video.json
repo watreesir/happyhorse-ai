@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI 参考生成视频 | 用参考素材控制风格与运动",
+    "description": "在 Happy Horse AI 中通过参考图片、参考视频、首帧和声音素材生成参考控制视频，并支持 720p 与 1080p 输出。",
+    "keywords": "happy horse ai 参考生成视频, 参考生成视频, 参考图生成视频, 参考视频生成"
+  },
+  "page": {
+    "title": "Happy Horse AI 参考生成视频",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI 参考生成视频",
+        "highlight_text": "参考生成视频",
+        "description": "通过参考素材来约束风格、主体和运动方向。这类工作流适合需要比纯提示词更强控制力的项目。",
+        "badge_text": "参考素材驱动工作流",
+        "default_tab": "reference-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-zh-reference-to-video/1600/900.webp",
+          "alt": "参考生成视频"
+        },
+        "generate_button": "生成视频",
+        "tabs": [
+          {
+            "key": "reference-to-video",
+            "label": "参考生成视频",
+            "placeholder": "描述视频风格和内容..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "参考素材能如何参与生成",
+        "description": "当你需要让输出更贴近指定风格、构图或运动方向时，参考生成视频会比纯提示词工作流更稳。",
+        "items": [
+          {
+            "title": "参考图片与参考视频",
+            "description": "可组合多种素材来约束角色、场景或镜头方向。",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "可选首帧",
+            "description": "当开场构图很重要时，可额外设置首帧素材。",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "可选声音输入",
+            "description": "需要额外的声音参考时，可以加入声音素材作为方向提示。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "适合短片段生成",
+            "description": "更适合对风格和运动方向要求较高的短视频片段。",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "720p 与 1080p 输出",
+            "description": "可根据测试或交付需求选择不同分辨率。",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "多种常见比例",
+            "description": "支持横屏、竖屏、方形和其他常见比例，方便后续发布。",
+            "icon": "RiLayoutGridLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "使用步骤",
+        "title": "三步构建参考控制视频",
+        "description": "先整理参考素材，再用提示词说明这些素材应该如何影响最终视频。",
+        "items": [
+          {
+            "title": "上传参考素材",
+            "description": "根据需求加入参考图片、参考视频，以及可选的首帧或声音素材。",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "描述影响方式",
+            "description": "在提示词里说明参考素材应如何影响风格、动作和镜头。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "生成并微调",
+            "description": "先看结果，再替换或补充参考素材继续迭代。",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "参考生成视频常见问题",
+        "description": "关于参考素材驱动工作流的常见问题。",
+        "items": [
+          {
+            "question": "可以上传哪些参考素材？",
+            "answer": "当前支持参考图片、参考视频，以及可选的首帧和声音输入。"
+          },
+          {
+            "question": "可以同时使用多个参考素材吗？",
+            "answer": "可以。这个工作流就是为多个素材共同约束风格和运动而设计的。"
+          },
+          {
+            "question": "什么时候更适合使用参考生成视频？",
+            "answer": "当你希望输出更贴近指定视觉方向或已有素材，而不是只依赖提示词时，更适合使用这个工作流。"
+          },
+          {
+            "question": "当前支持哪些输出设置？",
+            "answer": "参考生成视频支持 720p 与 1080p 输出，并可根据项目选择常见画面比例。"
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "开始参考控制生成",
+        "description": "打开 Happy Horse AI 上传参考素材，或者先查看价格方案，了解更多积分和保存能力。",
+        "buttons": [
+          {
+            "title": "打开 Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "查看价格",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

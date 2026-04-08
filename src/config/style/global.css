@@ -18,6 +18,29 @@
   @apply mx-auto max-w-7xl px-4 md:px-8;
 }
 
+.landing-shell {
+  background:
+    radial-gradient(
+      circle at top center,
+      color-mix(in oklab, var(--primary) 14%, transparent) 0%,
+      transparent 32%
+    ),
+    var(--landing-shell);
+}
+
+.landing-section-surface {
+  background-color: var(--landing-surface);
+}
+
+.landing-panel-surface {
+  background-color: var(--landing-panel);
+  border-color: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.landing-footer-surface {
+  background-color: var(--landing-footer);
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

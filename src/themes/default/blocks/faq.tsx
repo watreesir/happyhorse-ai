@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from '@/shared/components/ui/accordion';
 import { ScrollAnimation } from '@/shared/components/ui/scroll-animation';
+import { cn } from '@/shared/lib/utils';
 import { Section } from '@/shared/types/blocks/landing';
 
 export function Faq({
@@ -17,7 +18,15 @@ export function Faq({
   className?: string;
 }) {
   return (
-    <section id={section.id} className={`py-16 md:py-24 ${className}`}>
+    <section
+      id={section.id}
+      className={cn(
+        'py-16 md:py-24',
+        section.className,
+        'landing-section-surface',
+        className
+      )}
+    >
       <div className={`mx-auto max-w-full px-4 md:max-w-3xl md:px-8`}>
         <ScrollAnimation>
           <div className="mx-auto max-w-2xl text-center text-balance">
@@ -35,13 +44,13 @@ export function Faq({
             <Accordion
               type="single"
               collapsible
-              className="bg-muted dark:bg-muted/50 w-full rounded-2xl p-1"
+              className="landing-panel-surface w-full rounded-2xl p-1"
             >
               {section.items?.map((item, idx) => (
                 <div className="group" key={idx}>
                   <AccordionItem
                     value={item.question || item.title || ''}
-                    className="data-[state=open]:bg-card dark:data-[state=open]:bg-muted peer rounded-xl border-none px-7 py-1 data-[state=open]:border-none data-[state=open]:shadow-sm"
+                    className="peer data-[state=open]:bg-background/75 dark:data-[state=open]:bg-background/45 rounded-xl border-none px-7 py-1 data-[state=open]:border-none data-[state=open]:shadow-sm"
                   >
                     <AccordionTrigger className="cursor-pointer text-base hover:no-underline">
                       {item.question || item.title || ''}

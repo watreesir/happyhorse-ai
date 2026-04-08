@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "title": "AI 视频工作台",
+    "description": "Happy Horse AI 的视频制作工作台：用于草稿生成、灵感浏览与结果整理。"
+  },
+  "header": {
+    "eyebrow": "工作台预览版",
+    "title": "AI Video Studio",
+    "description": "在一个页面里完成提示词编排、灵感参考和结果回看，保持连续创作节奏。",
+    "note": "当前第一版仅实现页面框架，暂时使用 mock 数据。"
+  },
+  "tabs": {
+    "create": {
+      "label": "Create",
+      "hint": "配置提示词、素材与画幅。"
+    },
+    "myCreations": {
+      "label": "My Creations",
+      "hint": "分页查看历史输出与状态。"
+    }
+  },
+  "create": {
+    "workspace": {
+      "panelTitle": "Workspace",
+      "panelHint": "这里用于搭建本次生成草稿。真实生成链路会在下一阶段接入。",
+      "promptLabel": "提示词方向",
+      "promptPlaceholder": "用简洁描述写清主体、运动、镜头语言和氛围。",
+      "promptRequired": "请先输入提示词再提交。",
+      "uploadLabel": "参考素材",
+      "uploadHint": "当前为示意上传区",
+      "uploadSlots": {
+        "primary": "添加主参考帧",
+        "optional": "添加补充素材"
+      },
+      "ratioLabel": "画幅比例",
+      "runButton": "创建草稿任务",
+      "helper": "建议先写清动作与镜头，再逐步补充风格和细节词。",
+      "statusLabel": "任务状态",
+      "statuses": {
+        "idle": "可提交新的草稿任务。",
+        "submitting": "任务提交中...",
+        "queued": "任务已排队，等待执行。",
+        "processing": "任务正在生成中。",
+        "completed": "任务已完成，可在 History 查看。",
+        "failed": "任务失败，请检查错误后重试。"
+      },
+      "submitErrorPrefix": "提交错误"
+    },
+    "inspiration": {
+      "panelTitle": "Inspiration",
+      "panelHint": "按瀑布流组织的参考片段，用于快速套用创作方向。",
+      "applyButton": "套用此方向",
+      "empty": "当前暂无参考卡片。",
+      "recipePrefix": "模板"
+    },
+    "history": {
+      "panelTitle": "History",
+      "panelHint": "紧凑展示最近任务状态。",
+      "refreshButton": "刷新",
+      "refreshingButton": "刷新中",
+      "empty": "暂无最近记录。"
+    },
+    "status": {
+      "ready": "已完成",
+      "rendering": "生成中",
+      "queued": "排队中",
+      "failed": "需重试"
+    }
+  },
+  "myCreations": {
+    "panelTitle": "My Creations",
+    "panelHint": "分页展示你的近期草稿输出，便于快速复盘。",
+    "refreshButton": "重新加载",
+    "refreshingButton": "加载中",
+    "emptyTitle": "本页暂无内容",
+    "emptyDescription": "可先到 Create 页面创建草稿任务。",
+    "pageLabel": "页码",
+    "totalLabel": "总数",
+    "previousLabel": "上一页",
+    "nextLabel": "下一页"
+  }
+}

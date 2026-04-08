@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI Text to Video | Prompt-to-Clip Workflow",
+    "description": "Generate AI video from prompts in Happy Horse AI. Create short clips with 720p or 1080p output in a browser-based text-to-video workflow.",
+    "keywords": "happy horse ai text to video, text to video ai, prompt to video, 1080p ai video"
+  },
+  "page": {
+    "title": "Happy Horse AI Text to Video",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI Text to Video",
+        "highlight_text": "Text to Video",
+        "description": "Turn prompts into short AI video clips with a browser-based workflow. Adjust duration, resolution, and aspect ratio before you generate.",
+        "badge_text": "Prompt-to-video workflow",
+        "default_tab": "text-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-en-text-to-video/1600/900.webp",
+          "alt": "Text to video"
+        },
+        "generate_button": "Generate",
+        "tabs": [
+          {
+            "key": "text-to-video",
+            "label": "Text to Video",
+            "placeholder": "Describe the video you want to generate..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "What you can control",
+        "description": "This workflow is designed for prompt-first creation when you want to start from an idea instead of an existing asset.",
+        "items": [
+          {
+            "title": "Prompt-first generation",
+            "description": "Describe subjects, motion, camera direction, and mood directly in the prompt box.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Short-form clip lengths",
+            "description": "Choose preset durations from 2 to 15 seconds depending on the scene you want to create.",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "720p and 1080p output",
+            "description": "Pick a faster preview-friendly setting or a sharper export for final delivery.",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "Flexible aspect ratios",
+            "description": "Supports 16:9, 9:16, 1:1, 4:3, and 3:4 for different publishing targets.",
+            "icon": "RiLayoutGridLine"
+          },
+          {
+            "title": "Browser-based workflow",
+            "description": "Stay inside Happy Horse AI instead of switching between separate generation and export tools.",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "Credit-based usage",
+            "description": "Start with the plan that fits your output volume and scale up when you need more generation capacity.",
+            "icon": "RiGiftLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "How It Works",
+        "title": "Create text-to-video clips in three steps",
+        "description": "Start simple and iterate from the first result instead of overbuilding the prompt upfront.",
+        "items": [
+          {
+            "title": "Write the prompt",
+            "description": "Describe the subject, motion, pacing, and overall tone you want in the clip.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Choose output settings",
+            "description": "Set duration, resolution, and aspect ratio before you send the generation request.",
+            "icon": "RiLayoutGridLine"
+          },
+          {
+            "title": "Generate and refine",
+            "description": "Review the first output, then adjust prompt language or settings for the next version.",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Text-to-Video FAQ",
+        "description": "Questions about the Happy Horse AI prompt-based workflow.",
+        "items": [
+          {
+            "question": "How is text-to-video different from image-to-video?",
+            "answer": "Text-to-video starts from a written prompt and generates a clip from scratch. Image-to-video starts from a visual asset and focuses on animating or extending that input."
+          },
+          {
+            "question": "What settings can I change in text-to-video?",
+            "answer": "You can control duration, output resolution, and aspect ratio before generating the clip."
+          },
+          {
+            "question": "What output quality is available?",
+            "answer": "Happy Horse AI currently supports 720p and 1080p output for text-to-video generation."
+          },
+          {
+            "question": "When should I use text-to-video?",
+            "answer": "Use it when you want to start from an idea, concept, or script direction rather than a source image or source clip."
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "Open the prompt-to-video workflow",
+        "description": "Start generating from text in Happy Horse AI, or compare plans if you need more credits and faster queues.",
+        "buttons": [
+          {
+            "title": "Open Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "View Pricing",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

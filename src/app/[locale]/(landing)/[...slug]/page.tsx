@@ -18,6 +18,7 @@ export async function generateMetadata({
   // metadata values
   let title = '';
   let description = '';
+  let keywords = '';
   let canonicalUrl = '';
 
   // 1. try to get static page metadata from
@@ -49,6 +50,7 @@ export async function generateMetadata({
     return {
       title,
       description,
+      keywords,
       alternates: {
         canonical: canonicalUrl,
       },
@@ -69,10 +71,12 @@ export async function generateMetadata({
   if (t.has('metadata')) {
     title = t.raw('metadata.title');
     description = t.raw('metadata.description');
+    keywords = t.has('metadata.keywords') ? t.raw('metadata.keywords') : '';
 
     return {
       title,
       description,
+      keywords,
       alternates: {
         canonical: canonicalUrl,
       },
@@ -84,10 +88,12 @@ export async function generateMetadata({
 
   title = tc('title');
   description = tc('description');
+  keywords = tc.has('keywords') ? tc('keywords') : '';
 
   return {
     title,
     description,
+    keywords,
     alternates: {
       canonical: canonicalUrl,
     },

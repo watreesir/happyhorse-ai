@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI 视频编辑 | 用 AI 改写现有视频片段",
+    "description": "在 Happy Horse AI 中上传现有视频，通过提示词完成视频编辑，并可选择保留原音频或切换到 AI 音频。",
+    "keywords": "happy horse ai 视频编辑, AI视频编辑, 提示词视频编辑, 编辑现有视频"
+  },
+  "page": {
+    "title": "Happy Horse AI 视频编辑",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI 视频编辑",
+        "highlight_text": "视频编辑",
+        "description": "上传现有视频并通过提示词描述你希望的改动，同时决定保留原音频还是切换为 AI 音频。这个工作流适合已有素材的二次改写。",
+        "badge_text": "提示词驱动的视频编辑",
+        "default_tab": "video-edit",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-zh-video-edit/1600/900.webp",
+          "alt": "视频编辑"
+        },
+        "generate_button": "编辑视频",
+        "tabs": [
+          {
+            "key": "video-edit",
+            "label": "视频编辑",
+            "placeholder": "描述你想要对视频进行的编辑..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "视频编辑工作流包含什么",
+        "description": "当你已经有片段，希望通过 AI 做内容或风格调整时，这个工作流比从头生成更合适。",
+        "items": [
+          {
+            "title": "上传现有片段",
+            "description": "从视频本身开始，而不是从纯提示词或单张图片开始。",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "提示词驱动改写",
+            "description": "直接描述你希望发生的变化，而不是在外部编辑器里重做一遍。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "片段时长预设",
+            "description": "支持整段处理，也支持 5 秒和 10 秒等更短的处理预设。",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "音频处理选项",
+            "description": "可以保留原音频，也可以切换到 AI 音频。",
+            "icon": "RiMagicLine"
+          },
+          {
+            "title": "参考图片辅助",
+            "description": "当编辑需要更明确的视觉方向时，可加入参考图片。",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "720p 与 1080p 输出",
+            "description": "根据测试速度或最终交付质量选择不同输出设置。",
+            "icon": "RiHdLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "使用步骤",
+        "title": "三步改写现有视频",
+        "description": "先确保源视频清晰，再通过提示词和音频选择决定你希望输出如何变化。",
+        "items": [
+          {
+            "title": "上传源视频",
+            "description": "先放入需要改写的视频，也可以补充参考图片帮助约束方向。",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "描述编辑目标",
+            "description": "通过提示词说明内容或风格变化，并选择整段、5 秒或 10 秒模式。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "选择音频并导出",
+            "description": "在保留原音频和使用 AI 音频之间做选择，再生成编辑结果。",
+            "icon": "RiMagicLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "视频编辑常见问题",
+        "description": "关于 Happy Horse AI 视频编辑工作流的常见问题。",
+        "items": [
+          {
+            "question": "视频编辑工作流可以上传什么？",
+            "answer": "你可以上传现有视频片段，也可以额外添加参考图片来约束视觉方向。"
+          },
+          {
+            "question": "可以保留原始音频吗？",
+            "answer": "可以。这个工作流支持保留原始音频，也支持切换为 AI 音频。"
+          },
+          {
+            "question": "支持哪些时长选项？",
+            "answer": "视频编辑支持整段处理，也支持更短的 5 秒和 10 秒预设。"
+          },
+          {
+            "question": "什么时候更适合用视频编辑，而不是参考生成视频？",
+            "answer": "如果你已经有视频片段需要改写，视频编辑更合适；如果你是基于参考素材生成一个新片段，参考生成视频会更合适。"
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "开始编辑现有视频",
+        "description": "打开 Happy Horse AI 进入视频编辑工作流，或者先查看价格方案，了解更多积分和队列优先级。",
+        "buttons": [
+          {
+            "title": "打开 Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "查看价格",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

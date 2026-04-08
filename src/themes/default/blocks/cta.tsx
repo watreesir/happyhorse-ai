@@ -17,7 +17,12 @@ export function Cta({
   return (
     <section
       id={section.id}
-      className={cn('py-16 md:py-24', section.className, className)}
+      className={cn(
+        'py-16 md:py-24',
+        section.className,
+        'landing-section-surface',
+        className
+      )}
     >
       <div className="container">
         <div className="text-center">

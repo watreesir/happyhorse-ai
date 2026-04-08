@@ -327,7 +327,12 @@ export function Pricing({
   return (
     <section
       id={section.id}
-      className={cn('py-24 md:py-36', section.className, className)}
+      className={cn(
+        'py-24 md:py-36',
+        section.className,
+        'landing-section-surface',
+        className
+      )}
     >
       <div className="mx-auto mb-12 px-4 text-center md:px-8">
         {section.sr_only_title && (
@@ -388,9 +393,9 @@ export function Pricing({
             const currencies = getCurrenciesFromItem(item);
 
             return (
-              <Card key={idx} className="relative">
+              <Card key={idx} className="landing-panel-surface relative">
                 {item.label && (
-                  <span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br/increasing from-purple-400 to-amber-300 px-3 py-1 text-xs font-medium text-amber-950 ring-1 ring-white/20 ring-offset-1 ring-offset-gray-950/5 ring-inset">
+                  <span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br/increasing from-emerald-400 to-teal-300 px-3 py-1 text-xs font-medium text-emerald-950 ring-1 ring-white/20 ring-offset-1 ring-offset-gray-950/5 ring-inset">
                     {item.label}
                   </span>
                 )}

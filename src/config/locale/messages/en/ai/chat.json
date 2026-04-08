@@ -2,10 +2,10 @@
   "sidebar": {
     "header": {
       "brand": {
-        "title": "ShipAny Chat",
+        "title": "Happy Horse AI Chat",
         "logo": {
-          "src": "/logo.png",
-          "alt": "ShipAny Chat"
+          "src": "/brand/logo-512.png",
+          "alt": "Happy Horse AI Chat"
         },
         "url": "/chat"
       },
@@ -59,26 +59,8 @@
             "target": "_blank"
           },
           {
-            "title": "GitHub",
-            "url": "https://github.com/your-app-name",
-            "icon": "Github",
-            "target": "_blank"
-          },
-          {
-            "title": "Twitter",
-            "url": "https://twitter.com/your-app-name",
-            "icon": "RiTwitterXFill",
-            "target": "_blank"
-          },
-          {
-            "title": "Discord",
-            "url": "https://discord.gg/your-app-name",
-            "icon": "RiDiscordFill",
-            "target": "_blank"
-          },
-          {
             "title": "Email",
-            "url": "mailto:support@your-domain.com",
+            "url": "mailto:support@happyhorse-ai.app",
             "icon": "Mail",
             "target": "_blank"
           }

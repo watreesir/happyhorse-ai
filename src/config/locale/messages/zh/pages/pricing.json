@@ -1,15 +1,16 @@
 {
   "metadata": {
-    "title": "价格",
-    "description": "选择方案，立即开始"
+    "title": "Happy Horse AI 价格 | 套餐、积分与视频工作流访问",
+    "description": "对比 Happy Horse AI 的价格方案，查看积分、保存内容、处理队列优先级，以及文生视频、图生视频、参考生成和视频编辑工作流访问方式。",
+    "keywords": "happy horse ai 价格, happy horse ai 套餐, AI视频积分, 文生视频价格, 图生视频价格"
   },
   "page": {
-    "title": "ShipAny 价格表",
+    "title": "Happy Horse AI 价格",
     "sections": {
       "pricing": {
         "id": "pricing",
-        "title": "价格",
-        "description": "获取 ShipAny 的全部功能，极速交付你的 AI SaaS 创业项目。",
+        "title": "Happy Horse AI 价格",
+        "description": "根据你的文生视频、图生视频、参考生成和视频编辑频率，选择合适的积分方案，从轻量测试到高频生产都可以覆盖。",
         "groups": [
           {
             "name": "one-time",
@@ -18,8 +19,7 @@
           {
             "name": "monthly",
             "title": "包月",
-            "is_featured": true,
-            "label": "立省15%"
+            "is_featured": true
           },
           {
             "name": "yearly",
@@ -29,16 +29,15 @@
         "items": [
           {
             "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
+            "description": "适合测试提示词和短视频创意的轻量积分包。",
             "features_title": "包含",
             "features": [
               "100 积分，有效期 1 个月",
-              "NextJS 项目模板",
-              "SEO 友好结构",
-              "支持 Stripe 支付",
-              "Supabase 数据存储",
-              "Google Oauth & 一键登录",
-              "多语言（i18n）支持"
+              "文生视频与图生视频工作流",
+              "生成结果云端保存",
+              "无水印导出",
+              "标准处理队列",
+              "邮件支持"
             ],
             "interval": "one-time",
             "amount": 9900,
@@ -56,32 +55,31 @@
             ],
             "unit": "",
             "is_featured": false,
-            "tip": "一次付费，畅享无限项目部署！",
+            "tip": "一次付费，适合试用流程和单次项目。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter",
-            "product_name": "ShipAny 模板入门版",
+            "product_name": "Happy Horse AI 入门版",
             "credits": 100,
             "valid_days": 30,
             "group": "one-time"
           },
           {
             "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
+            "description": "为更高频的创作者提供更多积分与更灵活的工作流。",
             "label": "热门",
             "features_title": "包含入门版功能，此外",
             "features": [
               "200 积分，有效期 3 个月",
-              "支持 Vercel 或 Cloudflare 部署",
-              "自动生成隐私政策&服务条款",
-              "集成 Google Analytics",
-              "集成 Google Search Console",
-              "Discord 技术社区",
-              "首个上线项目技术支持",
-              "终身免费更新"
+              "参考生成视频与视频编辑工作流",
+              "支持 1080p 导出",
+              "更快生成队列",
+              "提示词构建器与预设",
+              "优先邮件支持",
+              "持续获得工作流改进"
             ],
             "interval": "one-time",
             "amount": 19900,
@@ -99,30 +97,30 @@
             ],
             "unit": "",
             "is_featured": true,
-            "tip": "一次付费，畅享无限项目部署！",
+            "tip": "一次付费，适合持续创作和客户草案输出。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard",
-            "product_name": "ShipAny 模板标准版",
+            "product_name": "Happy Horse AI 标准版",
             "credits": 200,
             "valid_days": 90,
             "group": "one-time"
           },
           {
             "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
+            "description": "为生产级使用提供更高积分容量和更快支持。",
             "features_title": "包含标准版功能，此外",
             "features": [
               "300 积分，有效期 1 年",
-              "内置 AI 业务功能",
-              "用户中心",
-              "积分系统",
-              "为你的 SaaS 售卖 API",
-              "后台管理系统",
-              "优先技术支持"
+              "全部 Happy Horse AI 视频工作流",
+              "支持 1080p 导出",
+              "优先生成队列",
+              "持续扩充的预设与模板访问",
+              "优先支持",
+              "优先体验新的 Happy Horse AI 模型更新"
             ],
             "interval": "one-time",
             "amount": 29900,
@@ -140,30 +138,29 @@
             ],
             "unit": "",
             "is_featured": false,
-            "tip": "一次付费，畅享无限项目部署！",
+            "tip": "一次付费，适合更重度的生产工作流。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium",
-            "product_name": "ShipAny 模板高级版",
+            "product_name": "Happy Horse AI 高级版",
             "credits": 300,
             "valid_days": 365,
             "group": "one-time"
           },
           {
             "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
+            "description": "适合每月稳定生成内容的基础方案。",
             "features_title": "包含",
             "features": [
               "100 积分，有效期 1 个月",
-              "NextJS 项目模板",
-              "SEO 友好结构",
-              "支持 Stripe 支付",
-              "Supabase 数据存储",
-              "Google Oauth & 一键登录",
-              "多语言（i18n）支持"
+              "文生视频与图生视频工作流",
+              "生成结果云端保存",
+              "无水印导出",
+              "标准处理队列",
+              "邮件支持"
             ],
             "interval": "month",
             "amount": 8900,
@@ -172,14 +169,14 @@
             "original_price": "$99",
             "unit": "/ 月",
             "is_featured": false,
-            "tip": "按月付费，畅享无限项目部署！",
+            "tip": "按月付费，适合定期试验和小规模创作。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter-monthly",
-            "product_name": "ShipAny 模板入门版包月",
+            "product_name": "Happy Horse AI 入门版包月",
             "credits": 100,
             "valid_days": 30,
             "group": "monthly",
@@ -187,18 +184,16 @@
           },
           {
             "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
+            "description": "适合每周都有稳定内容产出的创作者。",
             "label": "热门",
             "features_title": "包含入门版功能，此外",
             "features": [
               "200 积分，有效期 1 个月",
-              "支持 Vercel 或 Cloudflare 部署",
-              "自动生成隐私政策&服务条款",
-              "集成 Google Analytics",
-              "集成 Google Search Console",
-              "Discord 技术社区",
-              "首个上线项目技术支持",
-              "终身免费更新"
+              "参考生成视频与视频编辑工作流",
+              "支持 1080p 导出",
+              "更快生成队列",
+              "提示词构建器与预设",
+              "优先邮件支持"
             ],
             "interval": "month",
             "amount": 16900,
@@ -207,14 +202,14 @@
             "original_price": "$199",
             "unit": "/ 月",
             "is_featured": true,
-            "tip": "按月付费，极速上线你的 SaaS 项目。",
+            "tip": "按月付费，适合高频创作者。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard-monthly",
-            "product_name": "ShipAny 模板标准版包月",
+            "product_name": "Happy Horse AI 标准版包月",
             "credits": 200,
             "valid_days": 30,
             "group": "monthly",
@@ -222,16 +217,16 @@
           },
           {
             "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
+            "description": "适合高负载月度使用与更快支持需求。",
             "features_title": "包含标准版功能，此外",
             "features": [
               "300 积分，有效期 1 个月",
-              "内置 AI 业务功能",
-              "用户中心",
-              "积分系统",
-              "为你的 SaaS 售卖 API",
-              "后台管理系统",
-              "优先技术支持"
+              "全部 Happy Horse AI 视频工作流",
+              "支持 1080p 导出",
+              "优先生成队列",
+              "持续扩充的预设与模板访问",
+              "优先支持",
+              "优先体验新的 Happy Horse AI 模型更新"
             ],
             "interval": "month",
             "amount": 24900,
@@ -240,14 +235,14 @@
             "original_price": "$299",
             "unit": "/ 月",
             "is_featured": false,
-            "tip": "按月付费，助你交付任何 AI SaaS 项目。",
+            "tip": "按月付费，适合团队和高频使用场景。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium-monthly",
-            "product_name": "ShipAny 模板高级版包月",
+            "product_name": "Happy Horse AI 高级版包月",
             "credits": 300,
             "valid_days": 30,
             "group": "monthly",
@@ -255,16 +250,15 @@
           },
           {
             "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
+            "description": "适合个人创作者长期稳定输出的低成本年付方案。",
             "features_title": "包含",
             "features": [
-              "100 积分，有效期 1 年",
-              "NextJS 项目模板",
-              "SEO 友好结构",
-              "支持 Stripe 支付",
-              "Supabase 数据存储",
-              "Google Oauth & 一键登录",
-              "多语言（i18n）支持"
+              "1200 积分，有效期 1 年",
+              "文生视频与图生视频工作流",
+              "生成结果云端保存",
+              "无水印导出",
+              "标准处理队列",
+              "邮件支持"
             ],
             "interval": "year",
             "amount": 82800,
@@ -273,14 +267,14 @@
             "original_price": "$89",
             "unit": "/ 月",
             "is_featured": false,
-            "tip": "按年付费，畅享无限项目部署！",
+            "tip": "按年付费，长期创作成本更低。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter-yearly",
-            "product_name": "ShipAny 模板入门版包年",
+            "product_name": "Happy Horse AI 入门版包年",
             "credits": 1200,
             "valid_days": 365,
             "group": "yearly",
@@ -288,18 +282,17 @@
           },
           {
             "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
+            "description": "适合成长中的创作者团队和长期客户项目。",
             "label": "热门",
             "features_title": "包含入门版功能，此外",
             "features": [
-              "200 积分，有效期 1 年",
-              "支持 Vercel 或 Cloudflare 部署",
-              "自动生成隐私政策&服务条款",
-              "集成 Google Analytics",
-              "集成 Google Search Console",
-              "Discord 技术社区",
-              "首个上线项目技术支持",
-              "终身免费更新"
+              "2400 积分，有效期 1 年",
+              "参考生成视频与视频编辑工作流",
+              "支持 1080p 导出",
+              "更快生成队列",
+              "提示词构建器与预设",
+              "优先邮件支持",
+              "持续获得工作流改进"
             ],
             "interval": "year",
             "amount": 154800,
@@ -308,14 +301,14 @@
             "original_price": "$169",
             "unit": "/ 月",
             "is_featured": true,
-            "tip": "按年付费，极速上线你的 SaaS 项目。",
+            "tip": "按年付费，适合成长中的内容团队。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard-yearly",
-            "product_name": "ShipAny 模板标准版包年",
+            "product_name": "Happy Horse AI 标准版包年",
             "credits": 2400,
             "valid_days": 365,
             "group": "yearly",
@@ -323,16 +316,16 @@
           },
           {
             "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
+            "description": "适合生产级视频工作流，年度价值最高。",
             "features_title": "包含标准版功能，此外",
             "features": [
-              "300 积分，有效期 1 年",
-              "内置 AI 业务功能",
-              "用户中心",
-              "积分系统",
-              "为你的 SaaS 售卖 API",
-              "后台管理系统",
-              "优先技术支持"
+              "3600 积分，有效期 1 年",
+              "全部 Happy Horse AI 视频工作流",
+              "支持 1080p 导出",
+              "优先生成队列",
+              "持续扩充的预设与模板访问",
+              "优先支持",
+              "优先体验新的 Happy Horse AI 模型更新"
             ],
             "interval": "year",
             "amount": 226800,
@@ -341,14 +334,14 @@
             "original_price": "$249",
             "unit": "/ 月",
             "is_featured": false,
-            "tip": "按年付费，助你交付任何 AI SaaS 项目。",
+            "tip": "按年付费，适合生产级视频创作团队。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "选择方案",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium-yearly",
-            "product_name": "ShipAny 模板高级版包年",
+            "product_name": "Happy Horse AI 高级版包年",
             "credits": 3600,
             "valid_days": 365,
             "group": "yearly",

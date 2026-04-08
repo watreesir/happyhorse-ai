@@ -1,15 +1,75 @@
 <?xml version='1.0' encoding='utf-8' standalone='yes'?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://your-domain.com/</loc>
-    <lastmod>2025-11-15T10:00:00+00:00</lastmod>
+    <loc>https://happyhorse-ai.app/</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
   </url>
   <url>
-    <loc>https://your-domain.com/blog</loc>
-    <lastmod>2025-11-15T10:00:00+00:00</lastmod>
+    <loc>https://happyhorse-ai.app/text-to-video</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
   </url>
   <url>
-    <loc>https://your-domain.com/showcases</loc>
-    <lastmod>2025-11-15T10:00:00+00:00</lastmod>
+    <loc>https://happyhorse-ai.app/image-to-video</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/reference-to-video</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/video-edit</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/happy-horse-1-0</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/pricing</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/blog</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/blog/what-is-happy-horse-ai</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/text-to-video</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/image-to-video</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/reference-to-video</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/video-edit</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/happy-horse-1-0</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/pricing</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/blog</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
+  </url>
+  <url>
+    <loc>https://happyhorse-ai.app/zh/blog/what-is-happy-horse-ai</loc>
+    <lastmod>2026-04-08T10:00:00+00:00</lastmod>
   </url>
 </urlset>

@@ -1,19 +1,25 @@
-# ShipAny Template Two
+# Happy Horse AI
 
-## Getting Started
+Next.js-based AI video generation project for text-to-video, image-to-video, reference workflows, and video editing.
 
-read [ShipAny Document](https://shipany.ai/docs/quick-start) to start your AI SaaS project.
+## Development
 
-## Buy Templates
+```bash
+pnpm install
+pnpm dev
+```
 
-check [ShipAny Templates](https://shipany.ai/templates) to buy Business Templates.
+## Build
 
-## Feedback
+```bash
+pnpm build
+pnpm start
+```
 
-submit your feedbacks on [Github Issues](https://github.com/shipanyai/shipany-template-two/issues)
+## Configuration
 
-## LICENSE
+Update your app/domain settings with environment variables such as `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME`, and the AI provider credentials you plan to use.
 
-!!! Please do not publicly release ShipAny's Code. Illegal use will be prosecuted
+## License
 
-[ShipAny LICENSE](./LICENSE)
+This repository currently keeps the original upstream template license in [LICENSE](./LICENSE). Review it before public distribution.

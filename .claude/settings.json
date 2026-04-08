@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:happyhorseai.com)",
+      "Bash(pnpm install:*)",
+      "Bash(python3 \"/Users/zhangdeyuan/my-shipany-project/.claude/skills/shipany-quick-start/scripts/generate-logo.py\" --brand-name \"Happy Horse AI\" --primary-color \"#6466F1\" --public-dir \"/Users/zhangdeyuan/my-shipany-project/public\")",
+      "Bash(pnpm build:*)",
+      "Bash(node -e \"const n = require\\('./node_modules/next/dist/server/lib/router-utils/resolve-routes.js'\\); console.log\\('ok'\\)\")"
+    ]
+  }
+}

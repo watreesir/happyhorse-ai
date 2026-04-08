@@ -1,0 +1,153 @@
+{
+  "metadata": {
+    "title": "Happy Horse 1.0 | Happy Horse AI 中的模型概览页",
+    "description": "了解 Happy Horse 1.0 在 Happy Horse AI 平台中的定位，包括对应工作流、适用场景和推荐起步路径。",
+    "keywords": "happy horse 1.0, happyhorse 1.0, happy horse ai 模型, happy horse 1.0 概览"
+  },
+  "page": {
+    "title": "Happy Horse 1.0",
+    "show_sections": ["hero", "overview", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "在 Happy Horse AI 中了解 Happy Horse 1.0",
+        "highlight_text": "Happy Horse 1.0",
+        "description": "这个页面用于解释 Happy Horse 1.0 在平台中的位置：它对应哪些工作流、适合哪些使用场景，以及你应该从哪里开始。",
+        "badge_text": "模型概览页",
+        "default_tab": "text-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-zh-model/1600/900.webp",
+          "alt": "Happy Horse 1.0 概览"
+        },
+        "generate_button": "开始创作",
+        "tabs": [
+          {
+            "key": "text-to-video",
+            "label": "文字生成视频",
+            "placeholder": "描述你想要生成的视频内容..."
+          },
+          {
+            "key": "image-to-video",
+            "label": "图片生成视频",
+            "placeholder": "描述图片应如何动起来..."
+          },
+          {
+            "key": "reference-to-video",
+            "label": "参考生成视频",
+            "placeholder": "描述视频风格和内容..."
+          },
+          {
+            "key": "video-edit",
+            "label": "视频编辑",
+            "placeholder": "描述你想要对视频进行的编辑..."
+          }
+        ]
+      },
+      "overview": {
+        "id": "overview",
+        "title": "如何理解 Happy Horse 1.0 这个页面",
+        "description": "这是一个偏模型词的入口页，用来补充工作流页，而不是替代工作流页本身。",
+        "items": [
+          {
+            "title": "品牌与模型关系",
+            "description": "Happy Horse AI 是平台品牌，Happy Horse 1.0 是面向模型搜索词的概览页面。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "可用工作流",
+            "description": "在本站内，Happy Horse 1.0 相关搜索会被引导到文生视频、图生视频、参考生成和视频编辑等工作流。",
+            "icon": "RiLayoutGridLine"
+          },
+          {
+            "title": "浏览器端访问",
+            "description": "你不需要为每个场景切换不同界面，核心工作流都在 Happy Horse AI 内可用。",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "720p 与 1080p 输出",
+            "description": "平台当前提供 720p 和 1080p 输出选项，具体取决于工作流和任务。",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "适用场景发现",
+            "description": "这个页面更适合先了解模型名对应能力，再跳转到具体工作流页面开始使用。",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "价格入口",
+            "description": "如果你已经知道自己要用哪个工作流，就可以继续前往价格页选择对应方案。",
+            "icon": "RiGiftLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "适用场景",
+        "title": "Happy Horse 1.0 在平台里通常怎么用",
+        "description": "模型概览页更适合帮助你选定起步工作流，而不是直接替代工作流入口。",
+        "items": [
+          {
+            "title": "从提示词开始",
+            "description": "如果你只有创意和文字描述，优先看文生视频页面。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "从图片或参考素材开始",
+            "description": "如果你已经有图片、参考视频或其他素材，优先看图生视频或参考生成视频页面。",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "从现有视频开始",
+            "description": "如果你已经有片段要改写，优先看视频编辑页面。",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Happy Horse 1.0 常见问题",
+        "description": "关于模型概览页与平台关系的常见问题。",
+        "items": [
+          {
+            "question": "本站里的 Happy Horse 1.0 是什么？",
+            "answer": "它是 Happy Horse AI 里的模型概览页，用来帮助搜索模型名的访客理解平台支持的工作流和使用方向。"
+          },
+          {
+            "question": "Happy Horse 1.0 和 Happy Horse AI 是一回事吗？",
+            "answer": "不完全一样。Happy Horse AI 是平台品牌，Happy Horse 1.0 是面向模型关键词的说明页。"
+          },
+          {
+            "question": "接下来应该看哪个工作流页面？",
+            "answer": "如果从提示词开始，看文生视频；如果从图片或参考素材开始，看图生视频或参考生成视频；如果已经有片段，看视频编辑。"
+          },
+          {
+            "question": "如果我是第一次使用，建议从哪里开始？",
+            "answer": "多数新用户可以先从首页或文生视频页面开始，再根据创作频率进入价格页选择方案。"
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "从模型概览页进入具体工作流",
+        "description": "选择最适合你的工作流开始，或者先查看价格方案，再决定如何投入生成频率。",
+        "buttons": [
+          {
+            "title": "查看文生视频",
+            "url": "/text-to-video",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "查看价格",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

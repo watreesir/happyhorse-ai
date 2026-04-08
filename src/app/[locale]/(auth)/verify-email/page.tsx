@@ -15,6 +15,10 @@ export async function generateMetadata({
 
   return {
     title: `${t('sign.verify_email_page_title')} - ${t('metadata.title')}`,
+    robots: {
+      index: false,
+      follow: true,
+    },
     alternates: {
       canonical:
         locale !== defaultLocale

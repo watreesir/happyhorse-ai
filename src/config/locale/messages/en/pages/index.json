@@ -2,150 +2,132 @@
   "page": {
     "show_sections": [
       "hero",
-      "logos",
       "introduce",
       "benefits",
-      "usage",
       "features",
-      "stats",
-      "testimonials",
       "faq",
       "cta"
     ],
     "sections": {
       "hero": {
         "id": "hero",
-        "title": "Ship AI Startups in hours, not days",
-        "highlight_text": "in hours",
-        "description": "ShipAny is a NextJS boilerplate for building AI SaaS startups.<br/>Ship Fast with a variety of templates and components.",
-        "announcement": {
-          "badge": "New",
-          "title": "🎉 ShipAny Template Two",
-          "url": "/pricing"
-        },
-        "tip": "🎁 Special offer for the first 1000 users",
-        "buttons": [
-          {
-            "title": "Get Started",
-            "icon": "Zap",
-            "url": "/pricing",
-            "target": "_self",
-            "variant": "default"
-          },
-          {
-            "title": "Read Document",
-            "icon": "BookOpenText",
-            "url": "/docs",
-            "target": "_blank",
-            "variant": "outline"
-          }
-        ],
-        "show_avatars": true,
-        "avatars_tip": "999+ users are using ShipAny",
-        "show_award": false,
-        "image": {
-          "src": "/imgs/features/admin.png",
-          "alt": "hero",
-          "width": 1200,
-          "height": 800
-        },
-        "image_invert": {
-          "src": "/imgs/features/admin-dark.png",
-          "alt": "hero",
-          "width": 1200,
-          "height": 800
-        },
+        "title": "Create AI Videos with Happy Horse AI",
+        "highlight_text": "Happy Horse AI",
+        "description": "Generate videos from text, images, references, or existing clips in one browser workflow. Choose 720p or 1080p output with flexible aspect ratios for social, product, and creative content.",
+        "badge_text": "",
+        "default_tab": "text-to-video",
         "background_image": {
-          "src": "/imgs/bg/tree.jpg",
-          "alt": "hero"
-        }
-      },
-      "logos": {
-        "id": "logos",
-        "title": "ShipAny is built on the shoulders of giants",
-        "items": [
+          "src": "https://picsum.photos/seed/happyhorse-en-hero-bg/1600/900.webp",
+          "alt": "background"
+        },
+        "generate_button": "Generate",
+        "tabs": [
           {
-            "title": "Next.js",
-            "image": {
-              "src": "/imgs/logos/nextjs.svg",
-              "alt": "Next.js"
-            }
+            "key": "text-to-video",
+            "label": "Text to Video",
+            "placeholder": "Describe the video you want to generate..."
           },
           {
-            "title": "React",
-            "image": {
-              "src": "/imgs/logos/react.svg",
-              "alt": "React"
-            }
+            "key": "image-to-video",
+            "label": "Image to Video",
+            "upload_hint": "Upload image",
+            "placeholder": "Describe how the image should animate..."
           },
           {
-            "title": "TailwindCSS",
-            "image": {
-              "src": "/imgs/logos/tailwindcss.svg",
-              "alt": "TailwindCSS"
-            }
+            "key": "reference-to-video",
+            "label": "Reference to Video",
+            "placeholder": "Describe the video style and content...",
+            "ref_tabs": [
+              {
+                "key": "first-frame",
+                "label": "First Frame",
+                "upload_hint": "Upload first frame image"
+              },
+              {
+                "key": "reference-video",
+                "label": "Reference Video",
+                "upload_hint": "Upload reference video"
+              },
+              {
+                "key": "reference-voice",
+                "label": "Reference Voice",
+                "upload_hint": "Upload voice file"
+              },
+              {
+                "key": "reference-image",
+                "label": "Reference Image",
+                "upload_hint": "Upload reference image"
+              }
+            ]
           },
           {
-            "title": "Shadcn/UI",
-            "image": {
-              "src": "/imgs/logos/shadcn.svg",
-              "alt": "Shadcn/UI"
-            }
-          },
-          {
-            "title": "Vercel",
-            "image": {
-              "src": "/imgs/logos/vercel.svg",
-              "alt": "Vercel"
-            }
+            "key": "video-edit",
+            "label": "Video Edit",
+            "upload_hint": "Upload video to edit",
+            "placeholder": "Describe the edits you want to make..."
           }
         ]
       },
       "introduce": {
         "block": "features-list",
         "id": "introduce",
-        "title": "What is ShipAny",
-        "label": "Introduce",
-        "description": "ShipAny is a NextJS boilerplate for building AI SaaS startups, including templates, components, and documentation.",
+        "title": "A single workflow for AI video creation",
+        "label": "Platform",
+        "description": "Happy Horse AI brings text-to-video, image-to-video, reference-guided generation, and video editing into one browser workspace so you can move from idea to export faster.",
         "image": {
-          "src": "/imgs/features/landing-page.png",
-          "alt": "introduce"
+          "src": "https://picsum.photos/seed/happyhorse-en-introduce/960/640.webp",
+          "alt": "Happy Horse AI workflow overview"
         },
+        "buttons": [
+          {
+            "title": "Explore Text to Video",
+            "url": "/text-to-video",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "View Pricing",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
         "items": [
           {
-            "title": "Ready-to-use Templates",
-            "description": "Choose from dozens of production-ready AI SaaS templates to quickly start your project.",
-            "icon": "RiNextjsFill",
+            "title": "Text-to-Video",
+            "description": "Turn written prompts into short clips with duration, resolution, and aspect-ratio controls.",
+            "icon": "RiFileTextLine",
             "image": {
-              "src": "/imgs/features/1.png",
-              "alt": "introduce"
+              "src": "https://picsum.photos/seed/happyhorse-en-introduce-1/640/480.webp",
+              "alt": "text to video"
             }
           },
           {
-            "title": "Infrastructure Setup",
-            "description": "Get instant access to scalable infrastructure with best practices built-in.",
-            "icon": "RiDatabase2Line",
+            "title": "Image-to-Video",
+            "description": "Animate a still image, define first and last frames, or continue motion from an existing clip.",
+            "icon": "RiImage2Line",
             "image": {
-              "src": "/imgs/features/2.png",
-              "alt": "introduce"
+              "src": "https://picsum.photos/seed/happyhorse-en-introduce-2/640/480.webp",
+              "alt": "image to video"
             }
           },
           {
-            "title": "Quick Deployment",
-            "description": "Deploy your AI SaaS application to production in hours, not days.",
-            "icon": "RiCloudyFill",
+            "title": "Reference-to-Video",
+            "description": "Guide style, motion, and subject direction with reference images, videos, first frames, or voice input.",
+            "icon": "RiSlideshowLine",
             "image": {
-              "src": "/imgs/features/3.png",
-              "alt": "introduce"
+              "src": "https://picsum.photos/seed/happyhorse-en-introduce-3/640/480.webp",
+              "alt": "reference to video"
             }
           },
           {
-            "title": "AI Integration",
-            "description": "Integrate AI into your project with ease using our built-in AI SDK.",
-            "icon": "RiRobot2Line",
+            "title": "Video Edit",
+            "description": "Upload an existing clip, apply edits, and choose whether to keep original audio or switch to AI audio.",
+            "icon": "RiEditLine",
             "image": {
-              "src": "/imgs/features/4.png",
-              "alt": "introduce"
+              "src": "https://picsum.photos/seed/happyhorse-en-introduce-4/640/480.webp",
+              "alt": "video edit"
             }
           }
         ],
@@ -154,269 +136,126 @@
       "benefits": {
         "block": "features-accordion",
         "id": "benefits",
-        "title": "Why Choose ShipAny",
+        "title": "Why creators choose Happy Horse AI",
         "label": "Benefits",
-        "description": "Get everything you need to launch your AI startup - from ready-to-use templates to technical support.",
+        "description": "Use the workflow that matches your project instead of forcing every idea into the same prompt box.",
         "items": [
           {
-            "title": "Complete Framework",
-            "description": "Built on Next.js with authentication, payments, and AI integration - everything works out of the box.",
-            "icon": "RiNextjsFill",
+            "title": "Workflow-specific controls",
+            "description": "Each mode exposes settings that fit the task, from first and last frames to reference assets and audio handling.",
+            "icon": "RiLayoutGridLine",
             "image": {
-              "src": "/imgs/features/user-billing.png",
-              "alt": "benefits"
+              "src": "https://picsum.photos/seed/happyhorse-en-benefits-1/960/640.webp",
+              "alt": "workflow controls"
             }
           },
           {
-            "title": "Rich Templates Library",
-            "description": "Choose from various AI SaaS templates to kickstart your project - chatbots, image generation, and more.",
-            "icon": "RiClapperboardAiLine",
+            "title": "720p and 1080p output",
+            "description": "Choose between faster previews and sharper final exports based on the needs of each project.",
+            "icon": "RiVideoLine",
             "image": {
-              "src": "/imgs/features/admin-settings.png",
-              "alt": "benefits"
+              "src": "https://picsum.photos/seed/happyhorse-en-benefits-2/960/640.webp",
+              "alt": "1080p output"
             }
           },
           {
-            "title": "Technical Guidance",
-            "description": "Get dedicated support and join our developer community to ensure your successful launch.",
-            "icon": "RiCodeFill",
+            "title": "Flexible ratios and short-form lengths",
+            "description": "Create clips for landscape, portrait, square, and alternate ratios without rebuilding your workflow.",
+            "icon": "RiFilmLine",
             "image": {
-              "src": "/imgs/features/landing-page.png",
-              "alt": "benefits"
+              "src": "https://picsum.photos/seed/happyhorse-en-benefits-3/960/640.webp",
+              "alt": "flexible ratios"
             }
           }
         ]
-      },
-      "usage": {
-        "block": "features-step",
-        "id": "usage",
-        "title": "How to Launch with ShipAny",
-        "description": "Get your AI SaaS startup running in three simple steps:",
-        "image": {
-          "src": "/imgs/features/1.png",
-          "alt": "usage"
-        },
-        "image_position": "left",
-        "text_align": "center",
-        "items": [
-          {
-            "title": "Get ShipAny",
-            "description": "Buy ShipAny with a one-time payment. Check your email for the code and documentation.",
-            "image": {
-              "src": "/imgs/features/5.png",
-              "alt": "usage"
-            }
-          },
-          {
-            "title": "Start Your Project",
-            "description": "Read the documentation and clone the code of ShipAny. Start building your AI SaaS startup.",
-            "image": {
-              "src": "/imgs/features/6.png",
-              "alt": "usage"
-            }
-          },
-          {
-            "title": "Customize Your Project",
-            "description": "Modify the template with your data and contents. Specific AI functionality needs.",
-            "image": {
-              "src": "/imgs/features/7.png",
-              "alt": "usage"
-            }
-          },
-          {
-            "title": "Deploy to Production",
-            "description": "Deploy your project to production with a few steps and start serving customers immediately.",
-            "image": {
-              "src": "/imgs/features/8.png",
-              "alt": "usage"
-            }
-          }
-        ],
-        "className": "bg-muted"
       },
       "features": {
         "id": "features",
-        "title": "Key Features of ShipAny",
-        "description": "Everything you need to launch your AI SaaS startup quickly and efficiently.",
+        "title": "Core workflows in Happy Horse AI",
+        "description": "Move from prompt to polished clip with workflow-aware inputs, settings, and credit-based access.",
         "items": [
           {
-            "title": "Next.js Boilerplate",
-            "description": "Production-ready Next.js templates with SEO-friendly structure and i18n support.",
-            "icon": "RiNextjsFill"
+            "title": "Prompt-based generation",
+            "description": "Create new video ideas from text prompts inside a browser-based workflow.",
+            "icon": "RiFileTextLine"
           },
           {
-            "title": "Authentication & Payments",
-            "description": "Integrated Google OAuth, one-tap login, and Stripe payment processing.",
-            "icon": "RiKey2Fill"
+            "title": "Image animation modes",
+            "description": "Animate from a first frame, define first and last frames, or continue motion from a clip.",
+            "icon": "RiImage2Line"
           },
           {
-            "title": "Data Infrastructure",
-            "description": "Built-in Supabase integration for reliable and scalable data storage.",
-            "icon": "RiDatabase2Line"
+            "title": "Reference-guided control",
+            "description": "Use reference images, videos, voice, or a first frame to steer style and composition.",
+            "icon": "RiSlideshowLine"
           },
           {
-            "title": "One-Click Deployment",
-            "description": "Seamless deployment to Vercel or Cloudflare with automated setup.",
-            "icon": "RiCloudy2Fill"
+            "title": "Video edit workflow",
+            "description": "Upload an existing clip, apply prompt-driven edits, and choose AI audio or original audio.",
+            "icon": "RiMagicLine"
           },
           {
-            "title": "Business Analytics",
-            "description": "Integrated Google Analytics and Search Console for tracking growth.",
-            "icon": "RiBarChart2Line"
+            "title": "Flexible aspect ratios",
+            "description": "Supports 16:9, 9:16, 1:1, 4:3, and 3:4 for different publishing channels.",
+            "icon": "RiHdLine"
           },
           {
-            "title": "AI-Ready Infrastructure",
-            "description": "Pre-configured AI integration with built-in credits system and API sales.",
-            "icon": "RiRobot2Line"
-          }
-        ]
-      },
-      "stats": {
-        "id": "stats",
-        "title": "People Love ShipAny",
-        "description": "for it's easy to use and fast to ship.",
-        "items": [
-          {
-            "title": "999+",
-            "description": "Customers"
-          },
-          {
-            "title": "200+",
-            "description": "Blocks"
-          },
-          {
-            "title": "50+",
-            "description": "Templates"
-          }
-        ],
-        "className": "bg-muted"
-      },
-      "testimonials": {
-        "id": "testimonials",
-        "title": "What Users Say About ShipAny",
-        "description": "Hear from developers and founders who launched their AI startups with ShipAny.",
-        "items": [
-          {
-            "name": "David Chen",
-            "role": "Founder of AIWallpaper.shop",
-            "quote": "ShipAny saved us months of development time. We launched our AI wallpaper business in just 2 days and got our first paying customer within a week!",
-            "image": {
-              "src": "/imgs/avatars/1.png",
-              "alt": "david"
-            }
-          },
-          {
-            "name": "Rachel Kim",
-            "role": "CTO at HeyBeauty.ai",
-            "quote": "The pre-built AI infrastructure is a game-changer. We didn't have to worry about architecture - just focused on our AI beauty tech and went live fast.",
-            "image": {
-              "src": "/imgs/avatars/2.png",
-              "alt": "rachel"
-            }
-          },
-          {
-            "name": "Marcus Thompson",
-            "role": "Solo Developer",
-            "quote": "As a solo developer, ShipAny gave me everything I needed - auth, payments, AI integration, and beautiful UI. Launched my SaaS in a weekend!",
-            "image": {
-              "src": "/imgs/avatars/3.png",
-              "alt": "marcus"
-            }
-          },
-          {
-            "name": "Sofia Garcia",
-            "role": "CEO of Melodisco",
-            "quote": "The templates are production-ready and highly customizable. We built our AI music platform in hours instead of months. Incredible time-to-market!",
-            "image": {
-              "src": "/imgs/avatars/4.png",
-              "alt": "sofia"
-            }
-          },
-          {
-            "name": "James Wilson",
-            "role": "Tech Lead at GPTs.works",
-            "quote": "ShipAny's infrastructure is rock-solid. We scaled from 0 to 10k users without touching the backend. Best investment for our AI startup.",
-            "image": {
-              "src": "/imgs/avatars/5.png",
-              "alt": "james"
-            }
-          },
-          {
-            "name": "Anna Zhang",
-            "role": "Startup Founder",
-            "quote": "From idea to launch in 3 days! ShipAny's templates and deployment tools made it possible to test our AI business concept incredibly fast.",
-            "image": {
-              "src": "/imgs/avatars/6.png",
-              "alt": "anna"
-            }
+            "title": "Credit-based access",
+            "description": "Start with a suitable credit plan and scale usage as your workflow or team grows.",
+            "icon": "RiGiftLine"
           }
         ]
       },
       "faq": {
         "id": "faq",
-        "title": "Frequently Asked Questions About ShipAny",
-        "description": "Have another question? Contact us on Discord or by email.",
+        "title": "Frequently Asked Questions",
+        "description": "Have more questions? Contact us at support@happyhorse-ai.app",
         "items": [
           {
-            "question": "What exactly is ShipAny and how does it work?",
-            "answer": "ShipAny is a comprehensive NextJS boilerplate designed specifically for building AI SaaS startups. It provides ready-to-use templates, infrastructure setup, and deployment tools that help you launch your AI business in hours instead of days."
+            "question": "What is Happy Horse AI and how does it work?",
+            "answer": "Happy Horse AI is a browser-based AI video platform. You can start from text, images, references, or an existing clip, then adjust workflow-specific settings before exporting the result."
           },
           {
-            "question": "Do I need advanced technical skills to use ShipAny?",
-            "answer": "While basic programming knowledge is helpful, ShipAny is designed to be developer-friendly. Our templates and documentation make it easy to get started, even if you're not an expert in AI or cloud infrastructure."
+            "question": "Which workflows are available on the homepage?",
+            "answer": "The main workflows are text to video, image to video, reference to video, and video edit. Each one exposes different upload options and settings based on the task."
           },
           {
-            "question": "What types of AI SaaS can I build with ShipAny?",
-            "answer": "ShipAny supports a wide range of AI applications, from content generation to data analysis tools. Our templates cover popular use cases like AI chatbots, content generators, image processing apps, and more."
+            "question": "What resolutions and aspect ratios are supported?",
+            "answer": "Happy Horse AI currently supports 720p and 1080p output. Available aspect ratios include 16:9, 9:16, 1:1, 4:3, and 3:4, depending on the workflow."
           },
           {
-            "question": "How long does it typically take to launch with ShipAny?",
-            "answer": "With ShipAny, you can have a working prototype in hours and a production-ready application in hours. Our one-click deployment and pre-configured infrastructure significantly reduce the traditional months-long development cycle."
+            "question": "Can I upload reference images, videos, or voice?",
+            "answer": "Yes. The reference-to-video workflow supports reference assets such as images, videos, a first frame, and voice input so you can better guide style and motion."
           },
           {
-            "question": "What's included in the ShipAny infrastructure?",
-            "answer": "ShipAny provides a complete infrastructure stack including authentication, database setup, API integration, payment processing, and scalable cloud deployment. Everything is pre-configured following industry best practices."
+            "question": "What can I change in the video edit workflow?",
+            "answer": "You can upload an existing clip, describe the edit you want, choose a clip length preset, and decide whether to keep original audio or switch to AI audio."
           },
           {
-            "question": "Can I customize the templates to match my brand?",
-            "answer": "Absolutely! All ShipAny templates are fully customizable. You can modify the design, features, and functionality to match your brand identity and specific business requirements while maintaining the robust underlying infrastructure."
+            "question": "How does pricing work?",
+            "answer": "Happy Horse AI uses credit-based plans. You can choose pay-as-you-go, monthly, or yearly options based on how often you generate videos and how much queue priority you need."
           }
         ]
       },
       "cta": {
         "id": "cta",
-        "title": "Ship your first AI SaaS Startup",
-        "description": "Start from here, ship with ShipAny.",
+        "title": "Start with the workflow that fits your project",
+        "description": "Open the text-to-video workflow first, or compare plans if you need more credits, saved generations, or faster processing.",
         "buttons": [
           {
-            "title": "Get ShipAny",
-            "url": "https://shipany.ai",
-            "target": "_blank",
+            "title": "Start with Text to Video",
+            "url": "/text-to-video",
+            "target": "_self",
             "icon": "Zap"
           },
           {
-            "title": "Read Document",
-            "url": "/docs",
-            "target": "_blank",
+            "title": "Compare Pricing",
+            "url": "/pricing",
+            "target": "_self",
             "variant": "outline",
-            "icon": "BookOpenText"
+            "icon": "Sparkles"
           }
         ],
-        "className": "bg-muted"
-      },
-      "subscribe": {
-        "id": "subscribe",
-        "title": "Subscribe to our newsletter",
-        "description": "Get the latest news and updates from ShipAny.",
-        "submit": {
-          "input": {
-            "placeholder": "Enter your email"
-          },
-          "button": {
-            "title": "Subscribe"
-          },
-          "action": "/api/subscribe"
-        },
         "className": "bg-muted"
       }
     }

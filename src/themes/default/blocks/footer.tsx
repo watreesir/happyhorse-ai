@@ -14,7 +14,7 @@ export function Footer({ footer }: { footer: FooterType }) {
   return (
     <footer
       id={footer.id}
-      className={`py-8 sm:py-8 ${footer.className || ''} overflow-x-hidden`}
+      className={`landing-footer-surface py-8 sm:py-8 ${footer.className || ''} overflow-x-hidden`}
       // overflow-x-hidden防止-footer-撑出水平滚动条
     >
       <div className="container space-y-8 overflow-x-hidden">
@@ -101,7 +101,7 @@ export function Footer({ footer }: { footer: FooterType }) {
                   key={index}
                   href={item.url || ''}
                   target={item.target || ''}
-                  className="text-muted-foreground hover:text-primary bg-background block cursor-pointer rounded-full p-2 duration-150"
+                  className="landing-panel-surface text-muted-foreground hover:text-primary block cursor-pointer rounded-full p-2 duration-150"
                   aria-label={item.title || 'Social media link'}
                 >
                   {item.icon && (

@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI Reference to Video | Guide Style and Motion",
+    "description": "Create reference-guided AI video in Happy Horse AI using images, videos, first frames, and voice input. Control style and motion with a dedicated workflow.",
+    "keywords": "happy horse ai reference to video, reference video generator, image and video reference ai, guided ai video"
+  },
+  "page": {
+    "title": "Happy Horse AI Reference to Video",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI Reference to Video",
+        "highlight_text": "Reference to Video",
+        "description": "Guide style, motion, and subject direction with reference materials. This workflow is for projects that need more visual control than prompt-only generation.",
+        "badge_text": "Reference-guided workflow",
+        "default_tab": "reference-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-en-reference-to-video/1600/900.webp",
+          "alt": "Reference to video"
+        },
+        "generate_button": "Generate",
+        "tabs": [
+          {
+            "key": "reference-to-video",
+            "label": "Reference to Video",
+            "placeholder": "Describe the video style and content..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "Reference-guided controls",
+        "description": "Use this workflow when you need a tighter link between your source materials and the final motion result.",
+        "items": [
+          {
+            "title": "Reference images and videos",
+            "description": "Bring in multiple reference assets to guide character direction, scene styling, or shot behavior.",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "Optional first frame",
+            "description": "Set a clear opening frame when the starting composition matters to the rest of the sequence.",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "Optional voice input",
+            "description": "Add a reference voice file when the project needs audio-led direction alongside visual guidance.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Short guided sequences",
+            "description": "The workflow is tuned for short-form video creation where style and motion cues matter most.",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "720p and 1080p output",
+            "description": "Choose the output setting that matches either testing speed or final presentation quality.",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "Flexible aspect ratios",
+            "description": "Supports common landscape, portrait, square, and alternate ratios for downstream publishing.",
+            "icon": "RiLayoutGridLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "How It Works",
+        "title": "Build a reference-guided video in three steps",
+        "description": "Gather the materials first, then keep the prompt focused on how those references should influence the final clip.",
+        "items": [
+          {
+            "title": "Upload references",
+            "description": "Add images, videos, or optional first-frame and voice inputs based on the control you need.",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "Explain the direction",
+            "description": "Use the prompt to describe style, motion, pacing, and what the references should influence.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Generate and adjust",
+            "description": "Render the clip, then refine with updated reference choices or prompt language if needed.",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Reference-to-Video FAQ",
+        "description": "Questions about the guided generation workflow.",
+        "items": [
+          {
+            "question": "What types of reference materials can I upload?",
+            "answer": "Happy Horse AI supports reference images and reference videos, plus optional first-frame and voice inputs for additional control."
+          },
+          {
+            "question": "Can I use more than one reference asset?",
+            "answer": "Yes. The workflow is designed for multiple reference materials when a single asset is not enough to guide style or motion."
+          },
+          {
+            "question": "When should I use reference-to-video instead of text-to-video?",
+            "answer": "Use reference-to-video when you need your final clip to follow a specific visual direction, source material, or motion cue more closely."
+          },
+          {
+            "question": "What output settings are available?",
+            "answer": "Reference-to-video supports 720p and 1080p output, plus common aspect ratios depending on the project setup."
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "Create a reference-guided video",
+        "description": "Open Happy Horse AI to upload references, or compare plans if you need more credits and saved generations.",
+        "buttons": [
+          {
+            "title": "Open Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "View Pricing",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

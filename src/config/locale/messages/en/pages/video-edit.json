@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI Video Edit | Transform Existing Clips",
+    "description": "Edit existing clips in Happy Horse AI with prompt-driven changes, short clip presets, and AI audio or original audio options.",
+    "keywords": "happy horse ai video edit, ai video editing, prompt video edit, edit existing video with ai"
+  },
+  "page": {
+    "title": "Happy Horse AI Video Edit",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI Video Edit",
+        "highlight_text": "Video Edit",
+        "description": "Upload an existing clip, describe the change you want, and choose whether to keep original audio or switch to AI audio. This workflow is built for prompt-led video revisions.",
+        "badge_text": "Prompt-based video editing",
+        "default_tab": "video-edit",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-en-video-edit/1600/900.webp",
+          "alt": "Video edit"
+        },
+        "generate_button": "Edit Video",
+        "tabs": [
+          {
+            "key": "video-edit",
+            "label": "Video Edit",
+            "placeholder": "Describe the edits you want to make..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "What the video edit workflow covers",
+        "description": "Use this mode when you already have a clip and want to revise content, direction, or presentation without starting from zero.",
+        "items": [
+          {
+            "title": "Upload an existing clip",
+            "description": "Start from a source video rather than a prompt-only idea or a single image.",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "Prompt-led revisions",
+            "description": "Describe the change you want instead of rebuilding the scene in a separate editor.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Clip length presets",
+            "description": "Choose a full clip edit or shorter 5-second and 10-second presets depending on the use case.",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "Audio handling options",
+            "description": "Pick AI audio or keep original audio when the source clip already contains the sound you want.",
+            "icon": "RiMagicLine"
+          },
+          {
+            "title": "Reference image support",
+            "description": "Add a reference image when the edit needs a specific visual direction or character style.",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "720p and 1080p output",
+            "description": "Export the edited clip at the resolution that fits either testing speed or final delivery.",
+            "icon": "RiHdLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "How It Works",
+        "title": "Revise existing clips in three steps",
+        "description": "Keep the source clip strong, then use the prompt and audio choices to control how much the output changes.",
+        "items": [
+          {
+            "title": "Upload the source clip",
+            "description": "Start with the video you want to transform, plus an optional reference image for added direction.",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "Describe the edit",
+            "description": "Explain the content or style change and choose full, 5-second, or 10-second processing.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Choose audio and export",
+            "description": "Keep original audio or switch to AI audio before generating the edited result.",
+            "icon": "RiMagicLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Video Edit FAQ",
+        "description": "Questions about editing existing clips in Happy Horse AI.",
+        "items": [
+          {
+            "question": "What can I upload to the video edit workflow?",
+            "answer": "You can upload an existing video clip and optionally add a reference image to guide the visual direction of the edit."
+          },
+          {
+            "question": "Can I keep the original audio?",
+            "answer": "Yes. The workflow includes an option to keep the original audio instead of switching to AI audio."
+          },
+          {
+            "question": "What duration options are available?",
+            "answer": "Video edit supports a full-clip option plus shorter 5-second and 10-second presets."
+          },
+          {
+            "question": "When should I use video edit instead of reference-to-video?",
+            "answer": "Use video edit when you already have a clip that needs revision. Use reference-to-video when you want to generate a new clip guided by source materials."
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "Start editing with Happy Horse AI",
+        "description": "Open the video edit workflow, or compare plans if you need more credits, faster queues, or more saved generations.",
+        "buttons": [
+          {
+            "title": "Open Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "Compare Pricing",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

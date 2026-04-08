@@ -20,6 +20,7 @@ export function FeaturesList({
       className={cn(
         'overflow-x-hidden py-16 md:py-24',
         section.className,
+        'landing-section-surface',
         className
       )}
     >

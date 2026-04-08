@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "title": "AI Video Studio Workspace",
+    "description": "A focused production workspace for drafting, organizing, and iterating AI video clips in Happy Horse AI."
+  },
+  "header": {
+    "eyebrow": "Workspace Preview",
+    "title": "AI Video Studio",
+    "description": "Use one focused studio to draft shots, scan inspiration, and review your latest renders without leaving the page.",
+    "note": "This first release is UI-only and currently runs with mock data."
+  },
+  "tabs": {
+    "create": {
+      "label": "Create",
+      "hint": "Compose prompts, media inputs, and framing."
+    },
+    "myCreations": {
+      "label": "My Creations",
+      "hint": "Browse paged outputs and quick status snapshots."
+    }
+  },
+  "create": {
+    "workspace": {
+      "panelTitle": "Workspace",
+      "panelHint": "Draft your scene setup here. Generation wiring will be connected in the next phase.",
+      "promptLabel": "Prompt Direction",
+      "promptPlaceholder": "Describe subject, movement, lens behavior, and mood in one concise brief.",
+      "promptRequired": "Please provide a prompt before submitting.",
+      "uploadLabel": "Reference Inputs",
+      "uploadHint": "Mock uploader in this release",
+      "uploadSlots": {
+        "primary": "Add primary frame",
+        "optional": "Add supporting media"
+      },
+      "ratioLabel": "Aspect Ratio",
+      "runButton": "Prepare Draft Job",
+      "helper": "Tip: start with one clear action + camera instruction, then refine style details in the next pass.",
+      "statusLabel": "Task State",
+      "statuses": {
+        "idle": "Ready to submit a new draft.",
+        "submitting": "Submitting task...",
+        "queued": "Task queued. Waiting for model capacity.",
+        "processing": "Task is being processed.",
+        "completed": "Task completed. Check History for latest output.",
+        "failed": "Task failed. Review the error and retry."
+      },
+      "submitErrorPrefix": "Submission error"
+    },
+    "inspiration": {
+      "panelTitle": "Inspiration",
+      "panelHint": "Curated motion references arranged in a masonry feed.",
+      "applyButton": "Use This Direction",
+      "empty": "No reference cards available right now.",
+      "recipePrefix": "Template"
+    },
+    "history": {
+      "panelTitle": "History",
+      "panelHint": "Recent activity queue in compact mode.",
+      "refreshButton": "Refresh",
+      "refreshingButton": "Refreshing",
+      "empty": "No recent studio actions yet."
+    },
+    "status": {
+      "ready": "Ready",
+      "rendering": "Rendering",
+      "queued": "Queued",
+      "failed": "Needs Retry"
+    }
+  },
+  "myCreations": {
+    "panelTitle": "My Creations",
+    "panelHint": "A paged shelf for your recent draft exports and status checks.",
+    "refreshButton": "Reload",
+    "refreshingButton": "Reloading",
+    "emptyTitle": "No clips on this page",
+    "emptyDescription": "Create a new draft in the Create tab to populate this shelf.",
+    "pageLabel": "Page",
+    "totalLabel": "Total",
+    "previousLabel": "Prev",
+    "nextLabel": "Next"
+  }
+}

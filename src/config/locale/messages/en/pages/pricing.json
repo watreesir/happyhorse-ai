@@ -1,15 +1,16 @@
 {
   "metadata": {
-    "title": "Pricing",
-    "description": "Start with a plan"
+    "title": "Happy Horse AI Pricing | Plans, Credits & Video Access",
+    "description": "Compare Happy Horse AI pricing for credits, saved generations, queue priority, and access to text-to-video, image-to-video, reference, and video edit workflows.",
+    "keywords": "happy horse ai pricing, happy horse ai plans, ai video credits, text to video pricing, image to video pricing"
   },
   "page": {
-    "title": "ShipAny Pricing",
+    "title": "Happy Horse AI Pricing",
     "sections": {
       "pricing": {
         "id": "pricing",
-        "title": "Pricing",
-        "description": "Get all features of ShipAny, Ship your AI SaaS startups fast.",
+        "title": "Happy Horse AI Pricing",
+        "description": "Choose a credit plan for text-to-video, image-to-video, reference workflows, and video edit. Scale from lightweight tests to frequent production work.",
         "groups": [
           {
             "name": "one-time",
@@ -18,27 +19,25 @@
           {
             "name": "monthly",
             "title": "Monthly",
-            "is_featured": true,
-            "label": "save 15%"
+            "is_featured": true
           },
           {
             "name": "yearly",
-            "title": "Annually"
+            "title": "Yearly"
           }
         ],
         "items": [
           {
             "title": "Starter",
-            "description": "Get started with your first SaaS startup.",
+            "description": "A lightweight credit pack for testing prompts and short-form ideas.",
             "features_title": "Includes",
             "features": [
               "100 credits, valid for 1 month",
-              "NextJS boilerplate",
-              "SEO-friendly structure",
-              "Payment with Stripe",
-              "Data storage with Supabase",
-              "Google Oauth & One-Tap Login",
-              "i18n support"
+              "Text-to-video and image-to-video workflows",
+              "Cloud storage for saved generations",
+              "Watermark-free exports",
+              "Standard processing queue",
+              "Email support"
             ],
             "interval": "one-time",
             "amount": 9900,
@@ -47,32 +46,31 @@
             "original_price": "$199",
             "unit": "",
             "is_featured": false,
-            "tip": "Pay once. Build unlimited projects!",
+            "tip": "Pay once. A practical entry point for trials and one-off projects.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter",
-            "product_name": "ShipAny Boilerplate Starter",
+            "product_name": "Happy Horse AI Starter",
             "credits": 100,
             "valid_days": 30,
             "group": "one-time"
           },
           {
             "title": "Standard",
-            "description": "Ship Fast with your SaaS Startups.",
+            "description": "More credits and workflow flexibility for active creators.",
             "label": "Popular",
             "features_title": "Everything in Starter, plus",
             "features": [
-              "200 credits, valid for 3 month",
-              "Deploy with Vercel or Cloudflare",
-              "Generation of Privacy & Terms",
-              "Google Analytics Integration",
-              "Google Search Console Integration",
-              "Discord community",
-              "Technical support for your first ship",
-              "Lifetime updates"
+              "200 credits, valid for 3 months",
+              "Reference-to-video and video edit workflows",
+              "1080p export support",
+              "Faster generation queue",
+              "Guided prompt builder and presets",
+              "Priority email support",
+              "Access to ongoing workflow improvements"
             ],
             "interval": "one-time",
             "amount": 19900,
@@ -81,30 +79,30 @@
             "original_price": "$299",
             "unit": "",
             "is_featured": true,
-            "tip": "Pay once. Build unlimited projects!",
+            "tip": "Pay once. Best for recurring creator work and client drafts.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard",
-            "product_name": "ShipAny Boilerplate Standard",
+            "product_name": "Happy Horse AI Standard",
             "credits": 200,
             "valid_days": 90,
             "group": "one-time"
           },
           {
             "title": "Premium",
-            "description": "Ship Any AI SaaS Startups.",
+            "description": "High-capacity credits and faster support for production use.",
             "features_title": "Everything in Standard, plus",
             "features": [
               "300 credits, valid for 1 year",
-              "Business Functions with AI",
-              "User Center",
-              "Credits System",
-              "API Sales for your SaaS",
-              "Admin System",
-              "Priority Technical Support"
+              "All Happy Horse AI video workflows",
+              "1080p export support",
+              "Priority generation queue",
+              "Growing preset and template access",
+              "Priority support",
+              "Early access to new Happy Horse AI model updates"
             ],
             "interval": "one-time",
             "amount": 29900,
@@ -113,30 +111,29 @@
             "original_price": "$399",
             "unit": "",
             "is_featured": false,
-            "tip": "Pay once. Build unlimited projects!",
+            "tip": "Pay once. Built for heavier production workloads.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium",
-            "product_name": "ShipAny Boilerplate Premium",
+            "product_name": "Happy Horse AI Premium",
             "credits": 300,
             "valid_days": 365,
             "group": "one-time"
           },
           {
             "title": "Starter",
-            "description": "Get started with your first SaaS startup.",
+            "description": "A recurring plan for creators who generate every month.",
             "features_title": "Includes",
             "features": [
               "100 credits, valid for 1 month",
-              "NextJS boilerplate",
-              "SEO-friendly structure",
-              "Payment with Stripe",
-              "Data storage with Supabase",
-              "Google Oauth & One-Tap Login",
-              "i18n support"
+              "Text-to-video and image-to-video workflows",
+              "Cloud storage for saved generations",
+              "Watermark-free exports",
+              "Standard processing queue",
+              "Email support"
             ],
             "interval": "month",
             "amount": 8900,
@@ -145,14 +142,14 @@
             "original_price": "$99",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "Pay monthly. Build unlimited projects!",
+            "tip": "Pay monthly. A simple option for regular experiments.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter-monthly",
-            "product_name": "ShipAny Boilerplate Starter Monthly",
+            "product_name": "Happy Horse AI Starter Monthly",
             "credits": 100,
             "valid_days": 30,
             "group": "monthly",
@@ -160,18 +157,16 @@
           },
           {
             "title": "Standard",
-            "description": "Ship Fast with your SaaS Startups.",
+            "description": "Balanced for active creators with weekly output.",
             "label": "Popular",
             "features_title": "Everything in Starter, plus",
             "features": [
               "200 credits, valid for 1 month",
-              "Deploy with Vercel or Cloudflare",
-              "Generation of Privacy & Terms",
-              "Google Analytics Integration",
-              "Google Search Console Integration",
-              "Discord community",
-              "Technical support for your first ship",
-              "Lifetime updates"
+              "Reference-to-video and video edit workflows",
+              "1080p export support",
+              "Faster generation queue",
+              "Guided prompt builder and presets",
+              "Priority email support"
             ],
             "interval": "month",
             "amount": 16900,
@@ -180,14 +175,14 @@
             "original_price": "$199",
             "unit": "/ month",
             "is_featured": true,
-            "tip": "Pay monthly. Ship Fast with your SaaS Startups.",
+            "tip": "Pay monthly. Balanced for active creators.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard-monthly",
-            "product_name": "ShipAny Boilerplate Standard Monthly",
+            "product_name": "Happy Horse AI Standard Monthly",
             "credits": 200,
             "valid_days": 30,
             "group": "monthly",
@@ -195,16 +190,16 @@
           },
           {
             "title": "Premium",
-            "description": "Ship Any AI SaaS Startups.",
+            "description": "Higher capacity and faster support for heavy monthly usage.",
             "features_title": "Everything in Standard, plus",
             "features": [
               "300 credits, valid for 1 month",
-              "Business Functions with AI",
-              "User Center",
-              "Credits System",
-              "API Sales for your SaaS",
-              "Admin System",
-              "Priority Technical Support"
+              "All Happy Horse AI video workflows",
+              "1080p export support",
+              "Priority generation queue",
+              "Growing preset and template access",
+              "Priority support",
+              "Early access to new Happy Horse AI model updates"
             ],
             "interval": "month",
             "amount": 24900,
@@ -213,14 +208,14 @@
             "original_price": "$299",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "Pay monthly. Ship Any AI SaaS Startups.",
+            "tip": "Pay monthly. Built for teams and heavy usage.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium-monthly",
-            "product_name": "ShipAny Boilerplate Premium Monthly",
+            "product_name": "Happy Horse AI Premium Monthly",
             "credits": 300,
             "valid_days": 30,
             "group": "monthly",
@@ -228,16 +223,15 @@
           },
           {
             "title": "Starter",
-            "description": "Get started with your first SaaS startup.",
+            "description": "Lower annual cost for individual creators with steady output.",
             "features_title": "Includes",
             "features": [
-              "100 credits, valid for 1 year",
-              "NextJS boilerplate",
-              "SEO-friendly structure",
-              "Payment with Stripe",
-              "Data storage with Supabase",
-              "Google Oauth & One-Tap Login",
-              "i18n support"
+              "1200 credits, valid for 1 year",
+              "Text-to-video and image-to-video workflows",
+              "Cloud storage for saved generations",
+              "Watermark-free exports",
+              "Standard processing queue",
+              "Email support"
             ],
             "interval": "year",
             "amount": 82800,
@@ -246,14 +240,14 @@
             "original_price": "$89",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "Pay annually. Build unlimited projects!",
+            "tip": "Pay annually. Lower cost for long-term creation.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter-yearly",
-            "product_name": "ShipAny Boilerplate Starter Annually",
+            "product_name": "Happy Horse AI Starter Annually",
             "credits": 1200,
             "valid_days": 365,
             "group": "yearly",
@@ -261,18 +255,17 @@
           },
           {
             "title": "Standard",
-            "description": "Ship Fast with your SaaS Startups.",
+            "description": "Better value for growing creator teams and regular client work.",
             "label": "Popular",
             "features_title": "Everything in Starter, plus",
             "features": [
-              "200 credits, valid for 1 year",
-              "Deploy with Vercel or Cloudflare",
-              "Generation of Privacy & Terms",
-              "Google Analytics Integration",
-              "Google Search Console Integration",
-              "Discord community",
-              "Technical support for your first ship",
-              "Lifetime updates"
+              "2400 credits, valid for 1 year",
+              "Reference-to-video and video edit workflows",
+              "1080p export support",
+              "Faster generation queue",
+              "Guided prompt builder and presets",
+              "Priority email support",
+              "Access to ongoing workflow improvements"
             ],
             "interval": "year",
             "amount": 154800,
@@ -281,14 +274,14 @@
             "original_price": "$169",
             "unit": "/ month",
             "is_featured": true,
-            "tip": "Pay annually. Ship Fast with your SaaS Startups.",
+            "tip": "Pay annually. Better value for growing creator teams.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard-yearly",
-            "product_name": "ShipAny Boilerplate Standard Annually",
+            "product_name": "Happy Horse AI Standard Annually",
             "credits": 2400,
             "valid_days": 365,
             "group": "yearly",
@@ -296,16 +289,16 @@
           },
           {
             "title": "Premium",
-            "description": "Ship Any AI SaaS Startups.",
+            "description": "Highest value for production-scale video workflows.",
             "features_title": "Everything in Standard, plus",
             "features": [
-              "300 credits, valid for 1 year",
-              "Business Functions with AI",
-              "User Center",
-              "Credits System",
-              "API Sales for your SaaS",
-              "Admin System",
-              "Priority Technical Support"
+              "3600 credits, valid for 1 year",
+              "All Happy Horse AI video workflows",
+              "1080p export support",
+              "Priority generation queue",
+              "Growing preset and template access",
+              "Priority support",
+              "Early access to new Happy Horse AI model updates"
             ],
             "interval": "year",
             "amount": 226800,
@@ -314,14 +307,14 @@
             "original_price": "$249",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "Pay annually. Ship Any AI SaaS Startups.",
+            "tip": "Pay annually. Highest value for production-scale work.",
             "button": {
-              "title": "Get ShipAny",
+              "title": "Choose Plan",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium-yearly",
-            "product_name": "ShipAny Boilerplate Premium Annually",
+            "product_name": "Happy Horse AI Premium Annually",
             "credits": 3600,
             "valid_days": 365,
             "group": "yearly",

@@ -50,6 +50,59 @@ export function Header({ header }: { header: HeaderType }) {
   const scrollRafRef = useRef<number | null>(null);
   const isLarge = useMedia('(min-width: 64rem)');
   const pathname = usePathname();
+  const isOverlayHeader = !isScrolled && !isMobileMenuOpen;
+
+  const isPathActive = (url?: string) => {
+    if (!url) return false;
+    return pathname === url || pathname.startsWith(`${url}/`);
+  };
+
+  const isNavItemActive = (item: NavItem) =>
+    Boolean(
+      item.is_active ||
+        isPathActive(item.url) ||
+        item.children?.some((subItem) => isPathActive(subItem.url))
+    );
+
+  const desktopNavItemClass = cn(
+    'inline-flex h-10 items-center gap-2 rounded-full px-3.5 py-0 text-[0.95rem] font-medium tracking-[0.03em] transition-all duration-200',
+    isOverlayHeader
+      ? 'text-foreground/88 hover:bg-foreground/7 hover:text-foreground dark:text-white/88 dark:hover:bg-black/28 dark:hover:text-white dark:[text-shadow:0_1px_14px_rgba(0,0,0,0.45)]'
+      : 'text-foreground/82 hover:bg-foreground/6 hover:text-foreground'
+  );
+
+  const desktopNavActiveClass = isOverlayHeader
+    ? 'bg-foreground/7 text-foreground ring-1 ring-foreground/10 dark:bg-black/34 dark:text-white dark:ring-white/12'
+    : 'bg-foreground/7 text-foreground ring-1 ring-foreground/8';
+
+  const utilityButtonClass = cn(
+    'inline-flex size-9 items-center justify-center rounded-full transition-all duration-200',
+    isOverlayHeader
+      ? 'text-foreground/82 hover:bg-foreground/7 hover:text-foreground dark:text-white/82 dark:hover:bg-black/28 dark:hover:text-white dark:[text-shadow:0_1px_12px_rgba(0,0,0,0.45)]'
+      : 'text-foreground/80 hover:bg-foreground/6 hover:text-foreground'
+  );
+
+  const desktopNavIconClass = cn(
+    'size-4 shrink-0',
+    isOverlayHeader
+      ? 'text-foreground/70 dark:text-white/78'
+      : 'text-foreground/70'
+  );
+
+  const brand = header.brand
+    ? {
+        ...header.brand,
+        className: cn(
+          'group rounded-full px-2.5 py-1.5 transition-all duration-200',
+          isOverlayHeader
+            ? 'text-foreground dark:text-white dark:[text-shadow:0_1px_14px_rgba(0,0,0,0.45)]'
+            : 'text-foreground',
+          '[&_img]:rounded-xl [&_img]:shadow-[0_10px_28px_rgba(0,0,0,0.22)]',
+          '[&_span]:text-[1.08rem] [&_span]:font-semibold [&_span]:tracking-[0.08em]',
+          header.brand.className
+        ),
+      }
+    : null;
 
   useEffect(() => {
     // Listen to scroll event to enable header styles on scroll
@@ -88,35 +141,61 @@ export function Header({ header }: { header: HeaderType }) {
       >
         <NavigationMenuList className="gap-2">
           {header.nav?.items?.map((item, idx) => {
+            const isActive = isNavItemActive(item);
+
             if (!item.children || item.children.length === 0) {
               return (
-                <NavigationMenuLink key={idx} asChild>
+                <NavigationMenuItem key={idx}>
                   <Link
                     href={item.url || ''}
                     target={item.target || '_self'}
-                    className={`flex flex-row items-center gap-2 px-4 py-1.5 text-sm ${
-                      item.is_active || pathname.endsWith(item.url as string)
-                        ? 'bg-muted/40 text-muted-foreground'
-                        : ''
-                    }`}
+                    className={cn(
+                      desktopNavItemClass,
+                      isActive && desktopNavActiveClass
+                    )}
                   >
-                    {item.icon && <SmartIcon name={item.icon as string} />}
-                    {item.title}
+                    {item.icon && (
+                      <SmartIcon
+                        name={item.icon as string}
+                        className={desktopNavIconClass}
+                      />
+                    )}
+                    <span>{item.title}</span>
                   </Link>
-                </NavigationMenuLink>
+                </NavigationMenuItem>
               );
             }
 
             return (
               <NavigationMenuItem key={idx}>
-                <NavigationMenuTrigger className="flex flex-row items-center gap-2 text-sm">
-                  {item.icon && (
-                    <SmartIcon name={item.icon as string} className="h-4 w-4" />
+                <NavigationMenuTrigger
+                  onPointerDownCapture={(event) => {
+                    if (event.pointerType === 'mouse') {
+                      event.preventDefault();
+                    }
+                  }}
+                  onClickCapture={(event) => {
+                    event.preventDefault();
+                  }}
+                  className={cn(
+                    '!h-10 !rounded-full !px-3.5 !py-0 !shadow-none',
+                    '!text-[0.95rem] !font-medium !tracking-[0.03em]',
+                    isOverlayHeader
+                      ? '!text-foreground/88 hover:!bg-foreground/7 hover:!text-foreground data-[state=open]:!bg-foreground/7 data-[state=open]:!text-foreground data-[state=open]:ring-foreground/10 !bg-transparent data-[state=open]:ring-1 dark:!text-white/88 dark:[text-shadow:0_1px_14px_rgba(0,0,0,0.45)] dark:hover:!bg-black/28 dark:hover:!text-white dark:data-[state=open]:!bg-black/34 dark:data-[state=open]:!text-white dark:data-[state=open]:ring-white/12'
+                      : '!text-foreground/82 hover:!bg-foreground/6 hover:!text-foreground data-[state=open]:!bg-foreground/7 data-[state=open]:!text-foreground data-[state=open]:ring-foreground/8 !bg-transparent data-[state=open]:ring-1',
+                    isActive && desktopNavActiveClass
                   )}
-                  {item.title}
+                >
+                  {item.icon && (
+                    <SmartIcon
+                      name={item.icon as string}
+                      className={desktopNavIconClass}
+                    />
+                  )}
+                  <span>{item.title}</span>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="min-w-2xs origin-top p-0.5">
-                  <div className="border-foreground/5 bg-card ring-foreground/5 rounded-[calc(var(--radius)-2px)] border border-transparent p-2 shadow ring-1">
+                  <div className="rounded-[22px] border border-black/8 bg-white/92 p-2 text-slate-950 shadow-[0_22px_60px_rgba(15,23,42,0.18)] ring-1 ring-black/6 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:ring-white/8">
                     <ul className="mt-1 space-y-2">
                       {item.children?.map((subItem: NavItem, index: number) => (
                         <ListItem
@@ -173,7 +252,7 @@ export function Header({ header }: { header: HeaderType }) {
                             <Link
                               href={subItem.url || ''}
                               onClick={closeMenu}
-                              className="grid grid-cols-[auto_1fr] items-center gap-2.5 px-4 py-2"
+                              className="text-foreground/88 grid grid-cols-[auto_1fr] items-center gap-2.5 px-4 py-2 text-base font-medium tracking-[0.02em]"
                             >
                               <div
                                 aria-hidden
@@ -194,7 +273,7 @@ export function Header({ header }: { header: HeaderType }) {
                   <Link
                     href={item.url || ''}
                     onClick={closeMenu}
-                    className="data-[state=open]:bg-muted flex items-center justify-between px-4 py-3 text-lg **:!font-normal"
+                    className="data-[state=open]:bg-muted text-foreground/88 flex items-center justify-between px-4 py-3 text-lg font-medium tracking-[0.02em] **:!font-normal"
                   >
                     {item.title}
                   </Link>
@@ -227,14 +306,16 @@ export function Header({ header }: { header: HeaderType }) {
           <Link
             href={href}
             target={target || '_self'}
-            className="grid grid-cols-[auto_1fr] gap-3.5"
+            className="grid grid-cols-[auto_1fr] gap-3.5 rounded-2xl px-2 py-2 transition-colors hover:bg-black/4 dark:hover:bg-white/6"
           >
-            <div className="bg-background ring-foreground/10 relative flex size-9 items-center justify-center rounded border border-transparent shadow-sm ring-1">
+            <div className="relative flex size-10 items-center justify-center rounded-2xl border border-black/8 bg-black/[0.03] text-slate-700 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/78 dark:ring-white/8">
               {children}
             </div>
             <div className="space-y-0.5">
-              <div className="text-foreground text-sm font-medium">{title}</div>
-              <p className="text-muted-foreground line-clamp-1 text-xs">
+              <div className="text-sm font-semibold tracking-[0.02em] text-slate-800 dark:text-white">
+                {title}
+              </div>
+              <p className="line-clamp-1 text-xs text-slate-500 dark:text-white/55">
                 {description}
               </p>
             </div>
@@ -249,13 +330,12 @@ export function Header({ header }: { header: HeaderType }) {
       <header
         data-state={isMobileMenuOpen ? 'active' : 'inactive'}
         {...(isScrolled && { 'data-scrolled': true })}
-        className="has-data-[state=open]:bg-background/50 fixed inset-x-0 top-0 z-50 has-data-[state=open]:h-screen has-data-[state=open]:backdrop-blur"
+        className="fixed inset-x-0 top-0 z-50"
       >
         <div
           className={cn(
-            'absolute inset-x-0 top-0 z-50 h-18 border-transparent ring-1 ring-transparent transition-all duration-300',
-            'in-data-scrolled:border-foreground/5 in-data-scrolled:bg-background/75 in-data-scrolled:border-b in-data-scrolled:backdrop-blur',
-            'has-data-[state=open]:ring-foreground/5 has-data-[state=open]:bg-card/75 has-data-[state=open]:h-[calc(var(--navigation-menu-viewport-height)+3.4rem)] has-data-[state=open]:border-b has-data-[state=open]:shadow-lg has-data-[state=open]:shadow-black/10 has-data-[state=open]:backdrop-blur',
+            'border-foreground/10 bg-background/72 ring-foreground/6 absolute inset-x-0 top-0 z-50 h-18 border-b shadow-[0_16px_40px_rgba(15,23,42,0.08)] ring-1 backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-black/24 dark:shadow-[0_16px_40px_rgba(0,0,0,0.14)] dark:ring-white/6',
+            'in-data-scrolled:border-foreground/8 in-data-scrolled:bg-background/86 in-data-scrolled:ring-foreground/8 in-data-scrolled:backdrop-blur-xl',
             'max-lg:in-data-[state=active]:bg-background/75 max-lg:h-14 max-lg:overflow-hidden max-lg:border-b max-lg:in-data-[state=active]:h-screen max-lg:in-data-[state=active]:backdrop-blur'
           )}
         >
@@ -263,7 +343,7 @@ export function Header({ header }: { header: HeaderType }) {
             <div className="relative flex flex-wrap items-center justify-between lg:py-5">
               <div className="flex justify-between gap-8 max-lg:h-14 max-lg:w-full max-lg:border-b">
                 {/* Brand Logo */}
-                {header.brand && <BrandLogo brand={header.brand} />}
+                {brand && <BrandLogo brand={brand} />}
 
                 {/* Desktop Navigation Menu */}
                 {isLarge && <NavMenu />}
@@ -275,8 +355,22 @@ export function Header({ header }: { header: HeaderType }) {
                   }
                   className="relative z-20 -m-2.5 -mr-3 block cursor-pointer p-2.5 lg:hidden"
                 >
-                  <Menu className="m-auto size-5 duration-200 in-data-[state=active]:scale-0 in-data-[state=active]:rotate-180 in-data-[state=active]:opacity-0" />
-                  <X className="absolute inset-0 m-auto size-5 scale-0 -rotate-180 opacity-0 duration-200 in-data-[state=active]:scale-100 in-data-[state=active]:rotate-0 in-data-[state=active]:opacity-100" />
+                  <Menu
+                    className={cn(
+                      'm-auto size-5 duration-200 in-data-[state=active]:scale-0 in-data-[state=active]:rotate-180 in-data-[state=active]:opacity-0',
+                      isOverlayHeader
+                        ? 'text-foreground/88 dark:text-white/88'
+                        : 'text-foreground/82'
+                    )}
+                  />
+                  <X
+                    className={cn(
+                      'absolute inset-0 m-auto size-5 scale-0 -rotate-180 opacity-0 duration-200 in-data-[state=active]:scale-100 in-data-[state=active]:rotate-0 in-data-[state=active]:opacity-100',
+                      isOverlayHeader
+                        ? 'text-foreground/88 dark:text-white/88'
+                        : 'text-foreground/82'
+                    )}
+                  />
                 </button>
               </div>
 
@@ -312,8 +406,12 @@ export function Header({ header }: { header: HeaderType }) {
                       </Link>
                     ))}
 
-                  {header.show_theme ? <ThemeToggler /> : null}
-                  {header.show_locale ? <LocaleSelector /> : null}
+                  {header.show_theme ? (
+                    <ThemeToggler className={utilityButtonClass} />
+                  ) : null}
+                  {header.show_locale ? (
+                    <LocaleSelector className={utilityButtonClass} />
+                  ) : null}
                   <div className="flex-1 md:hidden"></div>
                   {header.show_sign ? (
                     <SignUser userNav={header.user_nav} />

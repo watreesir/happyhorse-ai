@@ -15,7 +15,12 @@ export function Features({
   return (
     <section
       id={section.id}
-      className={cn('py-16 md:py-24', section.className, className)}
+      className={cn(
+        'py-16 md:py-24',
+        section.className,
+        'landing-section-surface',
+        className
+      )}
     >
       <div className={`container space-y-8 md:space-y-16`}>
         <ScrollAnimation>

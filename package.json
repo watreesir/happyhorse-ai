@@ -1,21 +1,17 @@
 {
-  "name": "shipany-template-two",
+  "name": "happyhorse-ai",
   "version": "1.8.2",
   "private": true,
-  "author": "ShipAny.ai",
-  "homepage": "https://shipany.ai",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/shipanyai/shipany-template-two"
-  },
+  "author": "Happy Horse AI",
+  "homepage": "https://happyhorse-ai.app",
   "keywords": [
-    "shipany",
-    "shipany-two",
-    "shipany-template-two",
-    "ai-saas-boilerplate",
-    "ai-saas-template",
-    "ai-saas-framework",
-    "ai-saas-development"
+    "happyhorse",
+    "happyhorse-ai",
+    "happy horse ai",
+    "ai-video-generator",
+    "text-to-video",
+    "image-to-video",
+    "video-editing"
   ],
   "scripts": {
     "dev": "next dev --turbopack",

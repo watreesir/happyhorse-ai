@@ -535,7 +535,7 @@ export function getPostSlug({
   locale,
   prefix = '/blog/',
 }: {
-  url: string; // post url, like: /zh/blog/what-is-xxx
+  url: string; // post url, like: /zh/blog/what-is-happy-horse-ai
   locale: string; // locale
   prefix?: string; // post slug prefix
 }): string {

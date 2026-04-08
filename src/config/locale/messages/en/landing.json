@@ -2,10 +2,10 @@
   "header": {
     "id": "header",
     "brand": {
-      "title": "ShipAny Two",
+      "title": "Happy Horse AI",
       "logo": {
-        "src": "/logo.png",
-        "alt": "ShipAny Two",
+        "src": "/brand/logo-512.png",
+        "alt": "Happy Horse AI Video Generator",
         "width": 100,
         "height": 100
       },
@@ -14,74 +14,55 @@
     "nav": {
       "items": [
         {
-          "title": "Features",
-          "url": "/#features",
-          "icon": "Sparkles"
-        },
-        {
-          "title": "Showcases",
-          "url": "/showcases",
-          "icon": "Box"
+          "title": "AI Video Tools",
+          "icon": "Sparkles",
+          "children": [
+            {
+              "title": "Text to Video",
+              "description": "Generate short clips from prompts.",
+              "icon": "FileText",
+              "url": "/text-to-video",
+              "target": "_self"
+            },
+            {
+              "title": "Image to Video",
+              "description": "Animate still images and illustrations.",
+              "icon": "Image",
+              "url": "/image-to-video",
+              "target": "_self"
+            },
+            {
+              "title": "Reference to Video",
+              "description": "Guide style and motion with references.",
+              "icon": "Layers3",
+              "url": "/reference-to-video",
+              "target": "_self"
+            },
+            {
+              "title": "Video Edit",
+              "description": "Transform existing clips with AI edits.",
+              "icon": "Scissors",
+              "url": "/video-edit",
+              "target": "_self"
+            },
+            {
+              "title": "Happy Horse 1.0",
+              "description": "See the model overview and use cases.",
+              "icon": "Bot",
+              "url": "/happy-horse-1-0",
+              "target": "_self"
+            }
+          ]
         },
         {
           "title": "Pricing",
           "url": "/pricing",
-          "icon": "DollarSign"
+          "icon": "Wallet"
         },
         {
-          "title": "AI",
-          "icon": "RiRobot2Line",
-          "children": [
-            {
-              "title": "AI Image Generator",
-              "description": "Use AI to generate images",
-              "url": "/ai-image-generator",
-              "icon": "RiImage2Line"
-            },
-            {
-              "title": "AI Music Generator",
-              "description": "Use AI to generate music",
-              "url": "/ai-music-generator",
-              "icon": "RiMusic2Line"
-            },
-            {
-              "title": "AI Video Generator",
-              "description": "Use AI to generate videos",
-              "url": "/ai-video-generator",
-              "icon": "RiVideoLine"
-            },
-            {
-              "title": "AI Chatbot",
-              "description": "Chat with AI chatbot",
-              "url": "/chat",
-              "icon": "RiMessage2Line"
-            }
-          ]
-        },
-        {
-          "title": "Content",
-          "icon": "FileText",
-          "children": [
-            {
-              "title": "Blog",
-              "description": "Read Blog Posts",
-              "url": "/blog",
-              "icon": "Newspaper"
-            },
-            {
-              "title": "Updates",
-              "description": "Read Update Logs",
-              "url": "/updates",
-              "icon": "Clock"
-            },
-            {
-              "title": "Docs",
-              "description": "Read Documentation",
-              "url": "/docs",
-              "target": "_blank",
-              "icon": "BookOpenText"
-            }
-          ]
+          "title": "Blog",
+          "url": "/blog",
+          "icon": "BookOpen"
         }
       ]
     },
@@ -90,98 +71,70 @@
       "show_name": true,
       "show_credits": true,
       "show_sign_out": true,
-      "items": [
-        {
-          "title": "Billing",
-          "url": "/settings/billing",
-          "icon": "CreditCard"
-        },
-        {
-          "title": "Activity",
-          "url": "/activity",
-          "icon": "Activity"
-        }
-      ]
+      "items": []
     },
-    "show_sign": true,
+    "show_sign": false,
     "show_theme": true,
     "show_locale": true,
-    "topbanner": {
-      "text": "This website is a demo site for the ShipAny template. To purchase the ShipAny template, please visit the <a href='https://shipany.ai/pricing' class='text-orange-300' target='_blank'>ShipAny website</a>"
-    }
+    "topbanner": {}
   },
   "footer": {
     "id": "footer",
     "brand": {
-      "title": "ShipAny Two",
-      "description": "ShipAny is a NextJS boilerplate for building AI SaaS startups. Ship Fast with a variety of templates and components.",
+      "title": "Happy Horse AI",
+      "description": "Browser-based AI video workflows for text, image, reference, and video edit projects with 720p and 1080p output.",
       "logo": {
-        "src": "/logo.png",
-        "alt": "ShipAny Two",
-        "width": 1024,
-        "height": 1024
+        "src": "/brand/logo-512.png",
+        "alt": "Happy Horse AI Video Generator",
+        "width": 100,
+        "height": 100
       },
       "url": "/"
     },
     "nav": {
       "items": [
         {
-          "title": "About",
+          "title": "Workflows",
           "children": [
             {
-              "title": "Features",
-              "url": "/#features",
+              "title": "Text to Video",
+              "url": "/text-to-video",
               "target": "_self"
             },
             {
-              "title": "Showcases",
-              "url": "/showcases",
+              "title": "Image to Video",
+              "url": "/image-to-video",
+              "target": "_self"
+            },
+            {
+              "title": "Reference to Video",
+              "url": "/reference-to-video",
+              "target": "_self"
+            },
+            {
+              "title": "Video Edit",
+              "url": "/video-edit",
+              "target": "_self"
+            }
+          ]
+        },
+        {
+          "title": "Platform",
+          "children": [
+            {
+              "title": "Happy Horse 1.0",
+              "url": "/happy-horse-1-0",
               "target": "_self"
             },
             {
               "title": "Pricing",
               "url": "/pricing",
               "target": "_self"
-            }
-          ]
-        },
-        {
-          "title": "Resources",
-          "children": [
-            {
-              "title": "Documents",
-              "url": "/docs",
-              "target": "_self"
             },
             {
               "title": "Blog",
               "url": "/blog",
               "target": "_self"
-            },
-            {
-              "title": "Chat",
-              "url": "/chat",
-              "target": "_self"
-            }
-          ]
-        },
-        {
-          "title": "Friends",
-          "children": [
-            {
-              "title": "ShipAny",
-              "url": "https://shipany.ai",
-              "target": "_blank"
-            },
-            {
-              "title": "ThinkAny",
-              "url": "https://thinkany.ai",
-              "target": "_blank"
-            },
-            {
-              "title": "MCP.so",
-              "url": "https://mcp.so",
-              "target": "_blank"
             }
           ]
         }
@@ -190,27 +143,9 @@
     "social": {
       "items": [
         {
-          "title": "X",
-          "icon": "RiTwitterXFill",
-          "url": "https://x.com/your-app-name",
-          "target": "_blank"
-        },
-        {
-          "title": "Github",
-          "icon": "Github",
-          "url": "https://github.com/your-app-name",
-          "target": "_blank"
-        },
-        {
-          "title": "Discord",
-          "icon": "RiDiscordFill",
-          "url": "https://discord.gg/your-app-name",
-          "target": "_blank"
-        },
-        {
           "title": "Email",
           "icon": "Mail",
-          "url": "mailto:support@your-domain.com",
+          "url": "mailto:support@happyhorse-ai.app",
           "target": "_self"
         }
       ]

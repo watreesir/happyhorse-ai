@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "ShipAny 模板二",
-    "description": "ShipAny 是用于构建 AI SaaS 创业项目的 NextJS 脚手架。提供丰富模板和组件，助您快速上线产品。",
-    "keywords": "shipany, shipany-boilerplate, shipany-template-two-demo"
+    "title": "Happy Horse AI 视频生成平台 | 文生视频、图生视频与视频编辑",
+    "description": "在 Happy Horse AI 中通过文字、图片、参考素材或现有视频完成 AI 视频创作，支持 720p 与 1080p 输出。",
+    "keywords": "happy horse ai, AI视频生成平台, 文生视频, 图生视频, 参考生成视频, AI视频编辑, 1080p视频"
   },
   "sign": {
     "sign_in_title": "登录",

@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI 图生视频 | 让静态图片动起来",
+    "description": "在 Happy Horse AI 中通过首帧、首尾帧或续写模式生成图生视频，支持 720p 与 1080p 输出。",
+    "keywords": "happy horse ai 图生视频, 图生视频, 图片生成视频, 图片动画"
+  },
+  "page": {
+    "title": "Happy Horse AI 图生视频",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI 图生视频",
+        "highlight_text": "图生视频",
+        "description": "从静态图片出发，也可以通过首尾帧或续写模式控制运动方向，让图像素材更自然地变成短视频。",
+        "badge_text": "图片动画工作流",
+        "default_tab": "image-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-zh-image-to-video/1600/900.webp",
+          "alt": "图生视频"
+        },
+        "generate_button": "开始动画",
+        "tabs": [
+          {
+            "key": "image-to-video",
+            "label": "图片生成视频",
+            "placeholder": "描述图片应如何动起来..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "图像驱动的动画选项",
+        "description": "当视觉起点比提示词本身更重要时，图生视频比文生视频更适合。",
+        "items": [
+          {
+            "title": "首帧动画",
+            "description": "上传一张图片并描述你希望主体或镜头如何运动。",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "首尾帧控制",
+            "description": "同时定义起始画面和结束画面，更适合控制过渡和运动方向。",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "视频续写模式",
+            "description": "基于已有片段继续动作和镜头，而不是重新开始一个全新场景。",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "短视频时长",
+            "description": "更适合短片段、社交内容和快速镜头测试。",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "720p 与 1080p 输出",
+            "description": "可根据测试阶段或最终成片需要，选择不同清晰度。",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "提示词结合视觉输入",
+            "description": "在图片基础上补充运动、镜头和环境变化说明，而不是只依赖图片本身。",
+            "icon": "RiFileTextLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "使用步骤",
+        "title": "三步把图片变成视频",
+        "description": "先明确视觉起点，再补充运动和镜头描述，通常会比只写提示词更稳定。",
+        "items": [
+          {
+            "title": "上传素材",
+            "description": "选择单张图片、首尾帧组合，或带入已有片段进行续写。",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "描述运动",
+            "description": "说明镜头、动作和环境该如何变化。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "生成并比较",
+            "description": "先看第一版动画，再根据需要微调素材或提示词。",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "图生视频常见问题",
+        "description": "关于 Happy Horse AI 图生视频工作流的常见问题。",
+        "items": [
+          {
+            "question": "图生视频支持哪些输入模式？",
+            "answer": "当前支持首帧模式、首尾帧模式，以及基于已有片段的续写模式。"
+          },
+          {
+            "question": "可以同时定义开始和结束画面吗？",
+            "answer": "可以。首尾帧模式可以帮助你更明确地约束镜头过渡方向。"
+          },
+          {
+            "question": "可以基于已有片段继续生成吗？",
+            "answer": "可以。续写模式就是为已有片段的后续动作或镜头延展准备的。"
+          },
+          {
+            "question": "当前支持什么输出清晰度？",
+            "answer": "Happy Horse AI 当前支持 720p 和 1080p 图生视频输出。"
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "开始让图片动起来",
+        "description": "打开 Happy Horse AI 从图片开始，或者先查看价格方案，了解更多积分和生成容量。",
+        "buttons": [
+          {
+            "title": "打开 Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "查看价格",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

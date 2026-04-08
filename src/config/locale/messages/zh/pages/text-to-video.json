@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI 文生视频 | 提示词生成短视频工作流",
+    "description": "在 Happy Horse AI 中通过提示词生成 AI 视频，支持 720p 或 1080p 输出，是面向创意起稿和短视频生成的文生视频工作流。",
+    "keywords": "happy horse ai 文生视频, 文生视频, 提示词生成视频, 1080p AI视频"
+  },
+  "page": {
+    "title": "Happy Horse AI 文生视频",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI 文生视频",
+        "highlight_text": "文生视频",
+        "description": "从提示词直接生成 AI 视频短片，并在生成前调整时长、分辨率和画面比例。",
+        "badge_text": "提示词生成工作流",
+        "default_tab": "text-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-zh-text-to-video/1600/900.webp",
+          "alt": "文生视频"
+        },
+        "generate_button": "生成视频",
+        "tabs": [
+          {
+            "key": "text-to-video",
+            "label": "文字生成视频",
+            "placeholder": "描述你想要生成的视频内容..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "这个工作流能控制什么",
+        "description": "当你要从创意本身出发，而不是从现成图片或视频出发时，文生视频是最直接的入口。",
+        "items": [
+          {
+            "title": "提示词驱动生成",
+            "description": "直接描述主体、运动、镜头和氛围，让生成从创意本身开始。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "短视频时长预设",
+            "description": "支持 2 到 15 秒的时长选择，适合快速产出短视频片段。",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "720p 与 1080p 输出",
+            "description": "可根据预览速度或成片需求，选择更快或更清晰的导出设置。",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "多种画面比例",
+            "description": "支持 16:9、9:16、1:1、4:3 和 3:4 等常见比例。",
+            "icon": "RiLayoutGridLine"
+          },
+          {
+            "title": "浏览器端工作流",
+            "description": "直接在 Happy Horse AI 内完成输入、生成和迭代，不必来回切换工具。",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "按积分扩展使用量",
+            "description": "根据创作频率选择适合的方案，后续再按需增加生成容量。",
+            "icon": "RiGiftLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "使用步骤",
+        "title": "三步开始文生视频",
+        "description": "先拿到第一版结果，再逐步迭代提示词和参数，通常比一次把提示词写得过满更高效。",
+        "items": [
+          {
+            "title": "写下提示词",
+            "description": "描述主体、动作、节奏和整体风格，明确你想看到的核心变化。",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "设置输出参数",
+            "description": "在生成前选择时长、分辨率和画面比例。",
+            "icon": "RiLayoutGridLine"
+          },
+          {
+            "title": "生成并迭代",
+            "description": "先查看第一版结果，再根据效果继续优化提示词或参数。",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "文生视频常见问题",
+        "description": "关于 Happy Horse AI 文生视频工作流的常见问题。",
+        "items": [
+          {
+            "question": "文生视频和图生视频有什么区别？",
+            "answer": "文生视频从提示词直接开始生成，不依赖现成图片。图生视频则是从图片或已有视觉素材出发，重点在于让输入素材动起来。"
+          },
+          {
+            "question": "文生视频可以调整哪些参数？",
+            "answer": "你可以在生成前调整时长、输出分辨率和画面比例。"
+          },
+          {
+            "question": "当前支持哪些输出清晰度？",
+            "answer": "Happy Horse AI 当前支持 720p 和 1080p 输出。"
+          },
+          {
+            "question": "什么时候更适合使用文生视频？",
+            "answer": "当你只有创意方向、镜头描述或脚本想法，而没有现成图片或视频素材时，文生视频是更合适的入口。"
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "开始提示词生成视频",
+        "description": "直接打开 Happy Horse AI 开始生成，或者先查看价格方案，了解更多积分和处理队列选择。",
+        "buttons": [
+          {
+            "title": "打开 Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "查看价格",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

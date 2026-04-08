@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "title": "Happy Horse AI Image to Video | Animate Still Frames Online",
+    "description": "Animate still images in Happy Horse AI with first-frame, first-and-last-frame, or continuation workflows. Export image-to-video clips in 720p or 1080p.",
+    "keywords": "happy horse ai image to video, image to video ai, animate image online, ai image animation"
+  },
+  "page": {
+    "title": "Happy Horse AI Image to Video",
+    "show_sections": ["hero", "workflow", "steps", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Happy Horse AI Image to Video",
+        "highlight_text": "Image to Video",
+        "description": "Start from a still frame, define a first and last frame, or continue motion from an existing clip. Happy Horse AI keeps the workflow focused on image-led animation.",
+        "badge_text": "Image animation workflow",
+        "default_tab": "image-to-video",
+        "background_image": {
+          "src": "https://picsum.photos/seed/happyhorse-en-image-to-video/1600/900.webp",
+          "alt": "Image to video"
+        },
+        "generate_button": "Animate",
+        "tabs": [
+          {
+            "key": "image-to-video",
+            "label": "Image to Video",
+            "placeholder": "Describe how the image should animate..."
+          }
+        ]
+      },
+      "workflow": {
+        "id": "workflow",
+        "title": "Image-first animation options",
+        "description": "Use this workflow when the visual starting point matters more than the prompt alone.",
+        "items": [
+          {
+            "title": "First-frame animation",
+            "description": "Upload one image and describe the motion, camera behavior, or environment change you want to see.",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "First and last frame control",
+            "description": "Define the starting and ending visual state to better guide transitions between shots.",
+            "icon": "RiSlideshowLine"
+          },
+          {
+            "title": "Video continuation mode",
+            "description": "Continue motion from an existing clip when you want a follow-up shot instead of a reset.",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "Short clip durations",
+            "description": "Choose compact video lengths that fit fast image-led storytelling and social content.",
+            "icon": "RiFilmLine"
+          },
+          {
+            "title": "720p and 1080p output",
+            "description": "Select the balance between speed and quality that matches the stage of your project.",
+            "icon": "RiHdLine"
+          },
+          {
+            "title": "Prompt plus visual input",
+            "description": "Combine a source image with motion instructions rather than relying on visual input alone.",
+            "icon": "RiFileTextLine"
+          }
+        ]
+      },
+      "steps": {
+        "block": "features-step",
+        "id": "steps",
+        "label": "How It Works",
+        "title": "Animate still images in three steps",
+        "description": "Keep the initial setup simple, then refine motion or transitions after the first render.",
+        "items": [
+          {
+            "title": "Upload your source",
+            "description": "Pick a single image, define first and last frames, or bring in a clip for continuation.",
+            "icon": "RiImage2Line"
+          },
+          {
+            "title": "Describe the motion",
+            "description": "Use the prompt to define camera movement, subject action, or environmental change.",
+            "icon": "RiFileTextLine"
+          },
+          {
+            "title": "Render and compare",
+            "description": "Generate the clip, review the motion result, then iterate with updated frames or prompt detail.",
+            "icon": "RiVideoLine"
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Image-to-Video FAQ",
+        "description": "Questions about animating still images in Happy Horse AI.",
+        "items": [
+          {
+            "question": "What upload modes are available in image-to-video?",
+            "answer": "Happy Horse AI supports a first-frame mode, a first-and-last-frame mode, and a continuation mode based on an existing clip."
+          },
+          {
+            "question": "Can I define both a starting frame and an ending frame?",
+            "answer": "Yes. The first-and-last-frame workflow lets you guide the visual transition between the opening and final state."
+          },
+          {
+            "question": "Can I continue motion from an existing clip?",
+            "answer": "Yes. The continuation mode is designed for extending motion instead of restarting from a new scene."
+          },
+          {
+            "question": "What resolution is available for image-to-video?",
+            "answer": "Happy Horse AI currently supports 720p and 1080p output for image-to-video generation."
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "Animate your first still image",
+        "description": "Open Happy Horse AI to start with an image, or compare plans if you need more generation capacity.",
+        "buttons": [
+          {
+            "title": "Open Happy Horse AI",
+            "url": "/",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "Compare Pricing",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Sparkles"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

@@ -1,15 +1,15 @@
 {
   "metadata": {
     "title": "案例展示",
-    "description": "用 ShipAny 打造的精彩项目"
+    "description": "创意 AI 产品与灵感参考。"
   },
   "page": {
     "title": "案例展示",
     "sections": {
       "showcases": {
         "id": "showcases",
-        "title": "用 ShipAny 构建的 AI SaaS 创业项目",
-        "description": "简单、快速、高效。",
+        "title": "AI 创作者工具与产品灵感",
+        "description": "精选创意 AI 产品与工作流参考。",
         "groups": [
           {
             "name": "all",
