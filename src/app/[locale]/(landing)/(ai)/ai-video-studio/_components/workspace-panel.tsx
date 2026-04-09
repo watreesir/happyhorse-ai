@@ -442,7 +442,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
   // Listen for Recreate events dispatched by the Inspiration panel
   useEffect(() => {
-    const handler = async (e: CustomEvent<VideoStudioRecreateEventDetail>) => {
+    const handleRecreateEvent = async (
+      e: CustomEvent<VideoStudioRecreateEventDetail>
+    ) => {
       const { mode, prompt, i2vMode, imageUrl } = e.detail;
 
       // Apply mode + prompt immediately; clear any previous first-frame image
@@ -472,8 +474,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       }
     };
 
-    window.addEventListener(VIDEO_STUDIO_RECREATE_EVENT, handler as EventListener);
-    return () => window.removeEventListener(VIDEO_STUDIO_RECREATE_EVENT, handler as EventListener);
+    const listener: EventListener = (event) => {
+      void handleRecreateEvent(
+        event as CustomEvent<VideoStudioRecreateEventDetail>
+      );
+    };
+
+    window.addEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
+    return () => window.removeEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
   }, []);
 
   const handleUploadSingle = async (
