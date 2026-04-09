@@ -145,7 +145,6 @@ export function MyCreationsPanel({
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             {copy.panelTitle}
           </h3>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">{copy.panelHint}</p>
         </div>
         <Button
           type="button"

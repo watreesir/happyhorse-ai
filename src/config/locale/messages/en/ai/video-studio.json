@@ -87,7 +87,8 @@
         "auto": "AI Audio",
         "origin": "Keep Original"
       },
-      "runButton": "Prepare Draft Job",
+      "runButton": "Get and Generate",
+      "generatingToast": "Task is generating. Please wait.",
       "submitFromHero": "Submitted from homepage workspace. Tracking latest task...",
       "helper": "Tip: start with one clear action + camera instruction, then refine style details in the next pass.",
       "statusLabel": "Task State",
@@ -121,6 +122,8 @@
       "panelHint": "Recent activity queue in compact mode.",
       "refreshButton": "Refresh",
       "refreshingButton": "Refreshing",
+      "generatingLabel": "Generating",
+      "downloadButton": "Download",
       "loading": "Loading recent tasks...",
       "errorFallback": "Unable to load recent activity. Please refresh.",
       "empty": "No recent studio actions yet."

@@ -146,7 +146,18 @@ export function HistoryPanel({ copy, statusLabels, errors }: HistoryPanelProps) 
       ) : (
         <div className="space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
           {items.map((item) => (
-            <VideoCard key={item.id} item={item} mode="compact" statusLabels={statusLabels} />
+            <VideoCard
+              key={item.id}
+              item={item}
+              mode="compact"
+              statusLabels={statusLabels}
+              generatingLabel={copy.generatingLabel}
+              actionsCopy={{
+                view: '',
+                download: copy.downloadButton,
+                unavailable: '',
+              }}
+            />
           ))}
         </div>
       )}

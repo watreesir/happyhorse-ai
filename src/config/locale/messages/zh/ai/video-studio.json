@@ -87,7 +87,8 @@
         "auto": "AI 音频",
         "origin": "保留原音"
       },
-      "runButton": "创建草稿任务",
+      "runButton": "获取并生成",
+      "generatingToast": "任务正在生成中，请耐心等待",
       "submitFromHero": "任务已从首页工作区提交，正在同步最新状态...",
       "helper": "建议先写清动作与镜头，再逐步补充风格和细节词。",
       "statusLabel": "任务状态",
@@ -121,6 +122,8 @@
       "panelHint": "紧凑展示最近任务状态。",
       "refreshButton": "刷新",
       "refreshingButton": "刷新中",
+      "generatingLabel": "Generating",
+      "downloadButton": "下载",
       "loading": "正在加载最近任务...",
       "errorFallback": "最近记录加载失败，请点击刷新重试。",
       "empty": "暂无最近记录。"

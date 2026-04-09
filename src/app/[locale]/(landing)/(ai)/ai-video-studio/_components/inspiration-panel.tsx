@@ -20,7 +20,6 @@ export function InspirationPanel({ copy, statusLabels }: InspirationPanelProps) 
         <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
           {copy.panelTitle}
         </h3>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{copy.panelHint}</p>
       </header>
 
       {items.length === 0 ? (

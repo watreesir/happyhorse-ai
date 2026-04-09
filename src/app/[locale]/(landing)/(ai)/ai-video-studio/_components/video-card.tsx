@@ -1,6 +1,13 @@
 'use client';
 
-import { AlertCircle, Clock3, LoaderCircle, PlayCircle } from 'lucide-react';
+import { useState } from 'react';
+import {
+  AlertCircle,
+  Clock3,
+  Download,
+  LoaderCircle,
+  PlayCircle,
+} from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/components/ui/button';
@@ -15,6 +22,7 @@ type VideoCardProps = {
   actionLabel?: string;
   onAction?: () => void;
   statusLabels: Record<VideoStatus, string>;
+  generatingLabel?: string;
   actionsCopy?: {
     view: string;
     download: string;
@@ -61,30 +69,52 @@ export function VideoCard({
   actionLabel,
   onAction,
   statusLabels,
+  generatingLabel = 'Generating',
   actionsCopy,
 }: VideoCardProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
   const compact = mode === 'compact';
   const inspiration = mode === 'inspiration';
   const hasPreview = Boolean(item.previewUrl);
   const mediaActions = actionsCopy ?? null;
+  const isGeneratingTask = item.status === 'queued' || item.status === 'rendering';
   const showMediaActions =
     !compact && !inspiration && item.status === 'ready' && Boolean(mediaActions);
+  const showCompactDownload = compact && !inspiration && Boolean(mediaActions?.download);
+  const compactDownloadDisabled = item.status !== 'ready' || !hasPreview || isDownloading;
 
   const openPreview = () => {
     if (!item.previewUrl) return;
     window.open(item.previewUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const downloadPreview = () => {
+  const downloadPreview = async () => {
     if (!item.previewUrl) return;
-    const anchor = document.createElement('a');
-    anchor.href = item.previewUrl;
-    anchor.target = '_blank';
-    anchor.rel = 'noopener noreferrer';
-    anchor.download = `${item.id}.mp4`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
+    if (isDownloading) return;
+
+    try {
+      setIsDownloading(true);
+      const response = await fetch(
+        `/api/proxy/file?url=${encodeURIComponent(item.previewUrl)}`
+      );
+      if (!response.ok) {
+        throw new Error('download failed');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = blobUrl;
+      anchor.download = `${item.id}.mp4`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 300);
+    } catch (error) {
+      console.error('video download failed:', error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -116,6 +146,12 @@ export function VideoCard({
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.26),transparent_50%),radial-gradient(circle_at_85%_88%,rgba(255,255,255,0.12),transparent_40%)]" />
         {hasPreview ? <div className="absolute inset-0 bg-black/10" /> : null}
+        {isGeneratingTask ? (
+          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm dark:border-emerald-300/30 dark:bg-emerald-500/15 dark:text-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {generatingLabel}
+          </div>
+        ) : null}
         <div className="absolute inset-0 grid place-items-center">
           <span className="rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-medium tracking-wide backdrop-blur">
             {item.lengthLabel} · {item.aspectRatio.replace(/\s+/g, '')}
@@ -185,6 +221,7 @@ export function VideoCard({
                 size="sm"
                 className="h-7 rounded-full px-3 text-xs"
                 onClick={downloadPreview}
+                disabled={isDownloading}
               >
                 {mediaActions?.download}
               </Button>
@@ -194,6 +231,25 @@ export function VideoCard({
               {mediaActions?.unavailable}
             </p>
           )
+        ) : null}
+
+        {showCompactDownload ? (
+          <div className="pt-0.5">
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 rounded-full px-3 text-xs"
+              onClick={downloadPreview}
+              disabled={compactDownloadDisabled}
+            >
+              {isDownloading ? (
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              {mediaActions?.download}
+            </Button>
+          </div>
         ) : null}
       </div>
     </article>

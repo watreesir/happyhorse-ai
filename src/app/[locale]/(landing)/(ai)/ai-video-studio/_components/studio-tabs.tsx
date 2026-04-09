@@ -70,16 +70,6 @@ export function StudioTabs({ copy, createPanel, myCreationsPanel }: StudioTabsPr
             )}
           >
             <p className="text-base font-semibold">{tab.label}</p>
-            <p
-              className={cn(
-                'mt-1 text-sm',
-                activeTab === tab.key
-                  ? 'text-zinc-200 dark:text-zinc-700'
-                  : 'text-zinc-500 dark:text-zinc-400'
-              )}
-            >
-              {tab.hint}
-            </p>
           </button>
         ))}
       </div>

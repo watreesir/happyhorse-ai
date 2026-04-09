@@ -153,6 +153,7 @@ export type StudioCopy = {
       audioSettingLabel: string;
       audioSettings: Record<StudioAudioSetting, string>;
       runButton: string;
+      generatingToast: string;
       submitFromHero: string;
       helper: string;
       statusLabel: string;
@@ -179,6 +180,8 @@ export type StudioCopy = {
       panelHint: string;
       refreshButton: string;
       refreshingButton: string;
+      generatingLabel: string;
+      downloadButton: string;
       loading: string;
       errorFallback: string;
       empty: string;

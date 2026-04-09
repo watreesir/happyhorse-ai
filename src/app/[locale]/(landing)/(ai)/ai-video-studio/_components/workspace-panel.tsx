@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Film,
@@ -12,6 +12,7 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -223,6 +224,15 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const lifecycleRef = useRef<StudioTaskLifecycle>('idle');
   const pollFailureCountRef = useRef(0);
   const hydratedFromEntryRef = useRef(false);
+  const lastGeneratingToastTaskIdRef = useRef<string | null>(null);
+
+  const notifyGenerating = useCallback((taskId: string) => {
+    if (!taskId || lastGeneratingToastTaskIdRef.current === taskId) {
+      return;
+    }
+    lastGeneratingToastTaskIdRef.current = taskId;
+    toast.success(copy.generatingToast);
+  }, [copy.generatingToast]);
 
   const updateLifecycle = (nextLifecycle: StudioTaskLifecycle) => {
     lifecycleRef.current = nextLifecycle;
@@ -257,6 +267,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
               : 'queued'
         );
         setActiveTaskId(submission.taskId);
+        notifyGenerating(submission.taskId);
       }
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
@@ -332,6 +343,13 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     if (handoffTaskId && handoffLifecycle) {
       updateLifecycle(handoffLifecycle);
       setActiveTaskId(handoffLifecycle === 'completed' ? null : handoffTaskId);
+      if (
+        handoffLifecycle === 'queued' ||
+        handoffLifecycle === 'processing' ||
+        handoffLifecycle === 'submitting'
+      ) {
+        notifyGenerating(handoffTaskId);
+      }
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
       void fetchUserCredits();
@@ -342,7 +360,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       applyHeroHandoff(nextDraft);
       void fetchUserCredits();
     }
-  }, [copy.submitFromHero, draft, errors, fetchUserCredits, searchParams]);
+  }, [copy.submitFromHero, draft, errors, fetchUserCredits, notifyGenerating, searchParams]);
 
   useEffect(() => {
     if (!activeTaskId) {
@@ -494,6 +512,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         setActiveTaskId(null);
       } else {
         setActiveTaskId(lifecycle === 'completed' ? null : task.id);
+        if (lifecycle === 'queued' || lifecycle === 'processing') {
+          notifyGenerating(task.id);
+        }
       }
       await fetchUserCredits();
     } catch (error: unknown) {
