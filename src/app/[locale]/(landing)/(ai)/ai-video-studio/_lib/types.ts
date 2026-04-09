@@ -30,6 +30,7 @@ export type VideoDraft = {
   title: string;
   prompt: string;
   status: VideoStatus;
+  previewUrl?: string | null;
   updatedLabel: string;
   lengthLabel: string;
   aspectRatio: string;
@@ -195,5 +196,10 @@ export type StudioCopy = {
     totalLabel: string;
     previousLabel: string;
     nextLabel: string;
+    actions: {
+      view: string;
+      download: string;
+      unavailable: string;
+    };
   };
 };

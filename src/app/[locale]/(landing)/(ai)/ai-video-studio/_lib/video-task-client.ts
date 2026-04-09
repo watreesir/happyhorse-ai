@@ -65,9 +65,9 @@ function extractVideoUrls(result: unknown): string[] {
     return [];
   }
 
-  const videos = result.videos;
-  if (Array.isArray(videos)) {
-    return videos
+  const extractFromArray = (value: unknown): string[] => {
+    if (!Array.isArray(value)) return [];
+    return value
       .map((item) => {
         if (typeof item === 'string') return item;
         if (isObject(item)) {
@@ -78,25 +78,35 @@ function extractVideoUrls(result: unknown): string[] {
         return null;
       })
       .filter((item): item is string => Boolean(item));
+  };
+
+  const videos = result.videos;
+  const fromVideos = extractFromArray(videos);
+  if (fromVideos.length > 0) {
+    return fromVideos;
   }
 
   const output = result.output ?? result.video ?? result.data;
   if (typeof output === 'string') {
     return [output];
   }
+  const fromOutput = extractFromArray(output);
+  if (fromOutput.length > 0) {
+    return fromOutput;
+  }
 
-  if (Array.isArray(output)) {
-    return output
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        if (isObject(item)) {
-          const candidate =
-            item.url ?? item.uri ?? item.video ?? item.src ?? item.videoUrl;
-          return typeof candidate === 'string' ? candidate : null;
+  if (typeof result.resultJson === 'string') {
+    try {
+      const parsedResultJson = JSON.parse(result.resultJson);
+      if (isObject(parsedResultJson)) {
+        const fromResultJson = extractFromArray(parsedResultJson.resultUrls);
+        if (fromResultJson.length > 0) {
+          return fromResultJson;
         }
-        return null;
-      })
-      .filter((item): item is string => Boolean(item));
+      }
+    } catch {
+      // ignore malformed resultJson
+    }
   }
 
   return [];
@@ -178,6 +188,7 @@ export function mapTaskToDraft(task: VideoTaskRecord, index: number): VideoDraft
     title: resolveTitle(prompt),
     prompt,
     status: mapTaskStatus(task.status),
+    previewUrl: task.previewUrl,
     updatedLabel: formatRelativeTime(task.updatedAt),
     lengthLabel: resolveLengthLabel(task),
     aspectRatio: resolveAspectRatio(task),

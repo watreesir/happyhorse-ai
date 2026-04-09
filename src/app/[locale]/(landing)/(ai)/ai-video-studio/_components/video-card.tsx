@@ -15,6 +15,11 @@ type VideoCardProps = {
   actionLabel?: string;
   onAction?: () => void;
   statusLabels: Record<VideoStatus, string>;
+  actionsCopy?: {
+    view: string;
+    download: string;
+    unavailable: string;
+  };
 };
 
 const PALETTE_CLASS: Record<VideoPalette, string> = {
@@ -56,9 +61,31 @@ export function VideoCard({
   actionLabel,
   onAction,
   statusLabels,
+  actionsCopy,
 }: VideoCardProps) {
   const compact = mode === 'compact';
   const inspiration = mode === 'inspiration';
+  const hasPreview = Boolean(item.previewUrl);
+  const mediaActions = actionsCopy ?? null;
+  const showMediaActions =
+    !compact && !inspiration && item.status === 'ready' && Boolean(mediaActions);
+
+  const openPreview = () => {
+    if (!item.previewUrl) return;
+    window.open(item.previewUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const downloadPreview = () => {
+    if (!item.previewUrl) return;
+    const anchor = document.createElement('a');
+    anchor.href = item.previewUrl;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    anchor.download = `${item.id}.mp4`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  };
 
   return (
     <article
@@ -77,8 +104,18 @@ export function VideoCard({
         )}
         style={{ aspectRatio: item.aspectRatio }}
       >
+        {hasPreview ? (
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src={item.previewUrl ?? undefined}
+            preload="metadata"
+            muted
+            playsInline
+          />
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.26),transparent_50%),radial-gradient(circle_at_85%_88%,rgba(255,255,255,0.12),transparent_40%)]" />
+        {hasPreview ? <div className="absolute inset-0 bg-black/10" /> : null}
         <div className="absolute inset-0 grid place-items-center">
           <span className="rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-medium tracking-wide backdrop-blur">
             {item.lengthLabel} · {item.aspectRatio.replace(/\s+/g, '')}
@@ -130,6 +167,34 @@ export function VideoCard({
           <span>{item.updatedLabel}</span>
           <span>{item.lengthLabel}</span>
         </div>
+
+        {showMediaActions ? (
+          hasPreview ? (
+            <div className="flex items-center gap-2 pt-0.5">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full px-3 text-xs"
+                onClick={openPreview}
+              >
+                {mediaActions?.view}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 rounded-full px-3 text-xs"
+                onClick={downloadPreview}
+              >
+                {mediaActions?.download}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {mediaActions?.unavailable}
+            </p>
+          )
+        ) : null}
       </div>
     </article>
   );

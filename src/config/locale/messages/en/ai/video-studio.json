@@ -142,6 +142,11 @@
     "pageLabel": "Page",
     "totalLabel": "Total",
     "previousLabel": "Prev",
-    "nextLabel": "Next"
+    "nextLabel": "Next",
+    "actions": {
+      "view": "View",
+      "download": "Download",
+      "unavailable": "Output file is still syncing. Please refresh in a moment."
+    }
   }
 }

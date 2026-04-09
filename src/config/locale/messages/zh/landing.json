@@ -55,6 +55,10 @@
           ]
         },
         {
+          "title": "AI Video Studio",
+          "url": "/ai-video-studio"
+        },
+        {
           "title": "价格",
           "url": "/pricing",
           "icon": "Wallet"

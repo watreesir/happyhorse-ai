@@ -15,6 +15,7 @@ import {
 
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { useAppContext } from '@/shared/contexts/app';
 import { cn } from '@/shared/lib/utils';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import {
@@ -208,6 +209,7 @@ function FileBadge({
 
 export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const searchParams = useSearchParams();
+  const { fetchUserCredits } = useAppContext();
   const [draft, setDraft] = useState<VideoStudioDraft>(() => ({
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
     id: createDraftId(),
@@ -488,6 +490,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       } else {
         setActiveTaskId(lifecycle === 'completed' ? null : task.id);
       }
+      await fetchUserCredits();
     } catch (error: unknown) {
       if (error instanceof VideoStudioDraftError) {
         setSubmitError(mapDraftErrorToMessage(error, copy));
@@ -496,6 +499,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       }
       updateLifecycle('failed');
       setActiveTaskId(null);
+      await fetchUserCredits();
     }
   };
 

@@ -201,22 +201,38 @@ export function SignUser({
           <Loader2 className="size-4 animate-spin" />
         </div>
       ) : displayUser ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="relative h-10 w-10 rounded-full p-0"
+        <div className="flex items-center gap-2">
+          {userNav?.show_credits && (
+            <Link
+              href="/settings/credits"
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                'border-emerald-200/80 bg-emerald-50/90 text-emerald-700',
+                'dark:border-emerald-400/30 dark:bg-emerald-500/12 dark:text-emerald-200'
+              )}
             >
-              <Avatar>
-                <AvatarImage
-                  src={displayUser.image || ''}
-                  alt={displayUser.name || ''}
-                />
-                <AvatarFallback>{displayUser.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
+              <Coins className="h-3.5 w-3.5" />
+              <span className="tabular-nums">
+                {displayUser.credits?.remainingCredits ?? 0}
+              </span>
+            </Link>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full p-0"
+              >
+                <Avatar>
+                  <AvatarImage
+                    src={displayUser.image || ''}
+                    alt={displayUser.name || ''}
+                  />
+                  <AvatarFallback>{displayUser.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
             {userNav?.show_name && (
               <>
                 <DropdownMenuItem asChild>
@@ -299,8 +315,9 @@ export function SignUser({
                 <span>{t('sign_out_title')}</span>
               </DropdownMenuItem>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ) : (
         <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
           <Button

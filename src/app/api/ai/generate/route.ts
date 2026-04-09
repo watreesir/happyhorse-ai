@@ -1,14 +1,27 @@
 import { envConfigs } from '@/config';
 import { AIMediaType } from '@/extensions/ai';
+import { AITaskStatus } from '@/extensions/ai/types';
 import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
 import { getUuid } from '@/shared/lib/hash';
+import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
 import { respData, respErr } from '@/shared/lib/resp';
-import { createAITask, NewAITask } from '@/shared/models/ai_task';
-import { getRemainingCredits } from '@/shared/models/credit';
+import { createAITask, NewAITask, updateAITaskById } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
 
 export async function POST(request: Request) {
+  const limited = enforceMinIntervalRateLimit(request, {
+    intervalMs: Number(process.env.AI_GENERATE_MIN_INTERVAL_MS) || 1500,
+    keyPrefix: 'ai-generate',
+  });
+  if (limited) {
+    return limited;
+  }
+
+  let reservedTaskId: string | null = null;
+  let reservedCreditId: string | null = null;
+  let externalTaskCreated = false;
+
   try {
     let { provider, mediaType, model, prompt, options, scene } =
       await request.json();
@@ -64,13 +77,28 @@ export async function POST(request: Request) {
       throw new Error('invalid mediaType');
     }
 
-    // check credits
-    const remainingCredits = await getRemainingCredits(user.id);
-    if (remainingCredits < costCredits) {
-      throw new Error('insufficient credits');
-    }
-
     const callbackUrl = `${envConfigs.app_url}/api/ai/notify/${provider}`;
+
+    // Reserve credits first in a DB transaction before calling external provider.
+    // This prevents "generate first, charge later" race conditions under concurrent requests.
+    const newAITask: NewAITask = {
+      id: getUuid(),
+      userId: user.id,
+      mediaType,
+      provider,
+      model,
+      prompt: prompt || '',
+      scene,
+      options: options ? JSON.stringify(options) : null,
+      status: AITaskStatus.PENDING,
+      costCredits,
+      taskId: null,
+      taskInfo: null,
+      taskResult: null,
+    };
+    const reservedTask = await createAITask(newAITask);
+    reservedTaskId = reservedTask.id;
+    reservedCreditId = reservedTask.creditId || null;
 
     const params: any = {
       mediaType,
@@ -87,28 +115,52 @@ export async function POST(request: Request) {
         `ai generate failed, mediaType: ${mediaType}, provider: ${provider}, model: ${model}`
       );
     }
+    externalTaskCreated = true;
 
-    // create ai task
-    const newAITask: NewAITask = {
-      id: getUuid(),
-      userId: user.id,
-      mediaType,
-      provider,
-      model,
-      prompt,
-      scene,
-      options: options ? JSON.stringify(options) : null,
-      status: result.taskStatus,
-      costCredits,
+    const updatedTask = await updateAITaskById(reservedTask.id, {
+      status: result.taskStatus || AITaskStatus.PENDING,
       taskId: result.taskId,
       taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
       taskResult: result.taskResult ? JSON.stringify(result.taskResult) : null,
-    };
-    await createAITask(newAITask);
+    });
 
-    return respData(newAITask);
+    if (!updatedTask) {
+      throw new Error('failed to persist generated task');
+    }
+
+    return respData(updatedTask);
   } catch (e: any) {
+    const errorMessage = e?.message || 'generate failed';
+
+    if (reservedTaskId) {
+      try {
+        // Refund credits only when external generation was not started successfully.
+        // If provider has already accepted the task, keep the charge to avoid free-cost abuse.
+        if (reservedCreditId && !externalTaskCreated) {
+          await updateAITaskById(reservedTaskId, {
+            status: AITaskStatus.FAILED,
+            creditId: reservedCreditId,
+            taskInfo: JSON.stringify({ errorMessage }),
+            taskResult: null,
+          });
+        } else {
+          await updateAITaskById(reservedTaskId, {
+            status: AITaskStatus.FAILED,
+            taskInfo: JSON.stringify({ errorMessage }),
+          });
+        }
+      } catch (rollbackError) {
+        console.error('failed to finalize reserved task after generate error:', rollbackError);
+      }
+    }
+
     console.log('generate failed', e);
-    return respErr(e.message);
+    if (
+      typeof errorMessage === 'string' &&
+      errorMessage.toLowerCase().includes('insufficient credits')
+    ) {
+      return respErr('insufficient credits');
+    }
+    return respErr(errorMessage);
   }
 }

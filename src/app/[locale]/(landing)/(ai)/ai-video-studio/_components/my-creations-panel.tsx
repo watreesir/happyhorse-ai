@@ -194,7 +194,12 @@ export function MyCreationsPanel({
         <div className="space-y-5">
           <div className={cn('grid gap-3 md:grid-cols-2 xl:grid-cols-3')}>
             {items.map((item) => (
-              <VideoCard key={item.id} item={item} statusLabels={statusLabels} />
+              <VideoCard
+                key={item.id}
+                item={item}
+                statusLabels={statusLabels}
+                actionsCopy={copy.actions}
+              />
             ))}
           </div>
 

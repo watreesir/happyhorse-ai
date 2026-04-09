@@ -20,37 +20,46 @@ function extractVideoUrls(result: unknown): string[] {
   }
 
   const data = result as Record<string, unknown>;
-  const videos = data.videos;
-  if (Array.isArray(videos)) {
-    return videos
+  const fromArray = (value: unknown): string[] => {
+    if (!Array.isArray(value)) return [];
+    return value
       .map((item) => {
         if (typeof item === 'string') return item;
         if (item && typeof item === 'object') {
-          const candidate = (item as Record<string, unknown>).url;
+          const source = item as Record<string, unknown>;
+          const candidate =
+            source.url ?? source.uri ?? source.video ?? source.src ?? source.videoUrl;
           return typeof candidate === 'string' ? candidate : null;
         }
         return null;
       })
       .filter((item): item is string => Boolean(item));
+  };
+
+  const videos = data.videos;
+  const videoList = fromArray(videos);
+  if (videoList.length > 0) {
+    return videoList;
   }
 
   const output = data.output ?? data.video ?? data.data;
   if (typeof output === 'string') {
     return [output];
   }
-  if (Array.isArray(output)) {
-    return output
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        if (item && typeof item === 'object') {
-          const candidate =
-            (item as Record<string, unknown>).url ??
-            (item as Record<string, unknown>).videoUrl;
-          return typeof candidate === 'string' ? candidate : null;
-        }
-        return null;
-      })
-      .filter((item): item is string => Boolean(item));
+
+  const outputList = fromArray(output);
+  if (outputList.length > 0) {
+    return outputList;
+  }
+
+  if (typeof data.resultJson === 'string') {
+    const parsedResultJson = parseJson(data.resultJson);
+    if (parsedResultJson) {
+      const resultUrls = fromArray((parsedResultJson as Record<string, unknown>).resultUrls);
+      if (resultUrls.length > 0) {
+        return resultUrls;
+      }
+    }
   }
 
   return [];
