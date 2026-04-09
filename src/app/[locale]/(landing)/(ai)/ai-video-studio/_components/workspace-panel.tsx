@@ -34,7 +34,11 @@ import {
 
 import { STUDIO_ASPECT_RATIOS } from '../_data/mock-data';
 import { toStudioErrorMessage } from '../_lib/error-messages';
-import { dispatchVideoStudioRefresh } from '../_lib/events';
+import {
+  VIDEO_STUDIO_RECREATE_EVENT,
+  VideoStudioRecreateEventDetail,
+  dispatchVideoStudioRefresh,
+} from '../_lib/events';
 import {
   StudioAudioSetting,
   StudioCopy,
@@ -435,6 +439,42 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       window.clearInterval(timer);
     };
   }, [activeTaskId, copy.statusRetrying, copy.statusSyncError, errors, fetchUserCredits]);
+
+  // Listen for Recreate events dispatched by the Inspiration panel
+  useEffect(() => {
+    const handler = async (e: CustomEvent<VideoStudioRecreateEventDetail>) => {
+      const { mode, prompt, i2vMode, imageUrl } = e.detail;
+
+      // Apply mode + prompt immediately; clear any previous first-frame image
+      setDraft((prev) =>
+        mergeStudioDraft(prev, { mode, prompt, i2vMode, imageFirstFrame: null })
+      );
+      setSubmitError(null);
+      setHandoffNotice(null);
+
+      // If image-to-video with a reference image, fetch → upload → fill slot
+      if (mode === 'image-to-video' && imageUrl) {
+        setUploading('imageFirstFrame', true);
+        try {
+          const res = await fetch(imageUrl);
+          const blob = await res.blob();
+          const filename = imageUrl.split('/').pop() ?? 'reference.jpg';
+          const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+          const assets = await uploadStudioMediaFiles([file]);
+          if (assets[0]) {
+            setDraft((prev) => mergeStudioDraft(prev, { imageFirstFrame: assets[0] }));
+          }
+        } catch {
+          // CORS or network failure — user can upload manually
+        } finally {
+          setUploading('imageFirstFrame', false);
+        }
+      }
+    };
+
+    window.addEventListener(VIDEO_STUDIO_RECREATE_EVENT, handler as EventListener);
+    return () => window.removeEventListener(VIDEO_STUDIO_RECREATE_EVENT, handler as EventListener);
+  }, []);
 
   const handleUploadSingle = async (
     key: SingleUploadKey,

@@ -18,10 +18,7 @@ export function CreatePanel({ copy }: CreatePanelProps) {
         </div>
 
         <div className="xl:col-start-2">
-          <InspirationPanel
-            copy={copy.create.inspiration}
-            statusLabels={copy.create.status}
-          />
+          <InspirationPanel copy={copy.create.inspiration} />
         </div>
 
         <div className="xl:col-start-3">

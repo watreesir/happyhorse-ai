@@ -113,7 +113,7 @@
     "inspiration": {
       "panelTitle": "Inspiration",
       "panelHint": "按瀑布流组织的参考片段，用于快速套用创作方向。",
-      "applyButton": "套用此方向",
+      "applyButton": "Recreate",
       "empty": "当前暂无参考卡片。",
       "recipePrefix": "模板"
     },

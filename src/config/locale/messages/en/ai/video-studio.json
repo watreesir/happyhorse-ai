@@ -113,7 +113,7 @@
     "inspiration": {
       "panelTitle": "Inspiration",
       "panelHint": "Curated motion references arranged in a masonry feed.",
-      "applyButton": "Use This Direction",
+      "applyButton": "Recreate",
       "empty": "No reference cards available right now.",
       "recipePrefix": "Template"
     },
