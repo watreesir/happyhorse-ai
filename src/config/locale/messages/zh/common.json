@@ -42,7 +42,9 @@
     "verify_email_account_mismatch": "当前已登录 {current}，本页面等待 {expected} 的验证结果。",
     "resend_verification_countdown": "重新发送验证邮件（{seconds}秒）",
     "resend_verification_wait": "请等待 {seconds} 秒后再重新发送。",
-    "back_to_sign_in": "返回登录"
+    "back_to_sign_in": "返回登录",
+    "daily_credits_claimed": "获得 {credits} 积分",
+    "daily_credits_already_claimed": "今天已获得 {credits} 积分，明天再来吧"
   },
   "payment": {
     "choose_payment_method": "选择支付方式",

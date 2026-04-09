@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 import { Coins, LayoutDashboard, Loader2, LogOut, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 import { authClient, signOut, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
@@ -54,6 +55,7 @@ export function SignUser({
   const {
     configs,
     fetchConfigs,
+    fetchUserCredits,
     setIsShowSignModal,
     isCheckSign,
     setIsCheckSign,
@@ -73,6 +75,7 @@ export function SignUser({
 
   // one tap initialized
   const oneTapInitialized = useRef(false);
+  const dailyCreditsCheckedRef = useRef(false);
 
   useEffect(() => {
     fetchConfigs();
@@ -138,6 +141,58 @@ export function SignUser({
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPending, sessionUser, user?.id]);
+
+  useEffect(() => {
+    if (!mounted || isPending || !displayUser?.id) {
+      return;
+    }
+
+    if (dailyCreditsCheckedRef.current) {
+      return;
+    }
+
+    dailyCreditsCheckedRef.current = true;
+
+    void (async () => {
+      try {
+        const resp = await fetch('/api/user/claim-daily-credits', {
+          method: 'POST',
+        });
+        if (!resp.ok) {
+          throw new Error(`fetch failed with status: ${resp.status}`);
+        }
+
+        const { code, message, data } = await resp.json();
+        if (code !== 0 || !data) {
+          throw new Error(message || 'claim daily credits failed');
+        }
+
+        if (data.claimed) {
+          await fetchUserCredits();
+          toast.success(
+            t('daily_credits_claimed', {
+              credits: data.credits,
+            }),
+            { position: 'bottom-right' }
+          );
+          return;
+        }
+
+        if (data.alreadyClaimed) {
+          toast.message(
+            t('daily_credits_already_claimed', {
+              credits: data.credits,
+            }),
+            { position: 'bottom-right' }
+          );
+        }
+      } catch (e) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('claim daily credits failed:', e);
+        }
+      }
+    })();
+  }, [displayUser?.id, fetchUserCredits, isPending, mounted, t]);
 
   return (
     <>

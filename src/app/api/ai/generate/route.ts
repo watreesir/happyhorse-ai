@@ -1,5 +1,6 @@
 import { envConfigs } from '@/config';
 import { AIMediaType } from '@/extensions/ai';
+import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
 import { getUuid } from '@/shared/lib/hash';
 import { respData, respErr } from '@/shared/lib/resp';
 import { createAITask, NewAITask } from '@/shared/models/ai_task';
@@ -39,32 +40,25 @@ export async function POST(request: Request) {
       throw new Error('no auth, please sign in');
     }
 
-    // todo: get cost credits from settings
-    let costCredits = 2;
+    // MVP: keep all generation scenes at a fixed cost.
+    const costCredits = FIXED_AI_TASK_CREDIT_COST;
 
     if (mediaType === AIMediaType.IMAGE) {
       // generate image
-      if (scene === 'image-to-image') {
-        costCredits = 4;
-      } else if (scene === 'text-to-image') {
-        costCredits = 2;
-      } else {
+      if (scene !== 'image-to-image' && scene !== 'text-to-image') {
         throw new Error('invalid scene');
       }
     } else if (mediaType === AIMediaType.VIDEO) {
       // generate video
-      if (scene === 'text-to-video') {
-        costCredits = 6;
-      } else if (scene === 'image-to-video') {
-        costCredits = 8;
-      } else if (scene === 'video-to-video') {
-        costCredits = 10;
-      } else {
+      if (
+        scene !== 'text-to-video' &&
+        scene !== 'image-to-video' &&
+        scene !== 'video-to-video'
+      ) {
         throw new Error('invalid scene');
       }
     } else if (mediaType === AIMediaType.MUSIC) {
       // generate music
-      costCredits = 10;
       scene = 'text-to-music';
     } else {
       throw new Error('invalid mediaType');

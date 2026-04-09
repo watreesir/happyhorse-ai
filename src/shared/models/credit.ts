@@ -1,7 +1,24 @@
-import { and, asc, count, desc, eq, gt, isNull, or, sum } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  isNull,
+  like,
+  or,
+  sum,
+} from 'drizzle-orm';
 
 import { db } from '@/core/db';
-import { credit } from '@/config/db/schema';
+import { credit, user as userTable } from '@/config/db/schema';
+import {
+  DAILY_LOGIN_BONUS_CREDITS,
+  DAILY_LOGIN_BONUS_DESCRIPTION,
+  DAILY_LOGIN_BONUS_METADATA_TYPE,
+  DAILY_LOGIN_BONUS_TIMEZONE,
+} from '@/shared/lib/credits';
 import { getSnowId, getUuid } from '@/shared/lib/hash';
 
 import { getAllConfigs } from './config';
@@ -32,6 +49,30 @@ export enum CreditTransactionScene {
   RENEWAL = 'renewal', // renewal
   GIFT = 'gift', // gift
   REWARD = 'reward', // reward
+}
+
+export type DailyCreditClaimResult = {
+  claimed: boolean;
+  alreadyClaimed: boolean;
+  credits: number;
+  dayKey: string;
+};
+
+type DailyCreditUser = {
+  id: string;
+  email?: string | null;
+};
+
+function getDateKeyByTimeZone(
+  date: Date = new Date(),
+  timeZone: string = DAILY_LOGIN_BONUS_TIMEZONE
+): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
 }
 
 // Calculate credit expiration time based on order and subscription info
@@ -349,6 +390,89 @@ export async function grantCreditsForNewUser(user: User) {
   });
 
   return newCredit;
+}
+
+export async function claimDailyCreditsForUser(
+  user: DailyCreditUser
+): Promise<DailyCreditClaimResult> {
+  const credits = DAILY_LOGIN_BONUS_CREDITS;
+  const dayKey = getDateKeyByTimeZone();
+
+  if (credits <= 0) {
+    return {
+      claimed: false,
+      alreadyClaimed: true,
+      credits: 0,
+      dayKey,
+    };
+  }
+
+  return db().transaction(async (tx: any) => {
+    await tx
+      .select({ id: userTable.id })
+      .from(userTable)
+      .where(eq(userTable.id, user.id))
+      .limit(1)
+      .for('update');
+
+    const [existingDailyReward] = await tx
+      .select({ id: credit.id })
+      .from(credit)
+      .where(
+        and(
+          eq(credit.userId, user.id),
+          eq(credit.transactionType, CreditTransactionType.GRANT),
+          eq(credit.transactionScene, CreditTransactionScene.REWARD),
+          like(
+            credit.metadata,
+            `%\"type\":\"${DAILY_LOGIN_BONUS_METADATA_TYPE}\"%`
+          ),
+          like(credit.metadata, `%\"dayKey\":\"${dayKey}\"%`)
+        )
+      )
+      .limit(1);
+
+    if (existingDailyReward) {
+      return {
+        claimed: false,
+        alreadyClaimed: true,
+        credits,
+        dayKey,
+      };
+    }
+
+    const metadata = JSON.stringify({
+      type: DAILY_LOGIN_BONUS_METADATA_TYPE,
+      dayKey,
+      timezone: DAILY_LOGIN_BONUS_TIMEZONE,
+    });
+
+    const newCredit: NewCredit = {
+      id: getUuid(),
+      userId: user.id,
+      userEmail: user.email || null,
+      orderNo: '',
+      subscriptionNo: '',
+      transactionNo: getSnowId(),
+      transactionType: CreditTransactionType.GRANT,
+      transactionScene: CreditTransactionScene.REWARD,
+      credits,
+      remainingCredits: credits,
+      description: DAILY_LOGIN_BONUS_DESCRIPTION,
+      expiresAt: null,
+      status: CreditStatus.ACTIVE,
+      metadata,
+    };
+
+    await tx.insert(credit).values(newCredit);
+
+    return {
+      claimed: true,
+      alreadyClaimed: false,
+      credits,
+      dayKey,
+    };
+  });
 }
 
 // grant credits for user
