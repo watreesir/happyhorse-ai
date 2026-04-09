@@ -157,6 +157,11 @@ export type StudioCopy = {
       guestGenerateHint: string;
       guestTaskBanner: string;
       guestTaskBannerAction: string;
+      guestLoginModalTitle: string;
+      guestLoginModalContinue: string;
+      guestLoginModalNotify: string;
+      guestLoginModalAction: string;
+      guestLoginModalLater: string;
       submitFromHero: string;
       helper: string;
       statusLabel: string;

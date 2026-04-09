@@ -507,6 +507,55 @@ export const aiTask = table(
   ]
 );
 
+export const guestTrialQuota = table(
+  'guest_trial_quota',
+  {
+    id: text('id').primaryKey(),
+    tokenHash: text('token_hash').notNull().unique(),
+    deviceHash: text('device_hash').notNull(),
+    ipHash: text('ip_hash').notNull(),
+    remainingCredits: integer('remaining_credits').notNull().default(5),
+    usedTaskCount: integer('used_task_count').notNull().default(0),
+    blocked: boolean('blocked').notNull().default(false),
+    blockReason: text('block_reason'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    lastSeenAt: timestamp('last_seen_at').defaultNow().notNull(),
+    consumedAt: timestamp('consumed_at'),
+  },
+  (table) => [
+    index('idx_guest_trial_quota_ip_created').on(table.ipHash, table.createdAt),
+    index('idx_guest_trial_quota_device_created').on(
+      table.deviceHash,
+      table.createdAt
+    ),
+  ]
+);
+
+export const guestTrialTask = table(
+  'guest_trial_task',
+  {
+    id: text('id').primaryKey(),
+    quotaId: text('quota_id')
+      .notNull()
+      .references(() => guestTrialQuota.id, { onDelete: 'cascade' }),
+    taskId: text('task_id')
+      .notNull()
+      .unique()
+      .references(() => aiTask.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_guest_trial_task_quota_created').on(
+      table.quotaId,
+      table.createdAt
+    ),
+  ]
+);
+
 export const chat = table(
   'chat',
   {

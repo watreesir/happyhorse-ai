@@ -1,14 +1,68 @@
+import { cookies } from 'next/headers';
+
 import { envConfigs } from '@/config';
 import { AIMediaType } from '@/extensions/ai';
 import { AITaskStatus } from '@/extensions/ai/types';
 import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
 import { getUuid } from '@/shared/lib/hash';
+import { getClientIp } from '@/shared/lib/ip';
 import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
 import { respData, respErr } from '@/shared/lib/resp';
-import { createAITask, NewAITask, updateAITaskById } from '@/shared/models/ai_task';
+import {
+  createAITask,
+  NewAITask,
+  updateAITaskById,
+} from '@/shared/models/ai_task';
+import {
+  ensureGuestTrialSystemUser,
+  GUEST_DEVICE_ID_COOKIE,
+  GUEST_TRIAL_COOKIE_MAX_AGE_SECONDS,
+  GUEST_TRIAL_TOKEN_COOKIE,
+  linkGuestTaskToToken,
+  refundGuestTrialCredits,
+  reserveGuestTrialCredits,
+} from '@/shared/models/guest_trial';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
 import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
+
+const GUEST_TRIAL_ENABLED = process.env.GUEST_TRIAL_ENABLED !== 'false';
+
+async function getGuestIdentity() {
+  const cookieStore = await cookies();
+  let token = cookieStore.get(GUEST_TRIAL_TOKEN_COOKIE)?.value?.trim() || '';
+  let deviceId = cookieStore.get(GUEST_DEVICE_ID_COOKIE)?.value?.trim() || '';
+
+  const secure = process.env.NODE_ENV === 'production';
+
+  if (!token) {
+    token = getUuid();
+    cookieStore.set({
+      name: GUEST_TRIAL_TOKEN_COOKIE,
+      value: token,
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+      path: '/',
+      maxAge: GUEST_TRIAL_COOKIE_MAX_AGE_SECONDS,
+    });
+  }
+
+  if (!deviceId) {
+    deviceId = getUuid();
+    cookieStore.set({
+      name: GUEST_DEVICE_ID_COOKIE,
+      value: deviceId,
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+      path: '/',
+      maxAge: GUEST_TRIAL_COOKIE_MAX_AGE_SECONDS,
+    });
+  }
+
+  return { token, deviceId };
+}
 
 export async function POST(request: Request) {
   const limited = enforceMinIntervalRateLimit(request, {
@@ -21,6 +75,9 @@ export async function POST(request: Request) {
 
   let reservedTaskId: string | null = null;
   let reservedCreditId: string | null = null;
+  let reservedGuestToken: string | null = null;
+  let reservedGuestCredits = 0;
+  let isGuestTask = false;
   let externalTaskCreated = false;
 
   try {
@@ -48,14 +105,8 @@ export async function POST(request: Request) {
       throw new Error('invalid provider');
     }
 
-    // get current user
-    const user = await getUserInfo();
-    if (!user) {
-      throw new Error('no auth, please sign in');
-    }
-
     // MVP: keep all generation scenes at a fixed cost.
-    const costCredits = FIXED_AI_TASK_CREDIT_COST;
+    let costCredits = FIXED_AI_TASK_CREDIT_COST;
 
     if (mediaType === AIMediaType.IMAGE) {
       // generate image
@@ -78,13 +129,40 @@ export async function POST(request: Request) {
       throw new Error('invalid mediaType');
     }
 
+    const user = await getUserInfo();
+    let taskUserId = user?.id || '';
+
+    if (!user) {
+      if (!GUEST_TRIAL_ENABLED || mediaType !== AIMediaType.VIDEO) {
+        throw new Error('no auth, please sign in');
+      }
+
+      const guestIdentity = await getGuestIdentity();
+      const ip = await getClientIp();
+
+      await reserveGuestTrialCredits({
+        token: guestIdentity.token,
+        deviceId: guestIdentity.deviceId,
+        ip,
+        userAgent: request.headers.get('user-agent') || '',
+        acceptLanguage: request.headers.get('accept-language') || '',
+        credits: costCredits,
+      });
+
+      taskUserId = await ensureGuestTrialSystemUser();
+      reservedGuestToken = guestIdentity.token;
+      reservedGuestCredits = costCredits;
+      isGuestTask = true;
+      costCredits = 0;
+    }
+
     const callbackUrl = `${envConfigs.app_url}/api/ai/notify/${provider}`;
 
     // Reserve credits first in a DB transaction before calling external provider.
     // This prevents "generate first, charge later" race conditions under concurrent requests.
     const newAITask: NewAITask = {
       id: getUuid(),
-      userId: user.id,
+      userId: taskUserId,
       mediaType,
       provider,
       model,
@@ -100,6 +178,12 @@ export async function POST(request: Request) {
     const reservedTask = await createAITask(newAITask);
     reservedTaskId = reservedTask.id;
     reservedCreditId = reservedTask.creditId || null;
+    if (isGuestTask && reservedGuestToken) {
+      await linkGuestTaskToToken({
+        token: reservedGuestToken,
+        taskId: reservedTask.id,
+      });
+    }
 
     const params: any = {
       mediaType,
@@ -156,7 +240,26 @@ export async function POST(request: Request) {
           });
         }
       } catch (rollbackError) {
-        console.error('failed to finalize reserved task after generate error:', rollbackError);
+        console.error(
+          'failed to finalize reserved task after generate error:',
+          rollbackError
+        );
+      }
+    }
+
+    if (
+      isGuestTask &&
+      reservedGuestToken &&
+      reservedGuestCredits > 0 &&
+      !externalTaskCreated
+    ) {
+      try {
+        await refundGuestTrialCredits({
+          token: reservedGuestToken,
+          credits: reservedGuestCredits,
+        });
+      } catch (refundError) {
+        console.error('failed to refund guest trial credits:', refundError);
       }
     }
 

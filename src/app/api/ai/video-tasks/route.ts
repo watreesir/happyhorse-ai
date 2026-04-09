@@ -1,6 +1,10 @@
 import { AIMediaType } from '@/extensions/ai';
 import { respData, respErr } from '@/shared/lib/resp';
 import { getAITasks, getAITasksCount } from '@/shared/models/ai_task';
+import {
+  getGuestTrialTokenFromRequest,
+  getGuestVideoTasksByToken,
+} from '@/shared/models/guest_trial';
 import { getUserInfo } from '@/shared/models/user';
 
 type RawTask = Awaited<ReturnType<typeof getAITasks>>[number];
@@ -28,7 +32,11 @@ function extractVideoUrls(result: unknown): string[] {
         if (item && typeof item === 'object') {
           const source = item as Record<string, unknown>;
           const candidate =
-            source.url ?? source.uri ?? source.video ?? source.src ?? source.videoUrl;
+            source.url ??
+            source.uri ??
+            source.video ??
+            source.src ??
+            source.videoUrl;
           return typeof candidate === 'string' ? candidate : null;
         }
         return null;
@@ -55,7 +63,9 @@ function extractVideoUrls(result: unknown): string[] {
   if (typeof data.resultJson === 'string') {
     const parsedResultJson = parseJson(data.resultJson);
     if (parsedResultJson) {
-      const resultUrls = fromArray((parsedResultJson as Record<string, unknown>).resultUrls);
+      const resultUrls = fromArray(
+        (parsedResultJson as Record<string, unknown>).resultUrls
+      );
       if (resultUrls.length > 0) {
         return resultUrls;
       }
@@ -70,9 +80,7 @@ function normalizeTask(task: RawTask) {
   const taskResult = parseJson(task.taskResult);
   const options = parseJson(task.options);
   const previewUrl =
-    extractVideoUrls(taskInfo)[0] ??
-    extractVideoUrls(taskResult)[0] ??
-    null;
+    extractVideoUrls(taskInfo)[0] ?? extractVideoUrls(taskResult)[0] ?? null;
 
   const errorMessage =
     (taskInfo &&
@@ -92,9 +100,13 @@ function normalizeTask(task: RawTask) {
     previewUrl,
     errorMessage,
     createdAt:
-      task.createdAt instanceof Date ? task.createdAt.toISOString() : task.createdAt,
+      task.createdAt instanceof Date
+        ? task.createdAt.toISOString()
+        : task.createdAt,
     updatedAt:
-      task.updatedAt instanceof Date ? task.updatedAt.toISOString() : task.updatedAt,
+      task.updatedAt instanceof Date
+        ? task.updatedAt.toISOString()
+        : task.updatedAt,
   };
 }
 
@@ -108,27 +120,64 @@ function parsePositiveInteger(input: string | null, fallback: number) {
 
 export async function GET(request: Request) {
   try {
-    const user = await getUserInfo();
-    if (!user) {
-      return respErr('no auth, please sign in');
-    }
-
     const { searchParams } = new URL(request.url);
     const page = parsePositiveInteger(searchParams.get('page'), 1);
-    const limit = Math.min(parsePositiveInteger(searchParams.get('limit'), 12), 30);
+    const limit = Math.min(
+      parsePositiveInteger(searchParams.get('limit'), 12),
+      30
+    );
 
-    const total = await getAITasksCount({
-      userId: user.id,
-      mediaType: AIMediaType.VIDEO,
-    });
+    const user = await getUserInfo();
+    let total = 0;
+    let safePage = 1;
+    let items: RawTask[] = [];
+
+    if (user) {
+      total = await getAITasksCount({
+        userId: user.id,
+        mediaType: AIMediaType.VIDEO,
+      });
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      safePage = Math.min(page, totalPages);
+      items = await getAITasks({
+        userId: user.id,
+        mediaType: AIMediaType.VIDEO,
+        page: safePage,
+        limit,
+      });
+    } else {
+      const guestToken = getGuestTrialTokenFromRequest(request);
+      if (!guestToken) {
+        return respData({
+          items: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 1,
+          },
+        });
+      }
+
+      let guestResult = await getGuestVideoTasksByToken({
+        token: guestToken,
+        page,
+        limit,
+      });
+      total = guestResult.total;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      safePage = Math.min(page, totalPages);
+      if (safePage !== page) {
+        guestResult = await getGuestVideoTasksByToken({
+          token: guestToken,
+          page: safePage,
+          limit,
+        });
+      }
+      items = guestResult.items;
+    }
+
     const totalPages = Math.max(1, Math.ceil(total / limit));
-    const safePage = Math.min(page, totalPages);
-    const items = await getAITasks({
-      userId: user.id,
-      mediaType: AIMediaType.VIDEO,
-      page: safePage,
-      limit,
-    });
 
     return respData({
       items: items.map((item) => normalizeTask(item)),

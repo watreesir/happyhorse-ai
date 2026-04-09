@@ -1,6 +1,14 @@
 'use client';
 
-import { ChangeEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   BellRing,
@@ -16,11 +24,21 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
-import { cn } from '@/shared/lib/utils';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
+import { cn } from '@/shared/lib/utils';
 import {
+  buildVideoTaskPayloadFromDraft,
+  mergeStudioDraft,
+  parseStudioDraftPayload,
   VIDEO_STUDIO_DEFAULT_DRAFT,
   VIDEO_STUDIO_DRAFT_SESSION_KEY,
   VideoStudioDraft,
@@ -28,17 +46,14 @@ import {
   VideoStudioI2VMode,
   VideoStudioMode,
   VideoStudioUploadedAsset,
-  buildVideoTaskPayloadFromDraft,
-  mergeStudioDraft,
-  parseStudioDraftPayload,
 } from '@/shared/lib/video-studio-workflow';
 
 import { STUDIO_ASPECT_RATIOS } from '../_data/mock-data';
 import { toStudioErrorMessage } from '../_lib/error-messages';
 import {
+  dispatchVideoStudioRefresh,
   VIDEO_STUDIO_RECREATE_EVENT,
   VideoStudioRecreateEventDetail,
-  dispatchVideoStudioRefresh,
 } from '../_lib/events';
 import {
   StudioAudioSetting,
@@ -48,8 +63,8 @@ import {
   StudioTaskLifecycle,
 } from '../_lib/types';
 import {
-  POLL_INTERVAL_MS,
   generateVideoTask,
+  POLL_INTERVAL_MS,
   queryVideoTask,
   toLifecycle,
 } from '../_lib/video-task-client';
@@ -74,6 +89,7 @@ type SingleUploadKey =
 
 const MAX_REFERENCE_MATERIALS = 5;
 const MAX_POLL_FAILURES = 3;
+const GUEST_LOGIN_MODAL_SHOWN_KEY = 'studio:guest-login-modal:shown-task-ids';
 
 function createDraftId() {
   return `studio-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -90,7 +106,8 @@ function mapDraftErrorToMessage(
   error: VideoStudioDraftError,
   copy: StudioCopy['create']['workspace']
 ) {
-  if (error.code === 'PROMPT_REQUIRED') return copy.validationErrors.promptRequired;
+  if (error.code === 'PROMPT_REQUIRED')
+    return copy.validationErrors.promptRequired;
   if (error.code === 'IMAGE_FIRST_FRAME_REQUIRED') {
     return copy.validationErrors.imageFirstFrameRequired;
   }
@@ -129,13 +146,48 @@ function i2vModeFromSearch(value: string | null): VideoStudioI2VMode | null {
   return null;
 }
 
-function parseHandoffLifecycle(value: string | null): StudioTaskLifecycle | null {
+function parseHandoffLifecycle(
+  value: string | null
+): StudioTaskLifecycle | null {
   if (value === 'queued') return 'queued';
   if (value === 'processing') return 'processing';
   if (value === 'completed') return 'completed';
   if (value === 'failed') return 'failed';
   if (value === 'submitting') return 'submitting';
   return null;
+}
+
+function hasGuestLoginModalShown(taskId: string) {
+  if (typeof window === 'undefined' || !taskId) return false;
+  try {
+    const raw = window.sessionStorage.getItem(GUEST_LOGIN_MODAL_SHOWN_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return false;
+    return parsed.includes(taskId);
+  } catch {
+    return false;
+  }
+}
+
+function markGuestLoginModalShown(taskId: string) {
+  if (typeof window === 'undefined' || !taskId) return;
+  try {
+    const raw = window.sessionStorage.getItem(GUEST_LOGIN_MODAL_SHOWN_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    const taskIds = Array.isArray(parsed)
+      ? parsed.filter((item) => typeof item === 'string')
+      : [];
+    if (!taskIds.includes(taskId)) {
+      taskIds.push(taskId);
+      window.sessionStorage.setItem(
+        GUEST_LOGIN_MODAL_SHOWN_KEY,
+        JSON.stringify(taskIds.slice(-20))
+      );
+    }
+  } catch {
+    // ignore sessionStorage errors
+  }
 }
 
 function FileBadge({
@@ -174,14 +226,12 @@ function FileBadge({
         <span className="rounded-md bg-zinc-200/80 p-1.5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {icon}
         </span>
-        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">{label}</p>
+        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+          {label}
+        </p>
       </div>
       <div className="rounded-lg border border-dashed border-zinc-300/80 bg-white/80 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700/80 dark:bg-zinc-900/70 dark:text-zinc-300">
-        {uploading
-          ? uploadingText
-          : file
-            ? `${file.name}`
-            : `${uploadAction}`}
+        {uploading ? uploadingText : file ? `${file.name}` : `${uploadAction}`}
       </div>
       <div className="flex items-center gap-2">
         <label
@@ -215,15 +265,20 @@ function FileBadge({
 
 export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const searchParams = useSearchParams();
-  const { fetchUserCredits, isCheckSign, setIsShowSignModal, user } = useAppContext();
+  const { fetchUserCredits, isCheckSign, setIsShowSignModal, user } =
+    useAppContext();
   const [draft, setDraft] = useState<VideoStudioDraft>(() => ({
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
     id: createDraftId(),
     source: 'studio',
   }));
-  const [taskLifecycle, setTaskLifecycle] = useState<StudioTaskLifecycle>('idle');
+  const [taskLifecycle, setTaskLifecycle] =
+    useState<StudioTaskLifecycle>('idle');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  const [guestPendingTaskId, setGuestPendingTaskId] = useState<string | null>(null);
+  const [guestPendingTaskId, setGuestPendingTaskId] = useState<string | null>(
+    null
+  );
+  const [showGuestLoginModal, setShowGuestLoginModal] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
   const [uploadingMap, setUploadingMap] = useState<Record<string, boolean>>({});
@@ -234,13 +289,16 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const guestHintCooldownRef = useRef(0);
   const isGuestUser = !user && !isCheckSign;
 
-  const notifyGenerating = useCallback((taskId: string) => {
-    if (!taskId || lastGeneratingToastTaskIdRef.current === taskId) {
-      return;
-    }
-    lastGeneratingToastTaskIdRef.current = taskId;
-    toast.success(copy.generatingToast);
-  }, [copy.generatingToast]);
+  const notifyGenerating = useCallback(
+    (taskId: string) => {
+      if (!taskId || lastGeneratingToastTaskIdRef.current === taskId) {
+        return;
+      }
+      lastGeneratingToastTaskIdRef.current = taskId;
+      toast.success(copy.generatingToast);
+    },
+    [copy.generatingToast]
+  );
 
   const notifyGuestGenerateHint = useCallback(() => {
     if (!isGuestUser) return;
@@ -249,6 +307,20 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     guestHintCooldownRef.current = now;
     toast.message(copy.guestGenerateHint);
   }, [copy.guestGenerateHint, isGuestUser]);
+
+  const openGuestLoginModalForTask = useCallback(
+    (taskId: string | null) => {
+      if (!isGuestUser || !taskId) {
+        return;
+      }
+      if (hasGuestLoginModalShown(taskId)) {
+        return;
+      }
+      markGuestLoginModalShown(taskId);
+      setShowGuestLoginModal(true);
+    },
+    [isGuestUser]
+  );
 
   const updateLifecycle = (nextLifecycle: StudioTaskLifecycle) => {
     lifecycleRef.current = nextLifecycle;
@@ -291,10 +363,15 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           notifyGuestGenerateHint();
         }
       }
+      if (submission.lifecycle !== 'failed') {
+        openGuestLoginModalForTask(submission.taskId);
+      }
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
       if (submission.errorMessage) {
-        setSubmitError(toStudioErrorMessage(submission.errorMessage, errors, 'submitFailed'));
+        setSubmitError(
+          toStudioErrorMessage(submission.errorMessage, errors, 'submitFailed')
+        );
       } else {
         setSubmitError(null);
       }
@@ -303,7 +380,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
     if (submission?.errorMessage) {
       updateLifecycle('failed');
-      setSubmitError(toStudioErrorMessage(submission.errorMessage, errors, 'submitFailed'));
+      setSubmitError(
+        toStudioErrorMessage(submission.errorMessage, errors, 'submitFailed')
+      );
       setActiveTaskId(null);
       setGuestPendingTaskId(null);
       setHandoffNotice(null);
@@ -322,16 +401,23 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     const from = searchParams?.get('from');
     const draftId = searchParams?.get('draftId');
     const queryMode = modeFromSearch(searchParams?.get('mode') ?? null);
-    const queryI2VMode = i2vModeFromSearch(searchParams?.get('i2vMode') ?? null);
-    const queryRatio = (searchParams?.get('ratio') ??
-      null) as VideoStudioDraft['ratio'] | null;
+    const queryI2VMode = i2vModeFromSearch(
+      searchParams?.get('i2vMode') ?? null
+    );
+    const queryRatio = (searchParams?.get('ratio') ?? null) as
+      | VideoStudioDraft['ratio']
+      | null;
     const queryPrompt = searchParams?.get('prompt') ?? '';
-    const queryResolution = (searchParams?.get('resolution') ??
-      null) as VideoStudioDraft['resolution'] | null;
+    const queryResolution = (searchParams?.get('resolution') ?? null) as
+      | VideoStudioDraft['resolution']
+      | null;
     const queryDuration = searchParams?.get('duration');
-    const queryAudio = (searchParams?.get('audioSetting') ??
-      null) as VideoStudioDraft['audioSetting'] | null;
-    const handoffLifecycle = parseHandoffLifecycle(searchParams?.get('handoffStatus') ?? null);
+    const queryAudio = (searchParams?.get('audioSetting') ?? null) as
+      | VideoStudioDraft['audioSetting']
+      | null;
+    const handoffLifecycle = parseHandoffLifecycle(
+      searchParams?.get('handoffStatus') ?? null
+    );
     const handoffTaskId = searchParams?.get('taskId');
 
     let nextDraft = mergeStudioDraft(draft, {
@@ -340,7 +426,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       ratio: queryRatio ?? draft.ratio,
       prompt: queryPrompt || draft.prompt,
       resolution: queryResolution ?? draft.resolution,
-      duration: queryDuration ? Number.parseInt(queryDuration, 10) : draft.duration,
+      duration: queryDuration
+        ? Number.parseInt(queryDuration, 10)
+        : draft.duration,
       audioSetting: queryAudio ?? draft.audioSetting,
     });
 
@@ -384,6 +472,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       } else {
         setGuestPendingTaskId(null);
       }
+      if (handoffLifecycle !== 'failed') {
+        openGuestLoginModalForTask(handoffTaskId);
+      }
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
       void fetchUserCredits();
@@ -402,14 +493,33 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     isGuestUser,
     notifyGenerating,
     notifyGuestGenerateHint,
+    openGuestLoginModalForTask,
     searchParams,
   ]);
 
   useEffect(() => {
     if (!isGuestUser) {
       setGuestPendingTaskId(null);
+      return;
     }
-  }, [isGuestUser]);
+
+    if (
+      activeTaskId &&
+      (taskLifecycle === 'queued' ||
+        taskLifecycle === 'processing' ||
+        taskLifecycle === 'submitting')
+    ) {
+      setGuestPendingTaskId((prev) => prev ?? activeTaskId);
+      notifyGuestGenerateHint();
+      openGuestLoginModalForTask(activeTaskId);
+    }
+  }, [
+    activeTaskId,
+    isGuestUser,
+    notifyGuestGenerateHint,
+    openGuestLoginModalForTask,
+    taskLifecycle,
+  ]);
 
   useEffect(() => {
     if (!activeTaskId) {
@@ -486,7 +596,13 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       canceled = true;
       window.clearInterval(timer);
     };
-  }, [activeTaskId, copy.statusRetrying, copy.statusSyncError, errors, fetchUserCredits]);
+  }, [
+    activeTaskId,
+    copy.statusRetrying,
+    copy.statusSyncError,
+    errors,
+    fetchUserCredits,
+  ]);
 
   // Listen for Recreate events dispatched by the Inspiration panel
   useEffect(() => {
@@ -509,10 +625,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           const res = await fetch(imageUrl);
           const blob = await res.blob();
           const filename = imageUrl.split('/').pop() ?? 'reference.jpg';
-          const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+          const file = new File([blob], filename, {
+            type: blob.type || 'image/jpeg',
+          });
           const assets = await uploadStudioMediaFiles([file]);
           if (assets[0]) {
-            setDraft((prev) => mergeStudioDraft(prev, { imageFirstFrame: assets[0] }));
+            setDraft((prev) =>
+              mergeStudioDraft(prev, { imageFirstFrame: assets[0] })
+            );
           }
         } catch {
           // CORS or network failure — user can upload manually
@@ -529,7 +649,8 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     };
 
     window.addEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
-    return () => window.removeEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
+    return () =>
+      window.removeEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
   }, []);
 
   const handleUploadSingle = async (
@@ -577,7 +698,13 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         mergeStudioDraft(prev, {
           referenceMaterials: [
             ...prev.referenceMaterials,
-            ...uploaded.slice(0, Math.max(0, MAX_REFERENCE_MATERIALS - prev.referenceMaterials.length)),
+            ...uploaded.slice(
+              0,
+              Math.max(
+                0,
+                MAX_REFERENCE_MATERIALS - prev.referenceMaterials.length
+              )
+            ),
           ],
         })
       );
@@ -613,6 +740,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         setGuestPendingTaskId(null);
       } else {
         setActiveTaskId(lifecycle === 'completed' ? null : task.id);
+        if (isGuestUser) {
+          openGuestLoginModalForTask(task.id);
+        }
         if (lifecycle === 'queued' || lifecycle === 'processing') {
           notifyGenerating(task.id);
           if (isGuestUser) {
@@ -654,11 +784,44 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   return (
     <section className="rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
       <header className="mb-4 border-b border-dashed border-zinc-200 pb-3 dark:border-zinc-700/60">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
+        <h3 className="text-sm font-semibold tracking-[0.18em] text-zinc-700 uppercase dark:text-zinc-200">
           {copy.panelTitle}
         </h3>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{copy.panelHint}</p>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+          {copy.panelHint}
+        </p>
       </header>
+
+      <Dialog open={showGuestLoginModal} onOpenChange={setShowGuestLoginModal}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>{copy.guestLoginModalTitle}</DialogTitle>
+            <DialogDescription className="space-y-2 pt-1 text-sm text-zinc-600 dark:text-zinc-300">
+              <p>{copy.guestLoginModalContinue}</p>
+              <p>{copy.guestLoginModalNotify}</p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowGuestLoginModal(false)}
+            >
+              {copy.guestLoginModalLater}
+            </Button>
+            <Button
+              type="button"
+              className="bg-emerald-600 text-white hover:bg-emerald-500"
+              onClick={() => {
+                setShowGuestLoginModal(false);
+                setIsShowSignModal(true);
+              }}
+            >
+              {copy.guestLoginModalAction}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {showGuestTaskBanner ? (
         <div className="sticky top-2 z-20 mb-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-300/80 bg-emerald-50/95 px-3 py-2 shadow-sm dark:border-emerald-300/35 dark:bg-emerald-500/12">
@@ -680,10 +843,12 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       <div className="space-y-5">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.modeLabel}
             </label>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{copy.modeHint}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {copy.modeHint}
+            </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(copy.modes) as VideoStudioMode[]).map((mode) => (
@@ -706,25 +871,27 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         {draft.mode === 'image-to-video' ? (
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.i2vModeLabel}
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {(Object.keys(copy.i2vModes) as VideoStudioI2VMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => updateDraft({ i2vMode: mode })}
-                  className={cn(
-                    'rounded-lg border px-2 py-2 text-xs font-semibold transition',
-                    draft.i2vMode === mode
-                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-900'
-                      : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
-                  )}
-                >
-                  {copy.i2vModes[mode]}
-                </button>
-              ))}
+              {(Object.keys(copy.i2vModes) as VideoStudioI2VMode[]).map(
+                (mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => updateDraft({ i2vMode: mode })}
+                    className={cn(
+                      'rounded-lg border px-2 py-2 text-xs font-semibold transition',
+                      draft.i2vMode === mode
+                        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-900'
+                        : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
+                    )}
+                  >
+                    {copy.i2vModes[mode]}
+                  </button>
+                )
+              )}
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {copy.i2vCapabilityHint}
@@ -733,7 +900,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         ) : null}
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+          <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
             {copy.promptLabel}
           </label>
           <Textarea
@@ -746,10 +913,12 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.uploadLabel}
             </label>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{copy.uploadHint}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {copy.uploadHint}
+            </span>
           </div>
 
           {draft.mode === 'text-to-video' ? (
@@ -770,12 +939,15 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
           {draft.mode === 'image-to-video' ? (
             <div className="grid gap-2">
-              {draft.i2vMode === 'first-frame' || draft.i2vMode === 'first-last-frame' ? (
+              {draft.i2vMode === 'first-frame' ||
+              draft.i2vMode === 'first-last-frame' ? (
                 <FileBadge
                   label={copy.uploads.i2vFirstFrame}
                   file={draft.imageFirstFrame}
                   uploading={Boolean(uploadingMap.imageFirstFrame)}
-                  onUpload={(event) => void handleUploadSingle('imageFirstFrame', event)}
+                  onUpload={(event) =>
+                    void handleUploadSingle('imageFirstFrame', event)
+                  }
                   onClear={() => updateDraft({ imageFirstFrame: null })}
                   icon={<ImagePlus className="h-3.5 w-3.5" />}
                   accept="image"
@@ -790,7 +962,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                   label={copy.uploads.i2vLastFrame}
                   file={draft.imageLastFrame}
                   uploading={Boolean(uploadingMap.imageLastFrame)}
-                  onUpload={(event) => void handleUploadSingle('imageLastFrame', event)}
+                  onUpload={(event) =>
+                    void handleUploadSingle('imageLastFrame', event)
+                  }
                   onClear={() => updateDraft({ imageLastFrame: null })}
                   icon={<ImagePlus className="h-3.5 w-3.5" />}
                   accept="image"
@@ -805,7 +979,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                   label={copy.uploads.i2vFirstClip}
                   file={draft.imageFirstClip}
                   uploading={Boolean(uploadingMap.imageFirstClip)}
-                  onUpload={(event) => void handleUploadSingle('imageFirstClip', event)}
+                  onUpload={(event) =>
+                    void handleUploadSingle('imageFirstClip', event)
+                  }
                   onClear={() => updateDraft({ imageFirstClip: null })}
                   icon={<Film className="h-3.5 w-3.5" />}
                   accept="video"
@@ -819,7 +995,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 label={copy.uploads.i2vAudio}
                 file={draft.imageAudio}
                 uploading={Boolean(uploadingMap.imageAudio)}
-                onUpload={(event) => void handleUploadSingle('imageAudio', event)}
+                onUpload={(event) =>
+                  void handleUploadSingle('imageAudio', event)
+                }
                 onClear={() => updateDraft({ imageAudio: null })}
                 icon={<Music2 className="h-3.5 w-3.5" />}
                 accept="audio"
@@ -849,12 +1027,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                       accept={acceptByType('image-video')}
                       multiple
                       className="hidden"
-                      onChange={(event) => void handleUploadReferenceMaterials(event)}
+                      onChange={(event) =>
+                        void handleUploadReferenceMaterials(event)
+                      }
                     />
                   </label>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {copy.uploads.materialsCount}: {draft.referenceMaterials.length}/
-                    {MAX_REFERENCE_MATERIALS}
+                    {copy.uploads.materialsCount}:{' '}
+                    {draft.referenceMaterials.length}/{MAX_REFERENCE_MATERIALS}
                   </span>
                 </div>
                 {uploadingMap.referenceMaterials ? (
@@ -876,9 +1056,10 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                           type="button"
                           onClick={() =>
                             updateDraft({
-                              referenceMaterials: draft.referenceMaterials.filter(
-                                (_, itemIndex) => itemIndex !== index
-                              ),
+                              referenceMaterials:
+                                draft.referenceMaterials.filter(
+                                  (_, itemIndex) => itemIndex !== index
+                                ),
                             })
                           }
                           className="text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-300"
@@ -895,7 +1076,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                   label={copy.uploads.referenceFirstFrame}
                   file={draft.referenceFirstFrame}
                   uploading={Boolean(uploadingMap.referenceFirstFrame)}
-                  onUpload={(event) => void handleUploadSingle('referenceFirstFrame', event)}
+                  onUpload={(event) =>
+                    void handleUploadSingle('referenceFirstFrame', event)
+                  }
                   onClear={() => updateDraft({ referenceFirstFrame: null })}
                   icon={<ImagePlus className="h-3.5 w-3.5" />}
                   accept="image"
@@ -908,7 +1091,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                   label={copy.uploads.referenceVoice}
                   file={draft.referenceVoice}
                   uploading={Boolean(uploadingMap.referenceVoice)}
-                  onUpload={(event) => void handleUploadSingle('referenceVoice', event)}
+                  onUpload={(event) =>
+                    void handleUploadSingle('referenceVoice', event)
+                  }
                   onClear={() => updateDraft({ referenceVoice: null })}
                   icon={<Music2 className="h-3.5 w-3.5" />}
                   accept="audio"
@@ -927,7 +1112,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 label={copy.uploads.editVideo}
                 file={draft.editVideo}
                 uploading={Boolean(uploadingMap.editVideo)}
-                onUpload={(event) => void handleUploadSingle('editVideo', event)}
+                onUpload={(event) =>
+                  void handleUploadSingle('editVideo', event)
+                }
                 onClear={() => updateDraft({ editVideo: null })}
                 icon={<Film className="h-3.5 w-3.5" />}
                 accept="video"
@@ -940,7 +1127,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 label={copy.uploads.editReferenceImage}
                 file={draft.editReferenceImage}
                 uploading={Boolean(uploadingMap.editReferenceImage)}
-                onUpload={(event) => void handleUploadSingle('editReferenceImage', event)}
+                onUpload={(event) =>
+                  void handleUploadSingle('editReferenceImage', event)
+                }
                 onClear={() => updateDraft({ editReferenceImage: null })}
                 icon={<ImagePlus className="h-3.5 w-3.5" />}
                 accept="image"
@@ -955,7 +1144,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.durationLabel}
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -977,7 +1166,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.resolutionLabel}
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -1002,7 +1191,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         {ratioEnabled ? (
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.ratioLabel}
             </label>
             <div className="grid grid-cols-5 gap-2">
@@ -1027,25 +1216,27 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         {showAudioSetting ? (
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.audioSettingLabel}
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(copy.audioSettings) as StudioAudioSetting[]).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => updateDraft({ audioSetting: value })}
-                  className={cn(
-                    'rounded-md border px-2 py-1 text-xs font-semibold transition',
-                    draft.audioSetting === value
-                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-900'
-                      : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
-                  )}
-                >
-                  {copy.audioSettings[value]}
-                </button>
-              ))}
+              {(Object.keys(copy.audioSettings) as StudioAudioSetting[]).map(
+                (value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateDraft({ audioSetting: value })}
+                    className={cn(
+                      'rounded-md border px-2 py-1 text-xs font-semibold transition',
+                      draft.audioSetting === value
+                        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-900'
+                        : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
+                    )}
+                  >
+                    {copy.audioSettings[value]}
+                  </button>
+                )
+              )}
             </div>
           </div>
         ) : null}
@@ -1061,18 +1252,22 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           ) : (
             <Sparkles className="h-4 w-4" />
           )}
-          {taskLifecycle === 'submitting' ? copy.statuses.submitting : copy.runButton}
+          {taskLifecycle === 'submitting'
+            ? copy.statuses.submitting
+            : copy.runButton}
         </Button>
 
         <div className="space-y-2 rounded-xl border border-zinc-200/80 bg-zinc-50/70 px-3 py-2 dark:border-zinc-700/70 dark:bg-zinc-950/50">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
             {copy.statusLabel}
           </p>
           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
             {copy.statuses[taskLifecycle]}
           </p>
           {handoffNotice ? (
-            <p className="text-xs text-sky-700 dark:text-sky-300">{handoffNotice}</p>
+            <p className="text-xs text-sky-700 dark:text-sky-300">
+              {handoffNotice}
+            </p>
           ) : null}
           {submitError ? (
             <p className="text-xs text-rose-600 dark:text-rose-300">

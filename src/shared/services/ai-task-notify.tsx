@@ -1,8 +1,9 @@
 import { envConfigs } from '@/config';
 import { AIMediaType, AITaskStatus } from '@/extensions/ai';
-import { AITask } from '@/shared/models/ai_task';
-import { findUserById } from '@/shared/models/user';
 import { AITaskFinishedEmail } from '@/shared/blocks/email/ai-task-finished';
+import { AITask } from '@/shared/models/ai_task';
+import { isGuestTrialSystemUserId } from '@/shared/models/guest_trial';
+import { findUserById } from '@/shared/models/user';
 
 import { getEmailService } from './email';
 
@@ -102,7 +103,9 @@ function buildCopy({
       previewText: ready
         ? `你的${taskTypeLabel}任务已完成`
         : `你的${taskTypeLabel}任务有更新`,
-      title: ready ? `你的${taskTypeLabel}任务已完成` : `你的${taskTypeLabel}任务未成功完成`,
+      title: ready
+        ? `你的${taskTypeLabel}任务已完成`
+        : `你的${taskTypeLabel}任务未成功完成`,
       summary: ready
         ? '好消息，任务已经处理完成。你现在可以前往工作台查看并下载结果。'
         : '任务执行已结束，但结果未成功生成。你可以打开工作台查看详情并重试。',
@@ -147,6 +150,10 @@ export async function sendAITaskCompletionEmailIfNeeded({
   task: AITask;
 }) {
   try {
+    if (isGuestTrialSystemUserId(task.userId)) {
+      return;
+    }
+
     if (!isTerminalStatus(task.status)) {
       return;
     }

@@ -372,7 +372,14 @@ export async function grantCreditsForNewUser(user: User) {
   }
 
   // get initial credits amount and valid days
-  const credits = parseInt(configs.initial_credits_amount as string) || 0;
+  let credits = parseInt(configs.initial_credits_amount as string) || 0;
+  const guestTrialCap = parseInt(
+    process.env.GUEST_TRIAL_TOTAL_CREDITS || '5',
+    10
+  );
+  if (Number.isFinite(guestTrialCap) && guestTrialCap > 0) {
+    credits = Math.min(credits, guestTrialCap);
+  }
   if (credits <= 0) {
     return;
   }

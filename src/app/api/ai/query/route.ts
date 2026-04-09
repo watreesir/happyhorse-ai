@@ -4,6 +4,10 @@ import {
   UpdateAITask,
   updateAITaskById,
 } from '@/shared/models/ai_task';
+import {
+  canGuestAccessTask,
+  getGuestTrialTokenFromRequest,
+} from '@/shared/models/guest_trial';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
 import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
@@ -16,7 +20,8 @@ export async function POST(req: Request) {
     }
 
     const user = await getUserInfo();
-    if (!user) {
+    const guestToken = user ? '' : getGuestTrialTokenFromRequest(req);
+    if (!user && !guestToken) {
       return respErr('no auth, please sign in');
     }
 
@@ -25,8 +30,18 @@ export async function POST(req: Request) {
       return respErr('task not found');
     }
 
-    if (task.userId !== user.id) {
-      return respErr('no permission');
+    if (user) {
+      if (task.userId !== user.id) {
+        return respErr('no permission');
+      }
+    } else {
+      const hasAccess = await canGuestAccessTask({
+        token: guestToken,
+        taskId: task.id,
+      });
+      if (!hasAccess) {
+        return respErr('no permission');
+      }
     }
 
     const aiService = await getAIService();
