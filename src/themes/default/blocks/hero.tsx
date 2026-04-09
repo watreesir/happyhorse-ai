@@ -643,7 +643,7 @@ export function Hero({
           loop
           muted
           playsInline
-          className="h-full w-full object-cover opacity-55 saturate-[0.85] dark:opacity-60 dark:saturate-100"
+          className="h-full w-full object-cover opacity-75 saturate-[0.9] dark:opacity-60 dark:saturate-100"
         >
           <source src="/video/hero_video.mp4" type="video/mp4" />
           {section.background_image?.src && (
@@ -659,7 +659,7 @@ export function Hero({
           )}
         </video>
         {/* Cinematic gradient overlay */}
-        <div className="from-background/5 via-background/20 to-background/60 absolute inset-0 bg-gradient-to-b dark:from-zinc-950/30 dark:via-transparent dark:to-zinc-950/80" />
+        <div className="from-background/5 via-background/15 to-background/45 absolute inset-0 bg-gradient-to-b dark:from-zinc-950/30 dark:via-transparent dark:to-zinc-950/80" />
         {/* Soft accent vignette */}
         <div
           className="absolute inset-0 opacity-70 dark:opacity-15"
