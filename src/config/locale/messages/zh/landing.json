@@ -15,7 +15,6 @@
       "items": [
         {
           "title": "AI 视频工具",
-          "icon": "Sparkles",
           "children": [
             {
               "title": "文生视频",
@@ -55,18 +54,16 @@
           ]
         },
         {
-          "title": "AI Video Studio",
-          "url": "/ai-video-studio"
-        },
-        {
           "title": "价格",
-          "url": "/pricing",
-          "icon": "Wallet"
+          "url": "/pricing"
         },
         {
           "title": "博客",
-          "url": "/blog",
-          "icon": "BookOpen"
+          "url": "/blog"
+        },
+        {
+          "title": "AI Video Studio",
+          "url": "/ai-video-studio"
         }
       ]
     },

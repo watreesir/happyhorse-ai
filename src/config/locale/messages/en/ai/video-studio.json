@@ -50,6 +50,7 @@
         "first-last-frame": "First + Last Frame",
         "video-continuation": "Video Continuation"
       },
+      "i2vCapabilityHint": "Image to Video follows source frame/clip framing. Manual aspect ratio is not supported by this model.",
       "promptLabel": "Prompt Direction",
       "promptPlaceholder": "Describe subject, movement, lens behavior, and mood in one concise brief.",
       "promptRequired": "Please provide a prompt before submitting.",

@@ -2,6 +2,7 @@
 
 import { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
@@ -589,6 +590,18 @@ export function Hero({
             ? error.message
             : 'generate failed';
 
+      const normalizedMessage = message.trim().toLowerCase();
+      const isInsufficientCredits =
+        normalizedMessage.includes('insufficient credits') ||
+        normalizedMessage.includes('积分不足');
+
+      if (isInsufficientCredits) {
+        await fetchUserCredits();
+        setStatusHint('Insufficient credits');
+        toast.error('Insufficient credits', { position: 'bottom-right' });
+        return;
+      }
+
       const failedDraft = createDraft({
         taskId: null,
         lifecycle: 'failed',
@@ -748,6 +761,9 @@ export function Hero({
                   </button>
                 ))}
               </div>
+              <p className="text-foreground/50 px-1 text-left text-[11px] dark:text-white/45">
+                Image-to-video follows source framing; manual aspect ratio is not supported.
+              </p>
               {i2vMode === 'first-frame' && (
                 <UploadZone
                   label="Upload first frame image"

@@ -1,4 +1,4 @@
-import { EmailManager, ResendProvider } from '@/extensions/email';
+import { EmailManager, PostmarkProvider, ResendProvider } from '@/extensions/email';
 import { Configs, getAllConfigs } from '@/shared/models/config';
 
 /**
@@ -7,12 +7,24 @@ import { Configs, getAllConfigs } from '@/shared/models/config';
 export function getEmailServiceWithConfigs(configs: Configs) {
   const emailManager = new EmailManager();
 
+  if (configs.postmark_server_token) {
+    emailManager.addProvider(
+      new PostmarkProvider({
+        serverToken: configs.postmark_server_token,
+        defaultFrom: configs.postmark_from_email,
+        messageStream: configs.postmark_message_stream || 'outbound',
+      }),
+      true
+    );
+  }
+
   if (configs.resend_api_key) {
     emailManager.addProvider(
       new ResendProvider({
         apiKey: configs.resend_api_key,
         defaultFrom: configs.resend_sender_email,
-      })
+      }),
+      !configs.postmark_server_token
     );
   }
 

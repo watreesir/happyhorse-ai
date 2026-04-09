@@ -11,7 +11,11 @@
       "Bash(ls /Users/zhangdeyuan/my-shipany-project/public/preview*)",
       "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/Users/zhangdeyuan/my-shipany-project/public/preview.png'\\); print\\(img.size\\)\")",
       "Bash(ls -la /Users/zhangdeyuan/my-shipany-project/public/preview*)",
-      "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/Users/zhangdeyuan/my-shipany-project/public/preview.png'\\); print\\('Size:', img.size\\); print\\('Mode:', img.mode\\)\")"
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/Users/zhangdeyuan/my-shipany-project/public/preview.png'\\); print\\('Size:', img.size\\); print\\('Mode:', img.mode\\)\")",
+      "Bash(xargs basename:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/zhangdeyuan/.claude/projects/-Users-zhangdeyuan-my-shipany-project"
     ]
   }
 }

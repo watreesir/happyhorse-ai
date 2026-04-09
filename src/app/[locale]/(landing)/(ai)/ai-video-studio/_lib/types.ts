@@ -118,6 +118,7 @@ export type StudioCopy = {
       modes: Record<StudioMode, string>;
       i2vModeLabel: string;
       i2vModes: Record<StudioI2VMode, string>;
+      i2vCapabilityHint: string;
       promptLabel: string;
       promptPlaceholder: string;
       promptRequired: string;

@@ -352,7 +352,9 @@ export function buildStudioQueryFromDraft(
   params.set('from', 'hero');
   params.set('draftId', draft.id);
   params.set('mode', draft.mode);
-  params.set('ratio', draft.ratio);
+  if (draft.mode !== 'image-to-video') {
+    params.set('ratio', draft.ratio);
+  }
   params.set('resolution', draft.resolution);
   params.set('duration', String(draft.duration));
   params.set('i2vMode', draft.i2vMode);

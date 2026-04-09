@@ -582,6 +582,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 </button>
               ))}
             </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {copy.i2vCapabilityHint}
+            </p>
           </div>
         ) : null}
 

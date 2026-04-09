@@ -50,6 +50,7 @@
         "first-last-frame": "首尾帧控制",
         "video-continuation": "视频续写"
       },
+      "i2vCapabilityHint": "图生视频输出画幅跟随首帧/首段素材，当前模型不支持手动设置比例。",
       "promptLabel": "提示词方向",
       "promptPlaceholder": "用简洁描述写清主体、运动、镜头语言和氛围。",
       "promptRequired": "请先输入提示词再提交。",

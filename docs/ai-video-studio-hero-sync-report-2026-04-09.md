@@ -136,3 +136,32 @@
 - 结论：
   - **“能保留 30 天”可以做到**（在 Cloudflare R2 配置生命周期规则）。
   - **当前仓库默认并未强制 30 天删除**（不是代码自动执行）。
+
+## 9. Postmark 发信接入（2026-04-09）
+
+### 9.1 本次实现
+
+- 新增 `Postmark` 邮件 provider，并接入现有 `EmailManager`。
+- 现有任务完成通知链路不重写，只替换底层发件通道：
+  - 若配置了 `POSTMARK_SERVER_TOKEN`，优先走 Postmark
+  - 若未配置 Postmark，仍可回退到已有 `Resend`
+- 新增环境变量读取：
+  - `POSTMARK_SERVER_TOKEN`
+  - `POSTMARK_FROM_EMAIL`
+  - `POSTMARK_MESSAGE_STREAM`
+
+### 9.2 修改文件
+
+- 新增：
+  - `src/extensions/email/postmark.ts`
+- 修改：
+  - `src/extensions/email/index.ts`
+  - `src/config/index.ts`
+  - `src/shared/services/email.ts`
+
+### 9.3 当前约束
+
+- 当前“任务完成后发邮件”仍沿用现有“非终态 -> 终态”判定做基础去重，暂未增加数据库级幂等字段。
+- `POSTMARK_SERVER_TOKEN` 必须来自 `Happyhorse` 这个 Postmark server。
+- 发件邮箱当前按：
+  - `support@happyhorse-ai.app`

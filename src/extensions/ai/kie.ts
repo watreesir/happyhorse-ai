@@ -211,15 +211,16 @@ export class KieProvider implements AIProvider {
       throw new Error('model is required');
     }
 
+    const isWan27Model = params.model.startsWith('wan/2-7-');
+    const isWanImageToVideoModel = params.model === 'wan/2-7-image-to-video';
+    const hasValue = (value: unknown) =>
+      typeof value !== 'undefined' && value !== null;
+
     // build request params
     let payload: any = {
       model: params.model,
       callBackUrl: params.callbackUrl,
-      input: {
-        aspect_ratio: 'landscape',
-        n_frames: '10',
-        size: 'standard',
-      },
+      input: {},
     };
 
     if (params.prompt) {
@@ -232,22 +233,37 @@ export class KieProvider implements AIProvider {
       // image-to-video: use image_input
       // video-to-video: use video_input
       if (options.image_input && Array.isArray(options.image_input)) {
-        payload.input.image_urls = options.image_input;
-      }
-      if (options.video_input && Array.isArray(options.video_input)) {
-        payload.input.video_urls = options.video_input;
-        if (!payload.input.video_url && options.video_input[0]) {
-          payload.input.video_url = options.video_input[0];
+        if (isWanImageToVideoModel) {
+          if (!payload.input.first_frame_url && options.image_input[0]) {
+            payload.input.first_frame_url = options.image_input[0];
+          }
+        } else {
+          payload.input.image_urls = options.image_input;
         }
       }
-      if (options.aspect_ratio) {
+      if (options.video_input && Array.isArray(options.video_input)) {
+        if (isWanImageToVideoModel) {
+          if (!payload.input.first_clip_url && options.video_input[0]) {
+            payload.input.first_clip_url = options.video_input[0];
+          }
+        } else {
+          payload.input.video_urls = options.video_input;
+          if (!payload.input.video_url && options.video_input[0]) {
+            payload.input.video_url = options.video_input[0];
+          }
+        }
+      }
+      if (options.aspect_ratio && !isWanImageToVideoModel) {
         payload.input.aspect_ratio = options.aspect_ratio;
       }
       if (options.resolution) {
         payload.input.resolution = options.resolution;
       }
-      if (options.duration) {
-        payload.input.n_frames = options.duration;
+      if (hasValue(options.duration)) {
+        payload.input.duration = options.duration;
+        if (!isWan27Model) {
+          payload.input.n_frames = options.duration;
+        }
       }
       if (options.audio_url) {
         payload.input.audio_url = options.audio_url;
@@ -286,13 +302,42 @@ export class KieProvider implements AIProvider {
       // Keep unknown model-specific options to avoid blocking new workflows.
       Object.entries(options).forEach(([key, value]) => {
         if (typeof value === 'undefined') return;
+        if (
+          isWanImageToVideoModel &&
+          (key === 'aspect_ratio' || key === 'ratio')
+        ) {
+          return;
+        }
         if (typeof payload.input[key] === 'undefined') {
           payload.input[key] = value;
         }
       });
 
-      if (!payload.input.n_frames) {
+      if (isWanImageToVideoModel) {
+        // wan/2-7-image-to-video does not support aspect ratio controls.
+        delete payload.input.aspect_ratio;
+        delete payload.input.ratio;
+        delete payload.input.image_urls;
+        delete payload.input.video_urls;
+        delete payload.input.video_url;
+        delete payload.input.n_frames;
+        delete payload.input.size;
+      } else {
+        if (!payload.input.n_frames) {
+          payload.input.n_frames = '10';
+        }
+        if (!payload.input.size) {
+          payload.input.size = 'standard';
+        }
+        if (!payload.input.aspect_ratio) {
+          payload.input.aspect_ratio = isWan27Model ? '16:9' : 'landscape';
+        }
+      }
+    } else {
+      if (!isWanImageToVideoModel) {
         payload.input.n_frames = '10';
+        payload.input.size = 'standard';
+        payload.input.aspect_ratio = isWan27Model ? '16:9' : 'landscape';
       }
     }
 

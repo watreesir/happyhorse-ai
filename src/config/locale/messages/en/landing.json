@@ -15,7 +15,6 @@
       "items": [
         {
           "title": "AI Video Tools",
-          "icon": "Sparkles",
           "children": [
             {
               "title": "Text to Video",
@@ -55,18 +54,16 @@
           ]
         },
         {
-          "title": "AI Video Studio",
-          "url": "/ai-video-studio"
-        },
-        {
           "title": "Pricing",
-          "url": "/pricing",
-          "icon": "Wallet"
+          "url": "/pricing"
         },
         {
           "title": "Blog",
-          "url": "/blog",
-          "icon": "BookOpen"
+          "url": "/blog"
+        },
+        {
+          "title": "AI Video Studio",
+          "url": "/ai-video-studio"
         }
       ]
     },
