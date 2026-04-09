@@ -25,6 +25,7 @@ export default async function RootLayout({
 
   // app url
   const appUrl = envConfigs.app_url || '';
+  const faviconVersion = '20260409';
 
   // ads components
   let adsMetaTags = null;
@@ -85,24 +86,25 @@ export default async function RootLayout({
           rel="icon"
           type="image/png"
           sizes="32x32"
-          href={envConfigs.app_favicon}
+          href={`${envConfigs.app_favicon}?v=${faviconVersion}`}
         />
+        <link rel="shortcut icon" href={`/favicon.ico?v=${faviconVersion}`} />
         <link
           rel="icon"
           type="image/png"
           sizes="16x16"
-          href="/icons/favicon-16x16.png"
+          href={`/icons/favicon-16x16.png?v=${faviconVersion}`}
         />
         <link
           rel="icon"
           type="image/png"
           sizes="48x48"
-          href="/icons/favicon-48x48.png"
+          href={`/icons/favicon-48x48.png?v=${faviconVersion}`}
         />
         <link
           rel="apple-touch-icon"
           sizes="180x180"
-          href="/icons/apple-touch-icon.png"
+          href={`/icons/apple-touch-icon.png?v=${faviconVersion}`}
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
