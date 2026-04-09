@@ -399,7 +399,6 @@ export function buildVideoTaskPayloadFromDraft(
 
   if (draft.mode === 'image-to-video') {
     const baseOptions: Record<string, unknown> = {
-      aspect_ratio: draft.ratio,
       resolution: draft.resolution,
       duration: draft.duration,
     };

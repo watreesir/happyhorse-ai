@@ -12,6 +12,7 @@
   "errors": {
     "authRequired": "Please sign in to use Video Studio.",
     "creditsInsufficient": "Not enough credits. Add credits to continue.",
+    "uploadTooLarge": "Upload file is too large for current upload channel. Please compress it and keep each file under 4MB.",
     "permissionDenied": "This task is not available in your account.",
     "taskUnavailable": "This task is no longer available.",
     "rateLimited": "Too many requests. Please try again in a moment.",

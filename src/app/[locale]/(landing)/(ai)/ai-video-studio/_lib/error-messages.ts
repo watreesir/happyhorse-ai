@@ -41,6 +41,15 @@ export function toStudioErrorMessage(
     return copy.creditsInsufficient;
   }
 
+  if (
+    status === 413 ||
+    message.includes('upload too large') ||
+    message.includes('payload too large') ||
+    message.includes('entity too large')
+  ) {
+    return copy.uploadTooLarge;
+  }
+
   if (message.includes('no permission') || status === 403) {
     return copy.permissionDenied;
   }

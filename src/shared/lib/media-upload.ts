@@ -18,6 +18,21 @@ type UploadMediaResponse = {
   };
 };
 
+const DEFAULT_UPLOAD_MAX_FILE_BYTES = 4 * 1024 * 1024;
+
+function formatBytesToMb(bytes: number) {
+  return Math.max(1, Math.floor(bytes / (1024 * 1024)));
+}
+
+function getUploadMaxFileBytes() {
+  const raw = process.env.NEXT_PUBLIC_STUDIO_UPLOAD_MAX_FILE_BYTES;
+  const parsed = Number.parseInt(raw || '', 10);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+  return DEFAULT_UPLOAD_MAX_FILE_BYTES;
+}
+
 function resolveMediaType(mimeType: string): VideoStudioMediaType | null {
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType.startsWith('video/')) return 'video';
@@ -30,6 +45,14 @@ export async function uploadStudioMediaFiles(files: File[]) {
     return [] as VideoStudioUploadedAsset[];
   }
 
+  const maxFileBytes = getUploadMaxFileBytes();
+  const oversized = files.find((file) => file.size > maxFileBytes);
+  if (oversized) {
+    throw new Error(
+      `upload too large: keep each file under ${formatBytesToMb(maxFileBytes)}MB`
+    );
+  }
+
   const formData = new FormData();
   files.forEach((file) => {
     formData.append('files', file);
@@ -40,6 +63,11 @@ export async function uploadStudioMediaFiles(files: File[]) {
     body: formData,
   });
   if (!response.ok) {
+    if (response.status === 413) {
+      throw new Error(
+        `upload too large: keep each file under ${formatBytesToMb(maxFileBytes)}MB`
+      );
+    }
     throw new Error(`request failed with status: ${response.status}`);
   }
 

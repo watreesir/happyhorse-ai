@@ -76,6 +76,7 @@ export type VideoTaskPageData = {
 export type StudioErrorCopy = {
   authRequired: string;
   creditsInsufficient: string;
+  uploadTooLarge: string;
   permissionDenied: string;
   taskUnavailable: string;
   rateLimited: string;

@@ -619,7 +619,7 @@ export function Hero({
     <section
       id={section.id}
       className={cn(
-        'relative flex min-h-screen flex-col items-center justify-center overflow-hidden',
+        'relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden',
         className
       )}
     >

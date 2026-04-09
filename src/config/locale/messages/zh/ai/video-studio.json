@@ -12,6 +12,7 @@
   "errors": {
     "authRequired": "请先登录后再使用 Video Studio。",
     "creditsInsufficient": "当前积分不足，请先补充积分。",
+    "uploadTooLarge": "当前上传通道不支持该文件大小，请先压缩素材，并将单个文件控制在 4MB 以内。",
     "permissionDenied": "该任务不属于当前账号，无法查看。",
     "taskUnavailable": "该任务暂时不可用。",
     "rateLimited": "请求过于频繁，请稍后再试。",
