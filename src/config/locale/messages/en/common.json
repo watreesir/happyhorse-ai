@@ -43,6 +43,8 @@
     "resend_verification_countdown": "Resend verification email ({seconds}s)",
     "resend_verification_wait": "Please wait {seconds}s before resending.",
     "back_to_sign_in": "Back to Sign In",
+    "video_alerts_guide": "Sign in for free video alerts",
+    "video_alerts_guide_short": "Free video alerts",
     "daily_credits_claimed": "Daily reward +{credits} credits.",
     "daily_credits_already_claimed": "Daily reward already claimed today (+{credits})."
   },

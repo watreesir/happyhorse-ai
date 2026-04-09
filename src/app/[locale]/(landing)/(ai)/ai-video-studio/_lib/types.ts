@@ -154,6 +154,9 @@ export type StudioCopy = {
       audioSettings: Record<StudioAudioSetting, string>;
       runButton: string;
       generatingToast: string;
+      guestGenerateHint: string;
+      guestTaskBanner: string;
+      guestTaskBannerAction: string;
       submitFromHero: string;
       helper: string;
       statusLabel: string;

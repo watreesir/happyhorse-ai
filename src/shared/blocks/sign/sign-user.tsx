@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Fragment } from 'react/jsx-runtime';
-import { Coins, LayoutDashboard, Loader2, LogOut, User } from 'lucide-react';
+import {
+  BellRing,
+  Coins,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  User,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -321,15 +328,19 @@ export function SignUser({
       ) : (
         <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
           <Button
-            asChild
             size={signButtonSize}
             className={cn(
-              'border-foreground/10 ml-4 cursor-pointer ring-0',
+              'cursor-pointer rounded-full border-emerald-500/70 bg-emerald-600 px-3.5 text-white shadow-[0_10px_24px_-16px_rgba(5,150,105,0.9)] ring-0 hover:bg-emerald-500',
+              'dark:border-emerald-400/60 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400',
               isScrolled && 'lg:hidden'
             )}
             onClick={() => setIsShowSignModal(true)}
           >
-            <span>{t('sign_in_title')}</span>
+            <span className="inline-flex items-center gap-1.5">
+              <BellRing className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">{t('video_alerts_guide')}</span>
+              <span className="lg:hidden">{t('video_alerts_guide_short')}</span>
+            </span>
           </Button>
           <SignModal />
         </div>

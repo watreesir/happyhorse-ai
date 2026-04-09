@@ -3,6 +3,7 @@
 import { ChangeEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
+  BellRing,
   Film,
   ImagePlus,
   Layers3,
@@ -214,7 +215,7 @@ function FileBadge({
 
 export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const searchParams = useSearchParams();
-  const { fetchUserCredits } = useAppContext();
+  const { fetchUserCredits, isCheckSign, setIsShowSignModal, user } = useAppContext();
   const [draft, setDraft] = useState<VideoStudioDraft>(() => ({
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
     id: createDraftId(),
@@ -222,6 +223,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   }));
   const [taskLifecycle, setTaskLifecycle] = useState<StudioTaskLifecycle>('idle');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [guestPendingTaskId, setGuestPendingTaskId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
   const [uploadingMap, setUploadingMap] = useState<Record<string, boolean>>({});
@@ -229,6 +231,8 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const pollFailureCountRef = useRef(0);
   const hydratedFromEntryRef = useRef(false);
   const lastGeneratingToastTaskIdRef = useRef<string | null>(null);
+  const guestHintCooldownRef = useRef(0);
+  const isGuestUser = !user && !isCheckSign;
 
   const notifyGenerating = useCallback((taskId: string) => {
     if (!taskId || lastGeneratingToastTaskIdRef.current === taskId) {
@@ -237,6 +241,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     lastGeneratingToastTaskIdRef.current = taskId;
     toast.success(copy.generatingToast);
   }, [copy.generatingToast]);
+
+  const notifyGuestGenerateHint = useCallback(() => {
+    if (!isGuestUser) return;
+    const now = Date.now();
+    if (now - guestHintCooldownRef.current < 5_000) return;
+    guestHintCooldownRef.current = now;
+    toast.message(copy.guestGenerateHint);
+  }, [copy.guestGenerateHint, isGuestUser]);
 
   const updateLifecycle = (nextLifecycle: StudioTaskLifecycle) => {
     lifecycleRef.current = nextLifecycle;
@@ -259,9 +271,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       if (submission.lifecycle === 'completed') {
         updateLifecycle('completed');
         setActiveTaskId(null);
+        setGuestPendingTaskId(null);
       } else if (submission.lifecycle === 'failed') {
         updateLifecycle('failed');
         setActiveTaskId(null);
+        setGuestPendingTaskId(null);
       } else {
         updateLifecycle(
           submission.lifecycle === 'processing'
@@ -272,6 +286,10 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         );
         setActiveTaskId(submission.taskId);
         notifyGenerating(submission.taskId);
+        if (isGuestUser) {
+          setGuestPendingTaskId(submission.taskId);
+          notifyGuestGenerateHint();
+        }
       }
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
@@ -287,12 +305,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       updateLifecycle('failed');
       setSubmitError(toStudioErrorMessage(submission.errorMessage, errors, 'submitFailed'));
       setActiveTaskId(null);
+      setGuestPendingTaskId(null);
       setHandoffNotice(null);
       return;
     }
 
     updateLifecycle('idle');
     setActiveTaskId(null);
+    setGuestPendingTaskId(null);
   };
 
   useEffect(() => {
@@ -344,6 +364,10 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     }
     setDraft(nextDraft);
 
+    if (from === 'hero' && isGuestUser) {
+      notifyGuestGenerateHint();
+    }
+
     if (handoffTaskId && handoffLifecycle) {
       updateLifecycle(handoffLifecycle);
       setActiveTaskId(handoffLifecycle === 'completed' ? null : handoffTaskId);
@@ -353,6 +377,12 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         handoffLifecycle === 'submitting'
       ) {
         notifyGenerating(handoffTaskId);
+        if (isGuestUser) {
+          setGuestPendingTaskId(handoffTaskId);
+          notifyGuestGenerateHint();
+        }
+      } else {
+        setGuestPendingTaskId(null);
       }
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
@@ -364,7 +394,22 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       applyHeroHandoff(nextDraft);
       void fetchUserCredits();
     }
-  }, [copy.submitFromHero, draft, errors, fetchUserCredits, notifyGenerating, searchParams]);
+  }, [
+    copy.submitFromHero,
+    draft,
+    errors,
+    fetchUserCredits,
+    isGuestUser,
+    notifyGenerating,
+    notifyGuestGenerateHint,
+    searchParams,
+  ]);
+
+  useEffect(() => {
+    if (!isGuestUser) {
+      setGuestPendingTaskId(null);
+    }
+  }, [isGuestUser]);
 
   useEffect(() => {
     if (!activeTaskId) {
@@ -395,6 +440,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         if (nextLifecycle === 'completed' || nextLifecycle === 'failed') {
           setActiveTaskId(null);
+          setGuestPendingTaskId(null);
           void fetchUserCredits();
         }
       } catch (error: unknown) {
@@ -409,6 +455,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           updateLifecycle('failed');
           setSubmitError(message);
           setActiveTaskId(null);
+          setGuestPendingTaskId(null);
           dispatchVideoStudioRefresh('status');
           void fetchUserCredits();
           return;
@@ -423,6 +470,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
             message === errors.queryFailed ? copy.statusSyncError : message
           );
           setActiveTaskId(null);
+          setGuestPendingTaskId(null);
           dispatchVideoStudioRefresh('status');
           void fetchUserCredits();
         }
@@ -542,9 +590,13 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
   const handleSubmit = async () => {
     if (activeTaskId) return;
+    if (isGuestUser) {
+      notifyGuestGenerateHint();
+    }
 
     setSubmitError(null);
     setHandoffNotice(null);
+    setGuestPendingTaskId(null);
     pollFailureCountRef.current = 0;
     updateLifecycle('submitting');
 
@@ -558,10 +610,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       if (lifecycle === 'failed') {
         setSubmitError(task.errorMessage || null);
         setActiveTaskId(null);
+        setGuestPendingTaskId(null);
       } else {
         setActiveTaskId(lifecycle === 'completed' ? null : task.id);
         if (lifecycle === 'queued' || lifecycle === 'processing') {
           notifyGenerating(task.id);
+          if (isGuestUser) {
+            setGuestPendingTaskId(task.id);
+          }
         }
       }
       await fetchUserCredits();
@@ -573,6 +629,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       }
       updateLifecycle('failed');
       setActiveTaskId(null);
+      setGuestPendingTaskId(null);
       await fetchUserCredits();
     }
   };
@@ -592,6 +649,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
   const ratioEnabled = draft.mode !== 'image-to-video';
   const showAudioSetting = draft.mode === 'video-edit';
+  const showGuestTaskBanner = isGuestUser && Boolean(guestPendingTaskId);
 
   return (
     <section className="rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
@@ -601,6 +659,23 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         </h3>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{copy.panelHint}</p>
       </header>
+
+      {showGuestTaskBanner ? (
+        <div className="sticky top-2 z-20 mb-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-300/80 bg-emerald-50/95 px-3 py-2 shadow-sm dark:border-emerald-300/35 dark:bg-emerald-500/12">
+          <p className="flex items-center gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-100">
+            <BellRing className="h-3.5 w-3.5 shrink-0" />
+            {copy.guestTaskBanner}
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 shrink-0 rounded-full bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-500 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400"
+            onClick={() => setIsShowSignModal(true)}
+          >
+            {copy.guestTaskBannerAction}
+          </Button>
+        </div>
+      ) : null}
 
       <div className="space-y-5">
         <div className="space-y-2">
