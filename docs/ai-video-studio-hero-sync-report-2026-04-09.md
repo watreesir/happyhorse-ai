@@ -69,3 +69,33 @@
 - Inspiration 仍为 mock 数据（按计划未接真实库）。
 - 删除 / 下载 / 重做 / 模板回填等高级能力本轮未扩展。
 - 参考工作流在业务层按既定策略映射到当前可用 scene（`image-to-video` / `video-to-video`），未引入旧项目整套接口体系。
+
+## 7. 补充修复（积分显示与提示，2026-04-09）
+
+### 7.1 问题定位
+
+- 新用户看到 `25` 积分并同时收到“今日 +5”提示，原因是：
+  - 开启了 `INITIAL_CREDITS_ENABLED=true`
+  - `INITIAL_CREDITS_AMOUNT=20`
+  - 首次登录又叠加了每日登录奖励 `+5`
+- 首页 Hero 触发生成后，顶部积分偶发不立即变化，原因是：
+  - Hero 提交完成后没有主动刷新用户积分上下文
+  - Studio 接收 Hero 跳转后的首屏也未强制刷新积分
+
+### 7.2 本次代码修复
+
+- `src/themes/default/blocks/hero.tsx`
+  - 提交成功/失败跳转前，增加 `fetchUserCredits()`，确保右上角余额及时同步。
+- `src/app/[locale]/(landing)/(ai)/ai-video-studio/_components/workspace-panel.tsx`
+  - 接收 Hero handoff 时主动刷新积分。
+  - 轮询到终态（completed/failed）或终态错误时，主动刷新积分。
+- `src/config/locale/messages/en/common.json`
+- `src/config/locale/messages/zh/common.json`
+  - 将每日奖励提示改为“今日奖励 +X”语义，避免与总余额混淆。
+
+### 7.3 说明
+
+- 本次未改动 `/ai-video-generator`。
+- `/ai-video-studio` 的 `noindex` 未移除。
+- 积分是否为“5 起步”取决于线上配置：
+  - 若要新用户仅 5 积分起步，请将 `INITIAL_CREDITS_ENABLED=false`（或将 `INITIAL_CREDITS_AMOUNT=0`）。

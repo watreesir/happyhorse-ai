@@ -334,13 +334,15 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       setActiveTaskId(handoffLifecycle === 'completed' ? null : handoffTaskId);
       dispatchVideoStudioRefresh('submit');
       setHandoffNotice(copy.submitFromHero);
+      void fetchUserCredits();
       return;
     }
 
     if (from === 'hero') {
       applyHeroHandoff(nextDraft);
+      void fetchUserCredits();
     }
-  }, [copy.submitFromHero, draft, errors, searchParams]);
+  }, [copy.submitFromHero, draft, errors, fetchUserCredits, searchParams]);
 
   useEffect(() => {
     if (!activeTaskId) {
@@ -371,6 +373,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         if (nextLifecycle === 'completed' || nextLifecycle === 'failed') {
           setActiveTaskId(null);
+          void fetchUserCredits();
         }
       } catch (error: unknown) {
         if (canceled) return;
@@ -385,6 +388,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           setSubmitError(message);
           setActiveTaskId(null);
           dispatchVideoStudioRefresh('status');
+          void fetchUserCredits();
           return;
         }
 
@@ -398,6 +402,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           );
           setActiveTaskId(null);
           dispatchVideoStudioRefresh('status');
+          void fetchUserCredits();
         }
       }
     };
@@ -411,7 +416,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       canceled = true;
       window.clearInterval(timer);
     };
-  }, [activeTaskId, copy.statusRetrying, copy.statusSyncError, errors]);
+  }, [activeTaskId, copy.statusRetrying, copy.statusSyncError, errors, fetchUserCredits]);
 
   const handleUploadSingle = async (
     key: SingleUploadKey,

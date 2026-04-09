@@ -43,8 +43,8 @@
     "resend_verification_countdown": "Resend verification email ({seconds}s)",
     "resend_verification_wait": "Please wait {seconds}s before resending.",
     "back_to_sign_in": "Back to Sign In",
-    "daily_credits_claimed": "Got {credits} free credits today.",
-    "daily_credits_already_claimed": "You already got {credits} credits today. Come back tomorrow."
+    "daily_credits_claimed": "Daily reward +{credits} credits.",
+    "daily_credits_already_claimed": "Daily reward already claimed today (+{credits})."
   },
   "payment": {
     "choose_payment_method": "Choose Payment Method",

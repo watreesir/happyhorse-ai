@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
+import { useAppContext } from '@/shared/contexts/app';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -353,6 +354,7 @@ export function Hero({
     tabs[0]?.key ||
     'text-to-video') as MainTab;
   const router = useRouter();
+  const { fetchUserCredits } = useAppContext();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<MainTab>(defaultTab);
@@ -577,6 +579,7 @@ export function Hero({
         lifecycle: mapStatusToLifecycle(result.data.status),
         errorMessage: null,
       });
+      await fetchUserCredits();
       redirectToStudio(handoff);
     } catch (error) {
       const message =
@@ -591,6 +594,7 @@ export function Hero({
         lifecycle: 'failed',
         errorMessage: message,
       });
+      await fetchUserCredits();
       redirectToStudio(failedDraft);
     } finally {
       setIsSubmitting(false);
