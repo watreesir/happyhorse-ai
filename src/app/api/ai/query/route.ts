@@ -6,6 +6,7 @@ import {
 } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
+import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
       return respErr('query ai task failed');
     }
 
+    const previousStatus = task.status;
+
     // update ai task
     const updateAITask: UpdateAITask = {
       status: result.taskStatus,
@@ -51,15 +54,26 @@ export async function POST(req: Request) {
       taskResult: result.taskResult ? JSON.stringify(result.taskResult) : null,
       creditId: task.creditId, // credit consumption record id
     };
-    if (updateAITask.taskInfo !== task.taskInfo) {
-      await updateAITaskById(task.id, updateAITask);
+
+    const shouldPersist =
+      updateAITask.status !== task.status ||
+      updateAITask.taskInfo !== task.taskInfo ||
+      updateAITask.taskResult !== task.taskResult;
+
+    let persistedTask = task;
+    if (shouldPersist) {
+      const updatedTask = await updateAITaskById(task.id, updateAITask);
+      if (updatedTask) {
+        persistedTask = updatedTask;
+      }
     }
 
-    task.status = updateAITask.status || '';
-    task.taskInfo = updateAITask.taskInfo || null;
-    task.taskResult = updateAITask.taskResult || null;
+    await sendAITaskCompletionEmailIfNeeded({
+      previousStatus,
+      task: persistedTask,
+    });
 
-    return respData(task);
+    return respData(persistedTask);
   } catch (e: any) {
     console.log('ai query failed', e);
     return respErr(e.message);

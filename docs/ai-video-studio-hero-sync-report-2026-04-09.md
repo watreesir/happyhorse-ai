@@ -99,3 +99,40 @@
 - `/ai-video-studio` 的 `noindex` 未移除。
 - 积分是否为“5 起步”取决于线上配置：
   - 若要新用户仅 5 积分起步，请将 `INITIAL_CREDITS_ENABLED=false`（或将 `INITIAL_CREDITS_AMOUNT=0`）。
+
+## 8. 任务完成邮件通知 + 存储保留检查（2026-04-09）
+
+### 8.1 任务完成邮件通知（全任务类型）
+
+- 目标：任务进入终态后（`success / failed / canceled`），给任务所属用户发通知邮件。
+- 覆盖范围：
+  - `generate` 同步返回终态时触发（少数同步模型）
+  - `query` 轮询进入终态时触发
+  - `activity` 页面手动刷新任务进入终态时触发
+  - 新增 `notify` webhook 回调路由后，服务端回调进入终态也可触发
+- 通知文案：
+  - 按用户 `locale` 自动使用中/英文
+  - 主题与正文为 Happy Horse AI 自有表述，不使用旧项目品牌词
+  - 成功与失败分别发送不同文案
+- 去重策略：
+  - 仅在“非终态 -> 终态”状态跃迁时发送，避免常规重复轮询重复发信
+
+### 8.2 新增/修改文件
+
+- 新增：
+  - `src/shared/blocks/email/ai-task-finished.tsx`
+  - `src/shared/services/ai-task-notify.tsx`
+  - `src/app/api/ai/notify/[provider]/route.ts`
+- 修改：
+  - `src/shared/models/ai_task.ts`（新增按 provider taskId 查任务）
+  - `src/app/api/ai/generate/route.ts`
+  - `src/app/api/ai/query/route.ts`
+  - `src/app/[locale]/(landing)/activity/ai-tasks/[id]/refresh/page.tsx`
+
+### 8.3 Cloudflare/R2 保留时长检查结论
+
+- 当前代码侧没有“30 天自动删除”的内建逻辑，也没有 R2 生命周期参数配置项。
+- 当前逻辑是把生成结果上传到你自己的 R2（`KIE_CUSTOM_STORAGE=true`），对象会一直保留，直到你在 R2 生命周期规则里配置删除。
+- 结论：
+  - **“能保留 30 天”可以做到**（在 Cloudflare R2 配置生命周期规则）。
+  - **当前仓库默认并未强制 30 天删除**（不是代码自动执行）。

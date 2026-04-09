@@ -8,6 +8,7 @@ import { respData, respErr } from '@/shared/lib/resp';
 import { createAITask, NewAITask, updateAITaskById } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
+import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
 
 export async function POST(request: Request) {
   const limited = enforceMinIntervalRateLimit(request, {
@@ -127,6 +128,11 @@ export async function POST(request: Request) {
     if (!updatedTask) {
       throw new Error('failed to persist generated task');
     }
+
+    await sendAITaskCompletionEmailIfNeeded({
+      previousStatus: reservedTask.status,
+      task: updatedTask,
+    });
 
     return respData(updatedTask);
   } catch (e: any) {

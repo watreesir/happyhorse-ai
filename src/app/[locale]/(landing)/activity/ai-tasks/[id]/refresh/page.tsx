@@ -5,6 +5,7 @@ import { AITaskStatus } from '@/extensions/ai';
 import { Empty } from '@/shared/blocks/common';
 import { findAITaskById, updateAITaskById } from '@/shared/models/ai_task';
 import { getAIService } from '@/shared/services/ai';
+import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
 
 export default async function RefreshAITaskPage({
   params,
@@ -33,16 +34,25 @@ export default async function RefreshAITaskPage({
 
     const result = await aiProvider?.query?.({
       taskId: task.taskId,
+      mediaType: task.mediaType,
+      model: task.model,
     });
 
     if (result && result.taskStatus && result.taskInfo) {
-      await updateAITaskById(task.id, {
+      const previousStatus = task.status;
+      const updatedTask = await updateAITaskById(task.id, {
         status: result.taskStatus,
         taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
         taskResult: result.taskResult
           ? JSON.stringify(result.taskResult)
           : null,
       });
+      if (updatedTask) {
+        await sendAITaskCompletionEmailIfNeeded({
+          previousStatus,
+          task: updatedTask,
+        });
+      }
     }
   }
 

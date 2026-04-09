@@ -29,6 +29,7 @@ export function FeaturesAccordion({
     images[`item-${idx + 1}`] = {
       image: item.image?.src ?? '',
       alt: item.image?.alt || item.title || '',
+      video: item.video?.src ?? '',
     };
   });
 
@@ -94,11 +95,23 @@ export function FeaturesAccordion({
                     transition={{ duration: 0.2 }}
                     className="size-full overflow-hidden rounded-2xl border shadow-md"
                   >
-                    <LazyImage
-                      src={images[activeItem].image}
-                      className="size-full object-cover object-left-top dark:mix-blend-lighten"
-                      alt={images[activeItem].alt}
-                    />
+                    {images[activeItem].video ? (
+                      <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="size-full object-cover object-left-top"
+                      >
+                        <source src={images[activeItem].video} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <LazyImage
+                        src={images[activeItem].image}
+                        className="size-full object-cover object-left-top dark:mix-blend-lighten"
+                        alt={images[activeItem].alt}
+                      />
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>

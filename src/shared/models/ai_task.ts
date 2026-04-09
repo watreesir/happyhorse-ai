@@ -54,6 +54,32 @@ export async function findAITaskById(id: string) {
   return result;
 }
 
+export async function findAITaskByProviderTaskId({
+  providerTaskId,
+  provider,
+}: {
+  providerTaskId: string;
+  provider?: string;
+}) {
+  if (!providerTaskId) {
+    return null;
+  }
+
+  const [result] = await db()
+    .select()
+    .from(aiTask)
+    .where(
+      and(
+        eq(aiTask.taskId, providerTaskId),
+        provider ? eq(aiTask.provider, provider) : undefined
+      )
+    )
+    .orderBy(desc(aiTask.createdAt))
+    .limit(1);
+
+  return result || null;
+}
+
 export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
   const result = await db().transaction(async (tx: any) => {
     // task failed, Revoke credit consumption record

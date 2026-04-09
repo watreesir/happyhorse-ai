@@ -78,6 +78,9 @@
           "src": "https://picsum.photos/seed/happyhorse-zh-introduce/960/640.webp",
           "alt": "Happy Horse AI 工作流总览"
         },
+        "video": {
+          "src": "https://pub-c6aad452eb2347eaa4c21f700c027909.r2.dev/seahorse/SaveTwitter.Net_H_Xk2eXNG6h3opyF_(720p).mp4"
+        },
         "buttons": [
           {
             "title": "查看文生视频",
@@ -147,6 +150,9 @@
             "image": {
               "src": "https://picsum.photos/seed/happyhorse-zh-benefits-1/960/640.webp",
               "alt": "工作流控制项"
+            },
+            "video": {
+              "src": "https://pub-c6aad452eb2347eaa4c21f700c027909.r2.dev/seahorse/d4e137f9f16d12a4ab127912ac60a15d1627d5d4%202.MP4"
             }
           },
           {

@@ -28,11 +28,23 @@ export function FeaturesList({
         <div className="flex flex-wrap items-center gap-8 pb-12 md:gap-24">
           <ScrollAnimation direction="left">
             <div className="mx-auto w-full max-w-[500px] flex-shrink-0 md:mx-0">
-              <LazyImage
-                src={section.image?.src ?? ''}
-                alt={section.image?.alt ?? ''}
-                className="h-auto w-full rounded-lg object-cover"
-              />
+              {section.video?.src ? (
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="h-auto w-full rounded-lg object-cover"
+                >
+                  <source src={section.video.src} type="video/mp4" />
+                </video>
+              ) : (
+                <LazyImage
+                  src={section.image?.src ?? ''}
+                  alt={section.image?.alt ?? ''}
+                  className="h-auto w-full rounded-lg object-cover"
+                />
+              )}
             </div>
           </ScrollAnimation>
           <div className="w-full min-w-0 flex-1">
