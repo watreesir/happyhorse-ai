@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { Coins } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
@@ -1023,12 +1024,10 @@ export function Hero({
                 {isSubmitting ? (
                   '...'
                 ) : (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
-                      {TASK_COST_CREDITS}
-                    </span>
+                  <span className="inline-flex items-center gap-1.5">
                     <span>✦ {generateLabel}</span>
-                    <span className="rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
+                      <Coins className="h-3 w-3" />
                       {TASK_COST_CREDITS}
                     </span>
                   </span>

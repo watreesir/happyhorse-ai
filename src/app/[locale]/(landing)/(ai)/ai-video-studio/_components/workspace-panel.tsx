@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { signIn } from '@/core/auth/client';
 import { Button } from '@/shared/components/ui/button';
 import {
   Dialog,
@@ -266,8 +267,7 @@ function FileBadge({
 
 export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const searchParams = useSearchParams();
-  const { fetchUserCredits, isCheckSign, setIsShowSignModal, user } =
-    useAppContext();
+  const { fetchUserCredits, isCheckSign, user } = useAppContext();
   const [draft, setDraft] = useState<VideoStudioDraft>(() => ({
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
     id: createDraftId(),
@@ -353,6 +353,23 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     lifecycleRef.current = nextLifecycle;
     setTaskLifecycle(nextLifecycle);
   };
+
+  const triggerGoogleSignIn = useCallback(async () => {
+    const callbackURL =
+      `${window.location.pathname}${window.location.search}${window.location.hash}` ||
+      '/';
+    try {
+      await signIn.social({
+        provider: 'google',
+        callbackURL,
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('studio google sign in failed:', error);
+      }
+      window.location.assign('/sign-in');
+    }
+  }, []);
 
   const setUploading = (key: string, value: boolean) => {
     setUploadingMap((prev) => ({ ...prev, [key]: value }));
@@ -857,7 +874,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
               className="bg-emerald-600 text-white hover:bg-emerald-500"
               onClick={() => {
                 setShowGuestLoginModal(false);
-                setIsShowSignModal(true);
+                void triggerGoogleSignIn();
               }}
             >
               {copy.guestLoginModalAction}
@@ -876,7 +893,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
             type="button"
             size="sm"
             className="h-8 shrink-0 rounded-full bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-500 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400"
-            onClick={() => setIsShowSignModal(true)}
+            onClick={() => void triggerGoogleSignIn()}
           >
             {copy.guestTaskBannerAction}
           </Button>
