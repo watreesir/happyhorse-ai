@@ -46,7 +46,9 @@
     "video_alerts_guide": "Sign in for free trial",
     "video_alerts_guide_short": "Free trial",
     "daily_credits_claimed": "Daily reward +{credits} credits.",
-    "daily_credits_already_claimed": "Daily reward already claimed today (+{credits})."
+    "daily_credits_already_claimed": "Daily reward already claimed today (+{credits}).",
+    "guest_daily_credits_claimed": "Congratulations! You received {credits} credits.",
+    "guest_login_reward": "Congratulations! You received {credits} credits."
   },
   "payment": {
     "choose_payment_method": "Choose Payment Method",

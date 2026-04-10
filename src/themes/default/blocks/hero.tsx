@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
 import { useAppContext } from '@/shared/contexts/app';
+import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -82,6 +83,8 @@ const RATIOS: { key: Ratio; label: string; icon: string }[] = [
   { key: '3:4', label: '3:4', icon: '▯' },
   { key: '1:1', label: '1:1', icon: '■' },
 ];
+
+const TASK_COST_CREDITS = FIXED_AI_TASK_CREDIT_COST;
 
 // ─── UploadZone ────────────────────────────────────────────────────────────────
 
@@ -355,7 +358,14 @@ export function Hero({
     tabs[0]?.key ||
     'text-to-video') as MainTab;
   const router = useRouter();
-  const { fetchUserCredits } = useAppContext();
+  const {
+    fetchGuestCredits,
+    fetchUserCredits,
+    guestCredits,
+    isCheckSign,
+    setIsShowSignModal,
+    user,
+  } = useAppContext();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<MainTab>(defaultTab);
@@ -556,6 +566,19 @@ export function Hero({
     setStatusHint(null);
 
     try {
+      const isGuestUser = !user && !isCheckSign;
+      if (isGuestUser) {
+        const guestState = await fetchGuestCredits();
+        const remainingCredits =
+          guestState?.remainingCredits ?? guestCredits ?? 0;
+        if (remainingCredits < TASK_COST_CREDITS) {
+          setStatusHint('Insufficient credits');
+          toast.error('Insufficient credits', { position: 'bottom-right' });
+          setIsShowSignModal(true);
+          return;
+        }
+      }
+
       const draft = createDraft(null);
       const payload = buildVideoTaskPayloadFromDraft(draft);
       const response = await fetch('/api/ai/generate', {
@@ -580,7 +603,11 @@ export function Hero({
         lifecycle: mapStatusToLifecycle(result.data.status),
         errorMessage: null,
       });
-      await fetchUserCredits();
+      if (isGuestUser) {
+        await fetchGuestCredits();
+      } else {
+        await fetchUserCredits();
+      }
       redirectToStudio(handoff);
     } catch (error) {
       const message =
@@ -594,11 +621,21 @@ export function Hero({
       const isInsufficientCredits =
         normalizedMessage.includes('insufficient credits') ||
         normalizedMessage.includes('积分不足');
+      const shouldPromptSignIn =
+        isInsufficientCredits ||
+        normalizedMessage.includes('guest trial exhausted') ||
+        normalizedMessage.includes('guest trial risk blocked') ||
+        normalizedMessage.includes('no auth');
 
-      if (isInsufficientCredits) {
-        await fetchUserCredits();
+      if (shouldPromptSignIn) {
+        if (!user) {
+          await fetchGuestCredits();
+        } else {
+          await fetchUserCredits();
+        }
         setStatusHint('Insufficient credits');
         toast.error('Insufficient credits', { position: 'bottom-right' });
+        setIsShowSignModal(true);
         return;
       }
 
@@ -983,7 +1020,19 @@ export function Hero({
                 disabled={isSubmitting || hasUploading}
                 className="bg-primary text-primary-foreground hover:bg-primary/92 shrink-0 rounded-xl px-5 py-2 text-sm font-semibold shadow-lg transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? '...' : '✦'} {generateLabel}
+                {isSubmitting ? (
+                  '...'
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
+                      {TASK_COST_CREDITS}
+                    </span>
+                    <span>✦ {generateLabel}</span>
+                    <span className="rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
+                      {TASK_COST_CREDITS}
+                    </span>
+                  </span>
+                )}
               </button>
             </div>
 

@@ -88,7 +88,7 @@
         "origin": "Keep Original"
       },
       "runButton": "Get and Generate",
-      "generatingToast": "Task is generating. Please wait.",
+      "generatingToast": "Your video is generating. Please wait.",
       "guestGenerateHint": "Sign in to receive completion alerts after generation.",
       "guestTaskBanner": "This task is generating. Sign in now to bind completion alerts.",
       "guestTaskBannerAction": "Sign in and bind alerts",

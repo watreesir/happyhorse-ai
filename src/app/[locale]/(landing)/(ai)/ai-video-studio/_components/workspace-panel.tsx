@@ -90,6 +90,7 @@ type SingleUploadKey =
 const MAX_REFERENCE_MATERIALS = 5;
 const MAX_POLL_FAILURES = 3;
 const GUEST_LOGIN_MODAL_SHOWN_KEY = 'studio:guest-login-modal:shown-task-ids';
+const GUEST_LOGIN_MODAL_DELAY_MS = 3_000;
 
 function createDraftId() {
   return `studio-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -288,6 +289,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const lastGeneratingToastTaskIdRef = useRef<string | null>(null);
   const guestHintCooldownRef = useRef(0);
   const isGuestUser = !user && !isCheckSign;
+  const guestLoginModalTimerRef = useRef<number | null>(null);
+  const pendingGuestModalTaskIdRef = useRef<string | null>(null);
+  const isGuestUserRef = useRef(isGuestUser);
 
   const notifyGenerating = useCallback(
     (taskId: string) => {
@@ -308,18 +312,41 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     toast.message(copy.guestGenerateHint);
   }, [copy.guestGenerateHint, isGuestUser]);
 
+  const clearGuestLoginModalTimer = useCallback(() => {
+    if (guestLoginModalTimerRef.current) {
+      window.clearTimeout(guestLoginModalTimerRef.current);
+      guestLoginModalTimerRef.current = null;
+    }
+    pendingGuestModalTaskIdRef.current = null;
+  }, []);
+
   const openGuestLoginModalForTask = useCallback(
     (taskId: string | null) => {
-      if (!isGuestUser || !taskId) {
+      if (!isGuestUserRef.current || !taskId) {
         return;
       }
       if (hasGuestLoginModalShown(taskId)) {
         return;
       }
-      markGuestLoginModalShown(taskId);
-      setShowGuestLoginModal(true);
+      if (pendingGuestModalTaskIdRef.current === taskId) {
+        return;
+      }
+
+      clearGuestLoginModalTimer();
+      pendingGuestModalTaskIdRef.current = taskId;
+      guestLoginModalTimerRef.current = window.setTimeout(() => {
+        guestLoginModalTimerRef.current = null;
+        pendingGuestModalTaskIdRef.current = null;
+
+        if (!isGuestUserRef.current || hasGuestLoginModalShown(taskId)) {
+          return;
+        }
+
+        markGuestLoginModalShown(taskId);
+        setShowGuestLoginModal(true);
+      }, GUEST_LOGIN_MODAL_DELAY_MS);
     },
-    [isGuestUser]
+    [clearGuestLoginModalTimer]
   );
 
   const updateLifecycle = (nextLifecycle: StudioTaskLifecycle) => {
@@ -363,7 +390,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           notifyGuestGenerateHint();
         }
       }
-      if (submission.lifecycle !== 'failed') {
+      if (
+        submission.lifecycle === 'queued' ||
+        submission.lifecycle === 'processing' ||
+        submission.lifecycle === 'submitting'
+      ) {
         openGuestLoginModalForTask(submission.taskId);
       }
       dispatchVideoStudioRefresh('submit');
@@ -393,6 +424,19 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     setActiveTaskId(null);
     setGuestPendingTaskId(null);
   };
+
+  useEffect(() => {
+    isGuestUserRef.current = isGuestUser;
+    if (!isGuestUser) {
+      clearGuestLoginModalTimer();
+    }
+  }, [clearGuestLoginModalTimer, isGuestUser]);
+
+  useEffect(() => {
+    return () => {
+      clearGuestLoginModalTimer();
+    };
+  }, [clearGuestLoginModalTimer]);
 
   useEffect(() => {
     if (hydratedFromEntryRef.current) return;
@@ -472,7 +516,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       } else {
         setGuestPendingTaskId(null);
       }
-      if (handoffLifecycle !== 'failed') {
+      if (
+        handoffLifecycle === 'queued' ||
+        handoffLifecycle === 'processing' ||
+        handoffLifecycle === 'submitting'
+      ) {
         openGuestLoginModalForTask(handoffTaskId);
       }
       dispatchVideoStudioRefresh('submit');
@@ -511,13 +559,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     ) {
       setGuestPendingTaskId((prev) => prev ?? activeTaskId);
       notifyGuestGenerateHint();
-      openGuestLoginModalForTask(activeTaskId);
     }
   }, [
     activeTaskId,
     isGuestUser,
     notifyGuestGenerateHint,
-    openGuestLoginModalForTask,
     taskLifecycle,
   ]);
 
@@ -740,9 +786,6 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         setGuestPendingTaskId(null);
       } else {
         setActiveTaskId(lifecycle === 'completed' ? null : task.id);
-        if (isGuestUser) {
-          openGuestLoginModalForTask(task.id);
-        }
         if (lifecycle === 'queued' || lifecycle === 'processing') {
           notifyGenerating(task.id);
           if (isGuestUser) {
@@ -793,7 +836,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       </header>
 
       <Dialog open={showGuestLoginModal} onOpenChange={setShowGuestLoginModal}>
-        <DialogContent className="sm:max-w-[460px]">
+        <DialogContent className="sm:max-w-[620px]">
           <DialogHeader>
             <DialogTitle>{copy.guestLoginModalTitle}</DialogTitle>
             <DialogDescription className="space-y-2 pt-1 text-sm text-zinc-600 dark:text-zinc-300">

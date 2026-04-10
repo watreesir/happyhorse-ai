@@ -88,7 +88,7 @@
         "origin": "保留原音"
       },
       "runButton": "获取并生成",
-      "generatingToast": "任务正在生成中，请耐心等待",
+      "generatingToast": "你的视频正在生成，请耐心等待",
       "guestGenerateHint": "登录后可接收生成完成提醒。",
       "guestTaskBanner": "任务正在生成中，立即登录可绑定完成提醒。",
       "guestTaskBannerAction": "立即登录并绑定提醒",

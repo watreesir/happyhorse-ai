@@ -19,6 +19,7 @@ import { User } from '@/shared/models/user';
 export interface ContextValue {
   user: User | null;
   setUser: (user: User | null) => void;
+  guestCredits: number | null;
   isCheckSign: boolean;
   setIsCheckSign: (isCheckSign: boolean) => void;
   isShowSignModal: boolean;
@@ -28,6 +29,13 @@ export interface ContextValue {
   configs: Record<string, string>;
   fetchConfigs: () => Promise<void>;
   fetchUserCredits: () => Promise<void>;
+  fetchGuestCredits: () => Promise<{
+    remainingCredits: number;
+    totalCredits: number;
+    usedTaskCount: number;
+    claimedDaily: boolean;
+    dayKey: string;
+  } | null>;
   fetchUserInfo: () => Promise<void>;
   showOneTap: (configs: Record<string, string>) => Promise<void>;
 }
@@ -114,6 +122,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   // sign user
   const [user, setUser] = useState<User | null>(null);
+  const [guestCredits, setGuestCredits] = useState<number | null>(null);
   const userRef = useRef<User | null>(null);
   const oneTapAutoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -172,6 +181,35 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const fetchGuestCredits = useCallback(async () => {
+    try {
+      if (userRef.current) {
+        setGuestCredits(null);
+        return null;
+      }
+
+      const resp = await fetch('/api/guest/trial-credits', {
+        method: 'POST',
+      });
+      if (!resp.ok) {
+        throw new Error(`fetch failed with status: ${resp.status}`);
+      }
+      const { code, message, data } = await resp.json();
+      if (code !== 0 || !data) {
+        throw new Error(message || 'get guest trial credits failed');
+      }
+
+      const remaining = Number.parseInt(String(data.remainingCredits), 10);
+      setGuestCredits(Number.isFinite(remaining) ? remaining : 0);
+      return data;
+    } catch (e) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('fetch guest credits failed:', e);
+      }
+      return null;
+    }
+  }, []);
+
   const fetchUserInfo = useCallback(async () => {
     try {
       const resp = await fetch('/api/user/get-user-info', {
@@ -186,6 +224,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setUser(data);
+      setGuestCredits(null);
     } catch (e) {
       if (process.env.NODE_ENV !== 'production') {
         console.log('fetch user info failed:', e);
@@ -259,6 +298,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       user,
       setUser,
+      guestCredits,
       isCheckSign,
       setIsCheckSign,
       isShowSignModal,
@@ -268,17 +308,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       configs,
       fetchConfigs,
       fetchUserCredits,
+      fetchGuestCredits,
       fetchUserInfo,
       showOneTap,
     }),
     [
       user,
+      guestCredits,
       isCheckSign,
       isShowSignModal,
       isShowPaymentModal,
       configs,
       fetchConfigs,
       fetchUserCredits,
+      fetchGuestCredits,
       fetchUserInfo,
       showOneTap,
     ]

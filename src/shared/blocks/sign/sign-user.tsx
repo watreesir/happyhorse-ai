@@ -13,7 +13,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-import { authClient, signOut, useSession } from '@/core/auth/client';
+import { authClient, signIn, signOut, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import {
   Avatar,
@@ -63,11 +63,12 @@ export function SignUser({
     configs,
     fetchConfigs,
     fetchUserCredits,
-    setIsShowSignModal,
+    fetchGuestCredits,
     isCheckSign,
     setIsCheckSign,
     user,
     setUser,
+    guestCredits,
     fetchUserInfo,
     showOneTap,
   } = useAppContext();
@@ -83,6 +84,10 @@ export function SignUser({
   // one tap initialized
   const oneTapInitialized = useRef(false);
   const dailyCreditsCheckedRef = useRef(false);
+  const guestCreditsCheckedRef = useRef(false);
+  const authTransitionInitializedRef = useRef(false);
+  const wasSignedInRef = useRef(false);
+  const hadGuestStateRef = useRef(false);
 
   useEffect(() => {
     fetchConfigs();
@@ -200,6 +205,90 @@ export function SignUser({
       }
     })();
   }, [displayUser?.id, fetchUserCredits, isPending, mounted, t]);
+
+  useEffect(() => {
+    if (!mounted || isPending || displayUser?.id) {
+      return;
+    }
+
+    if (guestCreditsCheckedRef.current) {
+      return;
+    }
+
+    guestCreditsCheckedRef.current = true;
+
+    void (async () => {
+      const result = await fetchGuestCredits();
+      if (!result) {
+        return;
+      }
+
+      hadGuestStateRef.current = true;
+
+      if (result.claimedDaily) {
+        toast.success(
+          t('guest_daily_credits_claimed', {
+            credits: result.totalCredits,
+          }),
+          { position: 'bottom-right' }
+        );
+      }
+    })();
+  }, [displayUser?.id, fetchGuestCredits, isPending, mounted, t]);
+
+  useEffect(() => {
+    if (!displayUser?.id && guestCredits !== null) {
+      hadGuestStateRef.current = true;
+    }
+  }, [displayUser?.id, guestCredits]);
+
+  useEffect(() => {
+    if (!mounted || isPending) {
+      return;
+    }
+
+    const signedIn = Boolean(displayUser?.id);
+    if (!authTransitionInitializedRef.current) {
+      authTransitionInitializedRef.current = true;
+      wasSignedInRef.current = signedIn;
+      return;
+    }
+
+    if (!wasSignedInRef.current && signedIn && hadGuestStateRef.current) {
+      toast.success(
+        t('guest_login_reward', {
+          credits: 5,
+        }),
+        { position: 'bottom-right' }
+      );
+      hadGuestStateRef.current = false;
+    }
+
+    wasSignedInRef.current = signedIn;
+
+    if (!signedIn) {
+      guestCreditsCheckedRef.current = false;
+    }
+  }, [displayUser?.id, isPending, mounted, t]);
+
+  const handleTopRightSignIn = async () => {
+    const callbackURL =
+      `${window.location.pathname}${window.location.search}${window.location.hash}` ||
+      '/';
+    try {
+      await signIn.social({
+        provider: 'google',
+        callbackURL,
+      });
+      return;
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('header google sign in failed:', error);
+      }
+    }
+
+    router.push('/sign-in');
+  };
 
   return (
     <>
@@ -326,7 +415,19 @@ export function SignUser({
           </DropdownMenu>
         </div>
       ) : (
-        <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+        <div className="flex w-full flex-col space-y-3 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 md:w-fit">
+          {userNav?.show_credits && (
+            <span
+              className={cn(
+                'inline-flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                'border-emerald-200/80 bg-emerald-50/90 text-emerald-700',
+                'dark:border-emerald-400/30 dark:bg-emerald-500/12 dark:text-emerald-200'
+              )}
+            >
+              <Coins className="h-3.5 w-3.5" />
+              <span className="tabular-nums">{guestCredits ?? 0}</span>
+            </span>
+          )}
           <Button
             size={signButtonSize}
             className={cn(
@@ -334,7 +435,7 @@ export function SignUser({
               'dark:border-emerald-400/60 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400',
               isScrolled && 'lg:hidden'
             )}
-            onClick={() => setIsShowSignModal(true)}
+            onClick={() => void handleTopRightSignIn()}
           >
             <span className="inline-flex items-center gap-1.5">
               <BellRing className="h-3.5 w-3.5" />

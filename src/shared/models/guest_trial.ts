@@ -17,6 +17,7 @@ export const GUEST_DEVICE_ID_COOKIE = 'hh_guest_device_id';
 export const GUEST_TRIAL_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 const RISK_WINDOW_MS = 24 * 60 * 60 * 1000;
+const GUEST_TRIAL_TIMEZONE = process.env.GUEST_TRIAL_TIMEZONE || 'Asia/Shanghai';
 const GUEST_TRIAL_SYSTEM_USER_ID =
   process.env.GUEST_TRIAL_SYSTEM_USER_ID?.trim() || 'guest-trial-system-user';
 const GUEST_TRIAL_SYSTEM_USER_EMAIL =
@@ -35,10 +36,7 @@ const GUEST_TRIAL_TOTAL_CREDITS = parsePositiveInt(
   process.env.GUEST_TRIAL_TOTAL_CREDITS,
   5
 );
-const GUEST_TRIAL_MAX_TASKS = parsePositiveInt(
-  process.env.GUEST_TRIAL_MAX_TASKS,
-  1
-);
+const GUEST_TRIAL_MAX_TASKS = parsePositiveInt(process.env.GUEST_TRIAL_MAX_TASKS, 1);
 const GUEST_TRIAL_MAX_NEW_TOKENS_PER_IP_24H = parsePositiveInt(
   process.env.GUEST_TRIAL_MAX_NEW_TOKENS_PER_IP_24H,
   3
@@ -70,6 +68,31 @@ function toInt(value: unknown): number {
 
 function normalizeHeaderValue(value: string | null | undefined) {
   return (value || '').trim().slice(0, 512);
+}
+
+function parseDate(input: unknown, fallback: Date) {
+  if (input instanceof Date && Number.isFinite(input.getTime())) {
+    return input;
+  }
+  if (typeof input === 'string' || typeof input === 'number') {
+    const parsed = new Date(input);
+    if (Number.isFinite(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
+
+function getDateKey(
+  date: Date = new Date(),
+  timeZone: string = GUEST_TRIAL_TIMEZONE
+) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
 }
 
 function toGuestTokenHash(token: string) {
@@ -111,6 +134,133 @@ function getQuotaByTokenHash(
     .then((rows: GuestTrialQuotaRow[]) => rows[0] || null);
 }
 
+async function createQuotaIfNeeded({
+  tokenHash,
+  ipHash,
+  deviceHash,
+  now,
+  tx,
+}: {
+  tokenHash: string;
+  ipHash: string;
+  deviceHash: string;
+  now: Date;
+  tx: any;
+}) {
+  let quota = await getQuotaByTokenHash(tokenHash, tx);
+  let created = false;
+  if (quota) {
+    return { quota, created };
+  }
+
+  const windowStart = new Date(now.getTime() - RISK_WINDOW_MS);
+
+  const [ipRow] = await tx
+    .select({ count: count() })
+    .from(guestTrialQuota)
+    .where(
+      and(
+        eq(guestTrialQuota.ipHash, ipHash),
+        gt(guestTrialQuota.createdAt, windowStart)
+      )
+    );
+  const ipCount = toInt(ipRow?.count);
+  if (ipCount >= GUEST_TRIAL_MAX_NEW_TOKENS_PER_IP_24H) {
+    throw new Error('guest trial risk blocked, please sign in');
+  }
+
+  const [deviceRow] = await tx
+    .select({ count: count() })
+    .from(guestTrialQuota)
+    .where(
+      and(
+        eq(guestTrialQuota.deviceHash, deviceHash),
+        gt(guestTrialQuota.createdAt, windowStart)
+      )
+    );
+  const deviceCount = toInt(deviceRow?.count);
+  if (deviceCount >= GUEST_TRIAL_MAX_NEW_TOKENS_PER_DEVICE_24H) {
+    throw new Error('guest trial risk blocked, please sign in');
+  }
+
+  const newQuota = {
+    id: getUuid(),
+    tokenHash,
+    deviceHash,
+    ipHash,
+    remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
+    usedTaskCount: 0,
+    blocked: false,
+    blockReason: null,
+    createdAt: now,
+    updatedAt: now,
+    lastSeenAt: now,
+    consumedAt: null,
+  };
+
+  const [createdQuota] = await tx.insert(guestTrialQuota).values(newQuota).returning();
+  quota = createdQuota || newQuota;
+  created = true;
+
+  return { quota, created };
+}
+
+async function syncDailyCredits({
+  quota,
+  now,
+  tx,
+}: {
+  quota: GuestTrialQuotaRow;
+  now: Date;
+  tx: any;
+}) {
+  const dayKey = getDateKey(now);
+  const quotaLastSeenAt = parseDate(
+    quota.lastSeenAt || quota.updatedAt || quota.createdAt,
+    now
+  );
+  const quotaDayKey = getDateKey(quotaLastSeenAt);
+
+  if (quotaDayKey !== dayKey) {
+    const [updatedQuota] = await tx
+      .update(guestTrialQuota)
+      .set({
+        remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
+        usedTaskCount: 0,
+        lastSeenAt: now,
+        consumedAt: null,
+      })
+      .where(eq(guestTrialQuota.id, quota.id))
+      .returning();
+
+    return {
+      quota:
+        updatedQuota ||
+        ({
+          ...quota,
+          remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
+          usedTaskCount: 0,
+          lastSeenAt: now,
+          consumedAt: null,
+        } as GuestTrialQuotaRow),
+      claimedDaily: true,
+      dayKey,
+    };
+  }
+
+  const [updatedQuota] = await tx
+    .update(guestTrialQuota)
+    .set({ lastSeenAt: now })
+    .where(eq(guestTrialQuota.id, quota.id))
+    .returning();
+
+  return {
+    quota: updatedQuota || quota,
+    claimedDaily: false,
+    dayKey,
+  };
+}
+
 export function getGuestTrialTokenFromRequest(request: Request) {
   const token = getCookieFromHeader(
     request.headers.get('cookie'),
@@ -144,6 +294,63 @@ export async function ensureGuestTrialSystemUser(tx?: any) {
   return GUEST_TRIAL_SYSTEM_USER_ID;
 }
 
+export async function ensureGuestTrialSession({
+  token,
+  deviceId,
+  ip,
+  userAgent,
+  acceptLanguage,
+}: {
+  token: string;
+  deviceId: string;
+  ip: string;
+  userAgent: string;
+  acceptLanguage: string;
+}) {
+  const tokenHash = toGuestTokenHash(token);
+  const ipHash = toIpHash(ip);
+  const deviceHash = toDeviceHash({ deviceId, userAgent, acceptLanguage });
+  const now = new Date();
+
+  return db().transaction(async (tx: any) => {
+    const { quota, created } = await createQuotaIfNeeded({
+      tokenHash,
+      ipHash,
+      deviceHash,
+      now,
+      tx,
+    });
+
+    if (!quota) {
+      throw new Error('guest trial unavailable, please sign in');
+    }
+
+    if (quota.blocked) {
+      throw new Error('guest trial risk blocked, please sign in');
+    }
+
+    if (created) {
+      return {
+        remainingCredits: toInt(quota.remainingCredits),
+        totalCredits: GUEST_TRIAL_TOTAL_CREDITS,
+        usedTaskCount: toInt(quota.usedTaskCount),
+        claimedDaily: true,
+        dayKey: getDateKey(now),
+      };
+    }
+
+    const synced = await syncDailyCredits({ quota, now, tx });
+
+    return {
+      remainingCredits: toInt(synced.quota.remainingCredits),
+      totalCredits: GUEST_TRIAL_TOTAL_CREDITS,
+      usedTaskCount: toInt(synced.quota.usedTaskCount),
+      claimedDaily: synced.claimedDaily,
+      dayKey: synced.dayKey,
+    };
+  });
+}
+
 export async function reserveGuestTrialCredits({
   token,
   deviceId,
@@ -164,63 +371,15 @@ export async function reserveGuestTrialCredits({
   const ipHash = toIpHash(ip);
   const deviceHash = toDeviceHash({ deviceId, userAgent, acceptLanguage });
   const now = new Date();
-  const windowStart = new Date(now.getTime() - RISK_WINDOW_MS);
 
   return db().transaction(async (tx: any) => {
-    let quota = await getQuotaByTokenHash(tokenHash, tx);
-    let created = false;
-
-    if (!quota) {
-      const [ipRow] = await tx
-        .select({ count: count() })
-        .from(guestTrialQuota)
-        .where(
-          and(
-            eq(guestTrialQuota.ipHash, ipHash),
-            gt(guestTrialQuota.createdAt, windowStart)
-          )
-        );
-      const ipCount = toInt(ipRow?.count);
-      if (ipCount >= GUEST_TRIAL_MAX_NEW_TOKENS_PER_IP_24H) {
-        throw new Error('guest trial risk blocked, please sign in');
-      }
-
-      const [deviceRow] = await tx
-        .select({ count: count() })
-        .from(guestTrialQuota)
-        .where(
-          and(
-            eq(guestTrialQuota.deviceHash, deviceHash),
-            gt(guestTrialQuota.createdAt, windowStart)
-          )
-        );
-      const deviceCount = toInt(deviceRow?.count);
-      if (deviceCount >= GUEST_TRIAL_MAX_NEW_TOKENS_PER_DEVICE_24H) {
-        throw new Error('guest trial risk blocked, please sign in');
-      }
-
-      const newQuota = {
-        id: getUuid(),
-        tokenHash,
-        deviceHash,
-        ipHash,
-        remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
-        usedTaskCount: 0,
-        blocked: false,
-        blockReason: null,
-        createdAt: now,
-        updatedAt: now,
-        lastSeenAt: now,
-        consumedAt: null,
-      };
-
-      const [createdQuota] = await tx
-        .insert(guestTrialQuota)
-        .values(newQuota)
-        .returning();
-      quota = createdQuota || newQuota;
-      created = true;
-    }
+    const { quota } = await createQuotaIfNeeded({
+      tokenHash,
+      ipHash,
+      deviceHash,
+      now,
+      tx,
+    });
 
     if (!quota) {
       throw new Error('guest trial unavailable, please sign in');
@@ -230,12 +389,12 @@ export async function reserveGuestTrialCredits({
       throw new Error('guest trial risk blocked, please sign in');
     }
 
-    const remainingCredits = toInt(quota.remainingCredits);
-    const usedTaskCount = toInt(quota.usedTaskCount);
-    if (
-      usedTaskCount >= GUEST_TRIAL_MAX_TASKS ||
-      remainingCredits < safeCredits
-    ) {
+    const synced = await syncDailyCredits({ quota, now, tx });
+    const activeQuota = synced.quota;
+    const remainingCredits = toInt(activeQuota.remainingCredits);
+    const usedTaskCount = toInt(activeQuota.usedTaskCount);
+
+    if (usedTaskCount >= GUEST_TRIAL_MAX_TASKS || remainingCredits < safeCredits) {
       throw new Error('guest trial exhausted, please sign in');
     }
 
@@ -250,15 +409,13 @@ export async function reserveGuestTrialCredits({
         ipHash,
         deviceHash,
         lastSeenAt: now,
-        consumedAt: nextRemainingCredits === 0 ? now : quota.consumedAt,
+        consumedAt: nextRemainingCredits === 0 ? now : activeQuota.consumedAt,
       })
-      .where(eq(guestTrialQuota.id, quota.id))
+      .where(eq(guestTrialQuota.id, activeQuota.id))
       .returning();
 
     return {
-      created,
-      quota: updatedQuota || quota,
-      tokenHash,
+      quota: updatedQuota || activeQuota,
     };
   });
 }
@@ -286,8 +443,7 @@ export async function refundGuestTrialCredits({
     );
     const nextUsedTaskCount = Math.max(0, toInt(quota.usedTaskCount) - 1);
     const shouldClearConsumedAt =
-      nextRemainingCredits >= GUEST_TRIAL_TOTAL_CREDITS &&
-      nextUsedTaskCount === 0;
+      nextRemainingCredits >= GUEST_TRIAL_TOTAL_CREDITS && nextUsedTaskCount === 0;
 
     const [updatedQuota] = await tx
       .update(guestTrialQuota)
