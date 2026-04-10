@@ -66,6 +66,7 @@ export function getMetadata(
     } else {
       imageUrl = `${envConfigs.app_url}${imageUrl}`;
     }
+    imageUrl = appendVersionParam(imageUrl, envConfigs.app_preview_image_version);
 
     // app name
     let appName = options.appName;
@@ -153,4 +154,20 @@ async function getCanonicalUrl(canonicalUrl: string, locale: string) {
   }
 
   return canonicalUrl;
+}
+
+function appendVersionParam(url: string, version: string) {
+  const safeVersion = (version || '').trim();
+  if (!safeVersion) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set('v', safeVersion);
+    return parsed.toString();
+  } catch {
+    const joiner = url.includes('?') ? '&' : '?';
+    return `${url}${joiner}v=${encodeURIComponent(safeVersion)}`;
+  }
 }

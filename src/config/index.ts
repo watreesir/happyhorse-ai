@@ -14,6 +14,11 @@ export const envConfigs: ConfigMap = {
     process.env.NEXT_PUBLIC_APP_FAVICON ?? '/icons/favicon-32x32.png',
   app_preview_image:
     process.env.NEXT_PUBLIC_APP_PREVIEW_IMAGE ?? '/preview.png',
+  app_preview_image_version:
+    process.env.NEXT_PUBLIC_APP_PREVIEW_IMAGE_VERSION ??
+    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ??
+    process.env.VERCEL_DEPLOYMENT_ID ??
+    packageJson.version,
   theme: process.env.NEXT_PUBLIC_THEME ?? 'default',
   appearance: process.env.NEXT_PUBLIC_APPEARANCE ?? 'system',
   locale: process.env.NEXT_PUBLIC_DEFAULT_LOCALE ?? 'en',
