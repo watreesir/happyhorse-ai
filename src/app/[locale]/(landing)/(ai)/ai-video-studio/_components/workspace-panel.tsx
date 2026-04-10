@@ -12,12 +12,12 @@ import {
 import { useSearchParams } from 'next/navigation';
 import {
   BellRing,
+  Coins,
   Film,
   ImagePlus,
   Layers3,
   LoaderCircle,
   Music2,
-  Sparkles,
   Trash2,
   UploadCloud,
 } from 'lucide-react';
@@ -34,6 +34,7 @@ import {
 } from '@/shared/components/ui/dialog';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
+import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -92,6 +93,7 @@ const MAX_REFERENCE_MATERIALS = 5;
 const MAX_POLL_FAILURES = 3;
 const GUEST_LOGIN_MODAL_SHOWN_KEY = 'studio:guest-login-modal:shown-task-ids';
 const GUEST_LOGIN_MODAL_DELAY_MS = 3_000;
+const TASK_COST_CREDITS = FIXED_AI_TASK_CREDIT_COST;
 
 function createDraftId() {
   return `studio-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -847,9 +849,6 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         <h3 className="text-sm font-semibold tracking-[0.18em] text-zinc-700 uppercase dark:text-zinc-200">
           {copy.panelTitle}
         </h3>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          {copy.panelHint}
-        </p>
       </header>
 
       <Dialog open={showGuestLoginModal} onOpenChange={setShowGuestLoginModal}>
@@ -906,9 +905,6 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
             <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.modeLabel}
             </label>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {copy.modeHint}
-            </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(copy.modes) as VideoStudioMode[]).map((mode) => (
@@ -917,7 +913,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 type="button"
                 onClick={() => updateDraft({ mode })}
                 className={cn(
-                  'rounded-lg border px-2 py-2 text-xs font-semibold transition',
+                  'rounded-lg border px-2 py-2 text-xs font-semibold whitespace-nowrap transition',
                   draft.mode === mode
                     ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-900'
                     : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
@@ -973,12 +969,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
+            <label className="text-xs font-semibold tracking-[0.14em] whitespace-nowrap text-zinc-500 uppercase dark:text-zinc-400">
               {copy.uploadLabel}
             </label>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {copy.uploadHint}
-            </span>
           </div>
 
           {draft.mode === 'text-to-video' ? (
@@ -1305,36 +1298,31 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           type="button"
           onClick={handleSubmit}
           disabled={isSubmittingOrProcessing || hasUploading}
-          className="h-10 w-full rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="bg-primary text-primary-foreground hover:bg-primary/92 h-10 w-full rounded-xl text-sm font-semibold shadow-lg transition-all duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmittingOrProcessing ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" />
+            <>
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              {taskLifecycle === 'submitting'
+                ? copy.statuses.submitting
+                : copy.runButton}
+            </>
           ) : (
-            <Sparkles className="h-4 w-4" />
+            <span className="inline-flex items-center gap-1.5">
+              <span>✦ {copy.runButton}</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
+                <Coins className="h-3 w-3" />
+                {TASK_COST_CREDITS}
+              </span>
+            </span>
           )}
-          {taskLifecycle === 'submitting'
-            ? copy.statuses.submitting
-            : copy.runButton}
         </Button>
 
-        <div className="space-y-2 rounded-xl border border-zinc-200/80 bg-zinc-50/70 px-3 py-2 dark:border-zinc-700/70 dark:bg-zinc-950/50">
-          <p className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
-            {copy.statusLabel}
+        {submitError ? (
+          <p className="text-xs text-rose-600 dark:text-rose-300">
+            {copy.submitErrorPrefix}: {submitError}
           </p>
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            {copy.statuses[taskLifecycle]}
-          </p>
-          {handoffNotice ? (
-            <p className="text-xs text-sky-700 dark:text-sky-300">
-              {handoffNotice}
-            </p>
-          ) : null}
-          {submitError ? (
-            <p className="text-xs text-rose-600 dark:text-rose-300">
-              {copy.submitErrorPrefix}: {submitError}
-            </p>
-          ) : null}
-        </div>
+        ) : null}
 
         <p className="flex items-start gap-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
           <Layers3 className="mt-0.5 h-3.5 w-3.5 shrink-0" />

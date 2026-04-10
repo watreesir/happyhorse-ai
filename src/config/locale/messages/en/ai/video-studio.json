@@ -87,7 +87,7 @@
         "auto": "AI Audio",
         "origin": "Keep Original"
       },
-      "runButton": "Get and Generate",
+      "runButton": "Generate",
       "generatingToast": "Your video is generating. Please wait.",
       "guestGenerateHint": "Sign in to receive completion alerts after generation.",
       "guestTaskBanner": "This task is generating. Sign in now to bind completion alerts.",

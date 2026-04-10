@@ -27,9 +27,11 @@ export function InspirationPanel({ copy }: InspirationPanelProps) {
         </div>
       ) : (
         <div className="max-h-[700px] overflow-y-auto pr-1 [scrollbar-width:thin]">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="columns-2 gap-2">
             {INSPIRATION_ITEMS.map((item) => (
-              <InspirationCard key={item.id} item={item} recreateLabel={copy.applyButton} />
+              <div key={item.id} className="mb-2 break-inside-avoid">
+                <InspirationCard item={item} recreateLabel={copy.applyButton} />
+              </div>
             ))}
           </div>
         </div>
