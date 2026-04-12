@@ -11,8 +11,8 @@
     "sections": {
       "hero": {
         "id": "hero",
-        "title": "Create AI Videos with Happy Horse AI",
-        "highlight_text": "Happy Horse AI",
+        "title": "Create AI Videos with Any Face — Happy Horse AI",
+        "highlight_text": "Any Face",
         "description": "Generate videos from text, images, references, or existing clips in one browser workflow. Choose 720p or 1080p output with flexible aspect ratios for social, product, and creative content.",
         "badge_text": "",
         "default_tab": "text-to-video",

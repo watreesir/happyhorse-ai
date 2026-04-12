@@ -12,7 +12,10 @@
       "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/Users/zhangdeyuan/my-shipany-project/public/preview.png'\\); print\\(img.size\\)\")",
       "Bash(ls -la /Users/zhangdeyuan/my-shipany-project/public/preview*)",
       "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/Users/zhangdeyuan/my-shipany-project/public/preview.png'\\); print\\('Size:', img.size\\); print\\('Mode:', img.mode\\)\")",
-      "Bash(xargs basename:*)"
+      "Bash(xargs basename:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('metadata', {}\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); s=d['page']['sections']; print\\('introduce:', json.dumps\\(s.get\\('introduce',{}\\).get\\('description',''\\), ensure_ascii=False\\)\\); print\\('benefits:', json.dumps\\(s.get\\('benefits',{}\\).get\\('description',''\\), ensure_ascii=False\\)\\)\")",
+      "Bash(grep -rn \"happyhorse-ai\\\\|APP_URL\\\\|app_url\" /Users/zhangdeyuan/my-shipany-project/.env*)"
     ],
     "additionalDirectories": [
       "/Users/zhangdeyuan/.claude/projects/-Users-zhangdeyuan-my-shipany-project"

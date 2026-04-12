@@ -11,8 +11,8 @@
     "sections": {
       "hero": {
         "id": "hero",
-        "title": "使用 Happy Horse AI 创建 AI 视频",
-        "highlight_text": "Happy Horse AI",
+        "title": "用 Any Face 创建 AI 视频 — Happy Horse AI",
+        "highlight_text": "Any Face",
         "description": "在同一个浏览器工作流中，通过文字、图片、参考素材或现有视频生成 AI 视频。支持 720p 与 1080p 输出，以及多种常见画面比例。",
         "badge_text": "",
         "default_tab": "text-to-video",
