@@ -724,7 +724,7 @@ export function Hero({
         {titleParts && titleParts.length > 0 ? (
           <h1 className="text-foreground mb-5 text-4xl leading-tight font-bold tracking-tight text-balance sm:text-6xl dark:text-white">
             {titleParts[0]}
-            <span className="text-primary">{highlightText}</span>
+            <span className="text-primary whitespace-nowrap">{highlightText}</span>
             {titleParts[1]}
           </h1>
         ) : (
