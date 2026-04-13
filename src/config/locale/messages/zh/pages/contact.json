@@ -6,47 +6,12 @@
   },
   "page": {
     "title": "联系我们",
-    "show_sections": ["hero", "support", "resources", "faq", "cta"],
+    "show_sections": ["support", "resources", "faq", "cta"],
     "sections": {
-      "hero": {
-        "id": "hero",
-        "title": "联系 Happy Horse AI 团队",
-        "highlight_text": "Happy Horse AI 团队",
-        "description": "每封邮件我们都亲自阅读。来信时附上生成 ID 或具体错误描述，能帮助我们更快定位问题、减少来回确认。",
-        "badge_text": "工作日 24 小时内回复",
-        "default_tab": "text-to-video",
-        "background_image": {
-          "src": "",
-          "alt": "联系 Happy Horse AI"
-        },
-        "generate_button": "开始创作",
-        "tabs": [
-          {
-            "key": "text-to-video",
-            "label": "文字生成视频",
-            "placeholder": "描述你想要生成的视频内容..."
-          },
-          {
-            "key": "image-to-video",
-            "label": "图片生成视频",
-            "placeholder": "描述图片应如何动起来..."
-          },
-          {
-            "key": "reference-to-video",
-            "label": "参考生成视频",
-            "placeholder": "描述视频风格和内容..."
-          },
-          {
-            "key": "video-edit",
-            "label": "视频编辑",
-            "placeholder": "描述你想要对视频进行的编辑..."
-          }
-        ]
-      },
       "support": {
         "id": "support",
-        "title": "你需要哪方面的帮助？",
-        "description": "所有问题请发送至 support@happyhorse-ai.app，选择对应场景后，附上相关信息可以帮助我们更快处理你的请求。",
+        "title": "联系 Happy Horse AI",
+        "description": "每封邮件我们都亲自阅读。发送至 support@happyhorse-ai.app——选择对应场景后，附上相关信息可以帮助我们更快处理你的请求。",
         "items": [
           {
             "title": "使用与技术问题",

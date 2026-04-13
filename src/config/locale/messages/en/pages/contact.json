@@ -1,52 +1,17 @@
 {
   "metadata": {
-    "title": "Contact Us | Happy Horse AI",
+    "title": "Contact | Happy Horse AI",
     "description": "Reach the Happy Horse AI team for general support, billing questions, creator partnerships, or content concerns. We read every message personally.",
     "keywords": "happy horse ai contact, happy horse ai support, happyhorse-ai.app support"
   },
   "page": {
-    "title": "Contact Us",
-    "show_sections": ["hero", "support", "resources", "faq", "cta"],
+    "title": "Contact",
+    "show_sections": ["support", "resources", "faq", "cta"],
     "sections": {
-      "hero": {
-        "id": "hero",
-        "title": "Talk to the Happy Horse AI Team",
-        "highlight_text": "Happy Horse AI Team",
-        "description": "We read every message personally. For faster help, include any generation IDs or error details in your first email.",
-        "badge_text": "We reply within 24 hours",
-        "default_tab": "text-to-video",
-        "background_image": {
-          "src": "",
-          "alt": "Contact Happy Horse AI"
-        },
-        "generate_button": "Start Creating",
-        "tabs": [
-          {
-            "key": "text-to-video",
-            "label": "Text to Video",
-            "placeholder": "Describe the video you want to generate..."
-          },
-          {
-            "key": "image-to-video",
-            "label": "Image to Video",
-            "placeholder": "Describe how the image should animate..."
-          },
-          {
-            "key": "reference-to-video",
-            "label": "Reference to Video",
-            "placeholder": "Describe the video style and content..."
-          },
-          {
-            "key": "video-edit",
-            "label": "Video Edit",
-            "placeholder": "Describe the edits you want to make..."
-          }
-        ]
-      },
       "support": {
         "id": "support",
-        "title": "What Can We Help With?",
-        "description": "Send all enquiries to support@happyhorse-ai.app — choose the topic below to know what information helps us respond faster.",
+        "title": "Contact Happy Horse AI",
+        "description": "We read every message personally. Email support@happyhorse-ai.app — choose the topic below to know what to include for a faster response.",
         "items": [
           {
             "title": "General Support",
@@ -55,12 +20,12 @@
           },
           {
             "title": "Billing & Credits",
-            "description": "Questions about credit deductions, subscription changes, payment failures, or refund eligibility. Include your account email and the relevant transaction date. Before writing in, the Pricing page lists exactly what each plan includes and how credits are counted.",
+            "description": "Questions about credit deductions, subscription changes, payment failures, or refund eligibility. Include your account email and the relevant transaction date. The Pricing page lists exactly what each plan includes and how credits are counted.",
             "icon": "RiMoneyDollarCircleLine"
           },
           {
             "title": "Creator & Media Partnerships",
-            "description": "If you are a content creator, agency, or media outlet interested in working with Happy Horse AI — whether for co-promotion, product coverage, or integration — reach out with a brief summary of your platform and audience. We reply to all partnership enquiries within 2 business days.",
+            "description": "If you are a content creator, agency, or media outlet interested in working with Happy Horse AI — co-promotion, product coverage, or integration — reach out with a brief summary of your platform and audience. We reply to all partnership enquiries within 2 business days.",
             "icon": "RiHandshakeLine"
           },
           {
