@@ -22,5 +22,22 @@
       "maxDuration": 30
     }
   },
-  "crons": []
+  "redirects": [
+    {
+      "source": "/:locale/blog/what-is-happy-horse-ai",
+      "destination": "/:locale/blog/happyhorse-ai-1-0",
+      "permanent": true
+    },
+    {
+      "source": "/blog/what-is-happy-horse-ai",
+      "destination": "/blog/happyhorse-ai-1-0",
+      "permanent": true
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/internal/cron/subscription-monthly-credits",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

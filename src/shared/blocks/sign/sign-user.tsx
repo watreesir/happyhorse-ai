@@ -166,34 +166,51 @@ export function SignUser({
     dailyCreditsCheckedRef.current = true;
 
     void (async () => {
+      const maxAttempts = 3;
       try {
-        const resp = await fetch('/api/user/claim-daily-credits', {
-          method: 'POST',
-        });
-        if (!resp.ok) {
-          throw new Error(`fetch failed with status: ${resp.status}`);
+        let payload: any = null;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          const resp = await fetch('/api/user/claim-daily-credits', {
+            method: 'POST',
+          });
+
+          if (resp.ok) {
+            const { code, message, data } = await resp.json();
+            if (code === 0 && data) {
+              payload = data;
+              break;
+            }
+
+            throw new Error(message || 'claim daily credits failed');
+          }
+
+          if (attempt >= maxAttempts) {
+            throw new Error(`fetch failed with status: ${resp.status}`);
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
         }
 
-        const { code, message, data } = await resp.json();
-        if (code !== 0 || !data) {
-          throw new Error(message || 'claim daily credits failed');
+        if (!payload) {
+          throw new Error('claim daily credits failed');
         }
 
-        if (data.claimed) {
+        if (payload.claimed) {
           await fetchUserCredits();
           toast.success(
             t('daily_credits_claimed', {
-              credits: data.credits,
+              credits: payload.credits,
             }),
             { position: 'bottom-right' }
           );
           return;
         }
 
-        if (data.alreadyClaimed) {
+        if (payload.alreadyClaimed && payload.eligible) {
           toast.message(
             t('daily_credits_already_claimed', {
-              credits: data.credits,
+              credits: payload.credits,
             }),
             { position: 'bottom-right' }
           );
@@ -255,21 +272,35 @@ export function SignUser({
     }
 
     if (!wasSignedInRef.current && signedIn && hadGuestStateRef.current) {
-      toast.success(
-        t('guest_login_reward', {
-          credits: 5,
-        }),
-        { position: 'bottom-right' }
-      );
+      const createdAt = displayUser?.createdAt
+        ? new Date(displayUser.createdAt)
+        : null;
+      const isLikelyFreshAccount =
+        createdAt instanceof Date &&
+        Number.isFinite(createdAt.getTime()) &&
+        Date.now() - createdAt.getTime() < 10 * 60 * 1000;
+
+      if (isLikelyFreshAccount) {
+        const rewardCredits =
+          Number.parseInt(String(configs.initial_credits_amount ?? ''), 10) ||
+          65;
+        toast.success(
+          t('guest_login_reward', {
+            credits: rewardCredits,
+          }),
+          { position: 'bottom-right' }
+        );
+      }
       hadGuestStateRef.current = false;
     }
 
     wasSignedInRef.current = signedIn;
 
     if (!signedIn) {
+      dailyCreditsCheckedRef.current = false;
       guestCreditsCheckedRef.current = false;
     }
-  }, [displayUser?.id, isPending, mounted, t]);
+  }, [configs.initial_credits_amount, displayUser?.createdAt, displayUser?.id, isPending, mounted, t]);
 
   const handleTopRightSignIn = async () => {
     const callbackURL =

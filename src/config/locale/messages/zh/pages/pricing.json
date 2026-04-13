@@ -352,7 +352,80 @@
     }
   },
   "messages": {
-    "current_plan": "当前方案",
-    "processing": "处理中"
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "yearly_discount": "-20%"
+    },
+    "units": {
+      "per_month": "/ 月"
+    },
+    "plans": {
+      "free": "Free",
+      "standard": "Standard",
+      "premium": "Premium",
+      "unlimited": "Unlimited"
+    },
+    "badges": {
+      "recommended": "推荐"
+    },
+    "actions": {
+      "current": "Current",
+      "choose_plan": "Choose Plan",
+      "contact_us": "Contact Us",
+      "buy_credit_pack": "Purchase"
+    },
+    "values": {
+      "free_daily_credits": "65",
+      "free_daily_videos": "1",
+      "monthly_standard_videos": "13",
+      "monthly_premium_videos": "32",
+      "yearly_standard_videos": "154",
+      "yearly_premium_videos": "384"
+    },
+    "features": {
+      "daily_credits": "每日 {count} Credits",
+      "daily_videos": "每日 {count} 个视频（720p，5s）",
+      "free_text_only": "仅支持 Text to video",
+      "free_portrait_locked": "Portrait 上传功能不可用",
+      "monthly_credits": "每月 {count} Credits",
+      "generated_videos": "可生成 {count} 个视频（720p，5s）",
+      "portrait_enabled": "Portrait 上传功能可用",
+      "unlock_credit_packs": "解锁 Credit Pack 购买资格",
+      "queue_priority": "更高队列优先级",
+      "unlimited_downloads": "每日下载次数不限",
+      "normal_support": "标准客户支持",
+      "dedicated_support": "专属客户支持",
+      "model_upcoming": "Happy Horse 2.0 模型（即将上线）",
+      "advanced_access": "优先体验高级 AI 功能",
+      "capacity_boost": "相对 Standard 提升 2.5 倍容量",
+      "unlimited_credits": "Credits 不限量",
+      "api_access": "API 访问",
+      "unlimited_includes_all": "包含 Standard 与 Premium 全部权益"
+    },
+    "credit_pack": {
+      "title": "Credit Pack",
+      "description": "面向已订阅用户的一次性补充积分。购买后的积分有效期为 365 天，并在当月订阅 Credits 用完后再消耗。",
+      "notice": "Credit Pack 仅对已完成付费订阅的用户开放。",
+      "plan_credits": "{count} Credits",
+      "plans": {
+        "starter": {
+          "title": "Starter"
+        },
+        "standard": {
+          "title": "Standard"
+        },
+        "premium": {
+          "title": "Premium"
+        }
+      }
+    },
+    "toasts": {
+      "email_copied": "邮箱地址已复制",
+      "sign_in_required": "请先登录后继续",
+      "credits_required": "你的积分不足，需要订阅",
+      "credit_pack_locked": "你还未完成订阅",
+      "current_plan": "当前方案已生效"
+    }
   }
 }

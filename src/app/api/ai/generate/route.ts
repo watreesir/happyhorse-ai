@@ -14,6 +14,12 @@ import {
   updateAITaskById,
 } from '@/shared/models/ai_task';
 import {
+  attachFreeDailyVideoUsageMarkerToTask,
+  claimDailyCreditsForUser,
+  reserveFreeDailyVideoUsageForUser,
+  releaseFreeDailyVideoUsageForUser,
+} from '@/shared/models/credit';
+import {
   ensureGuestTrialSystemUser,
   GUEST_DEVICE_ID_COOKIE,
   GUEST_TRIAL_COOKIE_MAX_AGE_SECONDS,
@@ -25,8 +31,29 @@ import {
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
 import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
+import {
+  calculateVideoCreditsCost,
+  getPricingSnapshot,
+} from '@/shared/services/pricing';
 
 const GUEST_TRIAL_ENABLED = process.env.GUEST_TRIAL_ENABLED !== 'false';
+
+function resolveVideoCreditsCost(options: Record<string, any> | undefined) {
+  const resolution = options?.resolution === '720p' ? '720p' : '1080p';
+  const rawDuration =
+    typeof options?.duration === 'number'
+      ? options.duration
+      : typeof options?.duration === 'string'
+        ? Number.parseInt(options.duration, 10)
+        : Number.NaN;
+  const durationSeconds =
+    Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : 5;
+
+  return calculateVideoCreditsCost({
+    resolution,
+    durationSeconds,
+  });
+}
 
 async function getGuestIdentity() {
   const cookieStore = await cookies();
@@ -75,6 +102,7 @@ export async function POST(request: Request) {
 
   let reservedTaskId: string | null = null;
   let reservedCreditId: string | null = null;
+  let reservedFreeDailyVideoMarkerId: string | null = null;
   let reservedGuestToken: string | null = null;
   let reservedGuestCredits = 0;
   let isGuestTask = false;
@@ -105,7 +133,6 @@ export async function POST(request: Request) {
       throw new Error('invalid provider');
     }
 
-    // MVP: keep all generation scenes at a fixed cost.
     let costCredits = FIXED_AI_TASK_CREDIT_COST;
 
     if (mediaType === AIMediaType.IMAGE) {
@@ -122,6 +149,8 @@ export async function POST(request: Request) {
       ) {
         throw new Error('invalid scene');
       }
+
+      costCredits = resolveVideoCreditsCost(options);
     } else if (mediaType === AIMediaType.MUSIC) {
       // generate music
       scene = 'text-to-music';
@@ -154,6 +183,22 @@ export async function POST(request: Request) {
       reservedGuestCredits = costCredits;
       isGuestTask = true;
       costCredits = 0;
+    } else if (mediaType === AIMediaType.VIDEO) {
+      const pricingSnapshot = await getPricingSnapshot(user.id);
+
+      if (pricingSnapshot.freeDailyEligible) {
+        await claimDailyCreditsForUser(user);
+
+        const reservation = await reserveFreeDailyVideoUsageForUser({
+          user,
+        });
+
+        if (!reservation.reserved) {
+          throw new Error('free daily video limit reached');
+        }
+
+        reservedFreeDailyVideoMarkerId = reservation.markerId;
+      }
     }
 
     const callbackUrl = `${envConfigs.app_url}/api/ai/notify/${provider}`;
@@ -178,6 +223,12 @@ export async function POST(request: Request) {
     const reservedTask = await createAITask(newAITask);
     reservedTaskId = reservedTask.id;
     reservedCreditId = reservedTask.creditId || null;
+    if (reservedFreeDailyVideoMarkerId) {
+      await attachFreeDailyVideoUsageMarkerToTask({
+        markerId: reservedFreeDailyVideoMarkerId,
+        taskId: reservedTask.id,
+      });
+    }
     if (isGuestTask && reservedGuestToken) {
       await linkGuestTaskToToken({
         token: reservedGuestToken,
@@ -263,12 +314,24 @@ export async function POST(request: Request) {
       }
     }
 
+    if (reservedFreeDailyVideoMarkerId && !externalTaskCreated) {
+      try {
+        await releaseFreeDailyVideoUsageForUser(reservedFreeDailyVideoMarkerId);
+      } catch (releaseError) {
+        console.error(
+          'failed to release free daily video usage marker:',
+          releaseError
+        );
+      }
+    }
+
     console.log('generate failed', e);
     if (
       typeof errorMessage === 'string' &&
-      errorMessage.toLowerCase().includes('insufficient credits')
+      (errorMessage.toLowerCase().includes('insufficient credits') ||
+        errorMessage.toLowerCase().includes('free daily video limit reached'))
     ) {
-      return respErr('insufficient credits');
+      return respErr(errorMessage);
     }
     return respErr(errorMessage);
   }

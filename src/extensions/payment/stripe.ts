@@ -54,38 +54,47 @@ export class StripeProvider implements PaymentProvider {
     order: PaymentOrder;
   }): Promise<CheckoutSession> {
     try {
-      // check payment price
-      if (!order.price) {
+      const useExistingStripePrice =
+        !!order.productId && order.productId.startsWith('price_');
+
+      if (!useExistingStripePrice && !order.price) {
         throw new Error('price is required');
       }
 
-      // create payment with dynamic product
+      let lineItem:
+        | Stripe.Checkout.SessionCreateParams.LineItem
+        | undefined = undefined;
 
-      // build price data
-      const priceData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData =
-        {
-          currency: order.price.currency,
-          unit_amount: order.price.amount, // unit: cents
-          product_data: {
-            name: order.description || '',
-          },
-        };
-
-      if (order.type === PaymentType.SUBSCRIPTION) {
-        // create subscription payment
-
-        // check payment plan
-        if (!order.plan) {
-          throw new Error('plan is required');
-        }
-
-        // build recurring data
-        priceData.recurring = {
-          interval: order.plan
-            .interval as Stripe.Checkout.SessionCreateParams.LineItem.PriceData.Recurring.Interval,
+      if (useExistingStripePrice) {
+        lineItem = {
+          price: order.productId!,
+          quantity: order.quantity || 1,
         };
       } else {
-        // create one-time payment
+        const priceData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData =
+          {
+            currency: order.price!.currency,
+            unit_amount: order.price!.amount,
+            product_data: {
+              name: order.description || '',
+            },
+          };
+
+        if (order.type === PaymentType.SUBSCRIPTION) {
+          if (!order.plan) {
+            throw new Error('plan is required');
+          }
+
+          priceData.recurring = {
+            interval: order.plan
+              .interval as Stripe.Checkout.SessionCreateParams.LineItem.PriceData.Recurring.Interval,
+          };
+        }
+
+        lineItem = {
+          price_data: priceData,
+          quantity: order.quantity || 1,
+        };
       }
 
       // set or create customer
@@ -112,12 +121,7 @@ export class StripeProvider implements PaymentProvider {
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode:
           order.type === PaymentType.SUBSCRIPTION ? 'subscription' : 'payment',
-        line_items: [
-          {
-            price_data: priceData,
-            quantity: 1,
-          },
-        ],
+        line_items: [lineItem],
       };
 
       // pre-set promotion code
@@ -136,7 +140,7 @@ export class StripeProvider implements PaymentProvider {
 
       // If currency is CNY, enable WeChat Pay and Alipay (only for one-time payments)
       // Note: WeChat Pay and Alipay through Stripe only supports one-time payments, not subscriptions
-      const currency = order.price.currency.toLowerCase();
+      const currency = order.price?.currency?.toLowerCase();
       if (currency === 'cny' && order.type === PaymentType.ONE_TIME) {
         // Enable WeChat Pay and Alipay for CNY one-time payments
         sessionParams.payment_method_types = [];

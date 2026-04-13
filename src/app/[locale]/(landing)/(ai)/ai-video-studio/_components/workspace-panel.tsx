@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 
 import { signIn } from '@/core/auth/client';
+import { useRouter } from '@/core/i18n/navigation';
 import { Button } from '@/shared/components/ui/button';
 import {
   Dialog,
@@ -34,7 +35,7 @@ import {
 } from '@/shared/components/ui/dialog';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
-import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
+import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -93,7 +94,6 @@ const MAX_REFERENCE_MATERIALS = 5;
 const MAX_POLL_FAILURES = 3;
 const GUEST_LOGIN_MODAL_SHOWN_KEY = 'studio:guest-login-modal:shown-task-ids';
 const GUEST_LOGIN_MODAL_DELAY_MS = 3_000;
-const TASK_COST_CREDITS = FIXED_AI_TASK_CREDIT_COST;
 
 function createDraftId() {
   return `studio-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -194,6 +194,23 @@ function markGuestLoginModalShown(taskId: string) {
   }
 }
 
+function shouldRedirectToPricing(error: unknown) {
+  const raw =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : '';
+  const message = raw.toLowerCase();
+
+  return (
+    message.includes('insufficient credit') ||
+    message.includes('free daily video limit reached') ||
+    message.includes('guest trial exhausted') ||
+    message.includes('guest trial risk blocked')
+  );
+}
+
 function FileBadge({
   label,
   file,
@@ -269,6 +286,7 @@ function FileBadge({
 
 export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { fetchUserCredits, isCheckSign, user } = useAppContext();
   const [draft, setDraft] = useState<VideoStudioDraft>(() => ({
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
@@ -796,6 +814,16 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       const payload = buildVideoTaskPayloadFromDraft(draft);
       const task = await generateVideoTask(payload);
       const lifecycle = toLifecycle(task.status);
+
+      if (lifecycle === 'failed' && shouldRedirectToPricing(task.errorMessage)) {
+        updateLifecycle('failed');
+        setActiveTaskId(null);
+        setGuestPendingTaskId(null);
+        await fetchUserCredits();
+        router.push('/pricing?focus=subscriptions&notice=credits-required');
+        return;
+      }
+
       updateLifecycle(lifecycle);
       dispatchVideoStudioRefresh('submit');
 
@@ -814,6 +842,15 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       }
       await fetchUserCredits();
     } catch (error: unknown) {
+      if (shouldRedirectToPricing(error)) {
+        updateLifecycle('failed');
+        setActiveTaskId(null);
+        setGuestPendingTaskId(null);
+        await fetchUserCredits();
+        router.push('/pricing?focus=subscriptions&notice=credits-required');
+        return;
+      }
+
       if (error instanceof VideoStudioDraftError) {
         setSubmitError(mapDraftErrorToMessage(error, copy));
       } else {
@@ -834,6 +871,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const hasUploading = useMemo(
     () => Object.values(uploadingMap).some(Boolean),
     [uploadingMap]
+  );
+  const estimatedTaskCostCredits = useMemo(
+    () =>
+      getClientVideoCreditsCost({
+        resolution: draft.resolution,
+        durationSeconds: draft.duration || 5,
+      }),
+    [draft.duration, draft.resolution]
   );
 
   const durationOptions =
@@ -1312,7 +1357,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
               <span>✦ {copy.runButton}</span>
               <span className="inline-flex items-center gap-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
                 <Coins className="h-3 w-3" />
-                {TASK_COST_CREDITS}
+                {estimatedTaskCostCredits}
               </span>
             </span>
           )}

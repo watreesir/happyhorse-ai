@@ -1,6 +1,13 @@
 'use client';
 
-import { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Coins } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -8,7 +15,7 @@ import { toast } from 'sonner';
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
 import { useAppContext } from '@/shared/contexts/app';
-import { FIXED_AI_TASK_CREDIT_COST } from '@/shared/lib/credits';
+import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -84,8 +91,6 @@ const RATIOS: { key: Ratio; label: string; icon: string }[] = [
   { key: '3:4', label: '3:4', icon: '▯' },
   { key: '1:1', label: '1:1', icon: '■' },
 ];
-
-const TASK_COST_CREDITS = FIXED_AI_TASK_CREDIT_COST;
 
 // ─── UploadZone ────────────────────────────────────────────────────────────────
 
@@ -541,6 +546,10 @@ export function Hero({
     router.push(`/ai-video-studio?${params.toString()}`);
   };
 
+  const redirectToPricing = () => {
+    router.push('/pricing?focus=subscriptions&notice=credits-required');
+  };
+
   const formatDraftValidationError = (error: VideoStudioDraftError) => {
     if (error.code === 'PROMPT_REQUIRED') {
       return 'Please add a prompt before generating.';
@@ -568,17 +577,6 @@ export function Hero({
 
     try {
       const isGuestUser = !user && !isCheckSign;
-      if (isGuestUser) {
-        const guestState = await fetchGuestCredits();
-        const remainingCredits =
-          guestState?.remainingCredits ?? guestCredits ?? 0;
-        if (remainingCredits < TASK_COST_CREDITS) {
-          setStatusHint('Insufficient credits');
-          toast.error('Insufficient credits', { position: 'bottom-right' });
-          setIsShowSignModal(true);
-          return;
-        }
-      }
 
       const draft = createDraft(null);
       const payload = buildVideoTaskPayloadFromDraft(draft);
@@ -624,9 +622,9 @@ export function Hero({
         normalizedMessage.includes('积分不足');
       const shouldPromptSignIn =
         isInsufficientCredits ||
+        normalizedMessage.includes('free daily video limit reached') ||
         normalizedMessage.includes('guest trial exhausted') ||
-        normalizedMessage.includes('guest trial risk blocked') ||
-        normalizedMessage.includes('no auth');
+        normalizedMessage.includes('guest trial risk blocked');
 
       if (shouldPromptSignIn) {
         if (!user) {
@@ -634,8 +632,11 @@ export function Hero({
         } else {
           await fetchUserCredits();
         }
-        setStatusHint('Insufficient credits');
-        toast.error('Insufficient credits', { position: 'bottom-right' });
+        redirectToPricing();
+        return;
+      }
+
+      if (normalizedMessage.includes('no auth')) {
         setIsShowSignModal(true);
         return;
       }
@@ -662,6 +663,14 @@ export function Hero({
   const durationLabel = duration === 0 ? 'Full' : `${duration}s`;
   const showRatio = activeTab !== 'image-to-video';
   const hasUploading = Object.values(uploading).some(Boolean);
+  const estimatedTaskCostCredits = useMemo(
+    () =>
+      getClientVideoCreditsCost({
+        resolution,
+        durationSeconds: duration || 5,
+      }),
+    [duration, resolution]
+  );
   const placeholder =
     tabs.find((t) => t.key === activeTab)?.placeholder ??
     'Describe your video...';
@@ -1028,7 +1037,7 @@ export function Hero({
                     <span>✦ {generateLabel}</span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[11px] tabular-nums">
                       <Coins className="h-3 w-3" />
-                      {TASK_COST_CREDITS}
+                      {estimatedTaskCostCredits}
                     </span>
                   </span>
                 )}

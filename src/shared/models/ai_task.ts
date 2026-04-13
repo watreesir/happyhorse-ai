@@ -5,7 +5,11 @@ import { aiTask, credit } from '@/config/db/schema';
 import { AITaskStatus } from '@/extensions/ai';
 import { appendUserToResult, User } from '@/shared/models/user';
 
-import { consumeCredits, CreditStatus } from './credit';
+import {
+  consumeCredits,
+  CreditStatus,
+  releaseFreeDailyVideoUsageForTask,
+} from './credit';
 
 export type AITask = typeof aiTask.$inferSelect & {
   user?: User;
@@ -116,6 +120,13 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
           })
           .where(eq(credit.id, updateAITask.creditId));
       }
+    }
+
+    if (updateAITask.status === AITaskStatus.FAILED) {
+      await releaseFreeDailyVideoUsageForTask({
+        taskId: id,
+        tx,
+      });
     }
 
     // update task

@@ -20,6 +20,11 @@ import {
   DAILY_LOGIN_BONUS_TIMEZONE,
 } from '@/shared/lib/credits';
 import { getSnowId, getUuid } from '@/shared/lib/hash';
+import {
+  getFreeDailyCreditsAmount,
+  getFreeDailyVideoLimit,
+  getPricingSnapshot,
+} from '@/shared/services/pricing';
 
 import { getAllConfigs } from './config';
 import { appendUserToResult, User } from './user';
@@ -56,6 +61,8 @@ export type DailyCreditClaimResult = {
   alreadyClaimed: boolean;
   credits: number;
   dayKey: string;
+  eligible: boolean;
+  reason?: 'already-claimed' | 'not-eligible' | 'disabled';
 };
 
 type DailyCreditUser = {
@@ -73,6 +80,95 @@ function getDateKeyByTimeZone(
     month: '2-digit',
     day: '2-digit',
   }).format(date);
+}
+
+function getDatePartsByTimeZone(
+  date: Date = new Date(),
+  timeZone: string = DAILY_LOGIN_BONUS_TIMEZONE
+) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const getPart = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value || '0');
+
+  return {
+    year: getPart('year'),
+    month: getPart('month'),
+    day: getPart('day'),
+    hour: getPart('hour'),
+    minute: getPart('minute'),
+    second: getPart('second'),
+  };
+}
+
+function getTimeZoneOffsetMs(
+  date: Date = new Date(),
+  timeZone: string = DAILY_LOGIN_BONUS_TIMEZONE
+) {
+  const parts = getDatePartsByTimeZone(date, timeZone);
+  const utcTimestamp = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second
+  );
+  const actualTimestamp = Math.floor(date.getTime() / 1000) * 1000;
+
+  return utcTimestamp - actualTimestamp;
+}
+
+function zonedDateTimeToUtcDate({
+  year,
+  month,
+  day,
+  hour = 0,
+  minute = 0,
+  second = 0,
+  timeZone = DAILY_LOGIN_BONUS_TIMEZONE,
+}: {
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+  minute?: number;
+  second?: number;
+  timeZone?: string;
+}) {
+  const utcGuess = new Date(
+    Date.UTC(year, month - 1, day, hour, minute, second)
+  );
+  const offset = getTimeZoneOffsetMs(utcGuess, timeZone);
+
+  return new Date(utcGuess.getTime() - offset);
+}
+
+function getEndOfDayByTimeZone(
+  date: Date = new Date(),
+  timeZone: string = DAILY_LOGIN_BONUS_TIMEZONE
+) {
+  const parts = getDatePartsByTimeZone(date, timeZone);
+  const nextMidnight = zonedDateTimeToUtcDate({
+    year: parts.year,
+    month: parts.month,
+    day: parts.day + 1,
+    hour: 0,
+    minute: 0,
+    second: 0,
+    timeZone,
+  });
+
+  return new Date(nextMidnight.getTime() - 1);
 }
 
 // Calculate credit expiration time based on order and subscription info
@@ -373,13 +469,6 @@ export async function grantCreditsForNewUser(user: User) {
 
   // get initial credits amount and valid days
   let credits = parseInt(configs.initial_credits_amount as string) || 0;
-  const guestTrialCap = parseInt(
-    process.env.GUEST_TRIAL_TOTAL_CREDITS || '5',
-    10
-  );
-  if (Number.isFinite(guestTrialCap) && guestTrialCap > 0) {
-    credits = Math.min(credits, guestTrialCap);
-  }
   if (credits <= 0) {
     return;
   }
@@ -402,15 +491,29 @@ export async function grantCreditsForNewUser(user: User) {
 export async function claimDailyCreditsForUser(
   user: DailyCreditUser
 ): Promise<DailyCreditClaimResult> {
-  const credits = DAILY_LOGIN_BONUS_CREDITS;
+  const credits = getFreeDailyCreditsAmount();
   const dayKey = getDateKeyByTimeZone();
 
   if (credits <= 0) {
     return {
       claimed: false,
-      alreadyClaimed: true,
+      alreadyClaimed: false,
       credits: 0,
       dayKey,
+      eligible: false,
+      reason: 'disabled',
+    };
+  }
+
+  const pricingSnapshot = await getPricingSnapshot(user.id);
+  if (!pricingSnapshot.freeDailyEligible) {
+    return {
+      claimed: false,
+      alreadyClaimed: false,
+      credits: 0,
+      dayKey,
+      eligible: false,
+      reason: 'not-eligible',
     };
   }
 
@@ -445,6 +548,8 @@ export async function claimDailyCreditsForUser(
         alreadyClaimed: true,
         credits,
         dayKey,
+        eligible: true,
+        reason: 'already-claimed',
       };
     }
 
@@ -466,7 +571,7 @@ export async function claimDailyCreditsForUser(
       credits,
       remainingCredits: credits,
       description: DAILY_LOGIN_BONUS_DESCRIPTION,
-      expiresAt: null,
+      expiresAt: getEndOfDayByTimeZone(),
       status: CreditStatus.ACTIVE,
       metadata,
     };
@@ -478,8 +583,176 @@ export async function claimDailyCreditsForUser(
       alreadyClaimed: false,
       credits,
       dayKey,
+      eligible: true,
     };
   });
+}
+
+const FREE_DAILY_VIDEO_USAGE_METADATA_TYPE = 'free-daily-video-usage';
+
+export async function reserveFreeDailyVideoUsageForUser({
+  user,
+  dayKey = getDateKeyByTimeZone(),
+}: {
+  user: DailyCreditUser;
+  dayKey?: string;
+}) {
+  const videoLimit = getFreeDailyVideoLimit();
+  if (videoLimit <= 0) {
+    return { reserved: false, markerId: null as string | null };
+  }
+
+  return db().transaction(async (tx: any) => {
+    await tx
+      .select({ id: userTable.id })
+      .from(userTable)
+      .where(eq(userTable.id, user.id))
+      .limit(1)
+      .for('update');
+
+    const existingUsages = await tx
+      .select({ id: credit.id })
+      .from(credit)
+      .where(
+        and(
+          eq(credit.userId, user.id),
+          eq(credit.transactionType, CreditTransactionType.GRANT),
+          eq(credit.transactionScene, CreditTransactionScene.REWARD),
+          eq(credit.status, CreditStatus.ACTIVE),
+          like(
+            credit.metadata,
+            `%\"type\":\"${FREE_DAILY_VIDEO_USAGE_METADATA_TYPE}\"%`
+          ),
+          like(credit.metadata, `%\"dayKey\":\"${dayKey}\"%`)
+        )
+      )
+      .limit(videoLimit);
+
+    if (existingUsages.length >= videoLimit) {
+      return { reserved: false, markerId: null as string | null };
+    }
+
+    const newCredit: NewCredit = {
+      id: getUuid(),
+      userId: user.id,
+      userEmail: user.email || null,
+      orderNo: '',
+      subscriptionNo: '',
+      transactionNo: getSnowId(),
+      transactionType: CreditTransactionType.GRANT,
+      transactionScene: CreditTransactionScene.REWARD,
+      credits: 0,
+      remainingCredits: 0,
+      description: 'free daily video usage',
+      expiresAt: getEndOfDayByTimeZone(),
+      status: CreditStatus.ACTIVE,
+      metadata: JSON.stringify({
+        type: FREE_DAILY_VIDEO_USAGE_METADATA_TYPE,
+        dayKey,
+        timezone: DAILY_LOGIN_BONUS_TIMEZONE,
+      }),
+    };
+
+    await tx.insert(credit).values(newCredit);
+
+    return {
+      reserved: true,
+      markerId: newCredit.id,
+    };
+  });
+}
+
+export async function attachFreeDailyVideoUsageMarkerToTask({
+  markerId,
+  taskId,
+}: {
+  markerId: string;
+  taskId: string;
+}) {
+  if (!markerId || !taskId) {
+    return null;
+  }
+
+  const [marker] = await db()
+    .select({ id: credit.id, metadata: credit.metadata })
+    .from(credit)
+    .where(eq(credit.id, markerId))
+    .limit(1);
+
+  if (!marker?.id) {
+    return null;
+  }
+
+  let metadata: Record<string, any> = {};
+  try {
+    metadata = marker.metadata ? JSON.parse(marker.metadata) : {};
+  } catch {
+    metadata = {};
+  }
+
+  metadata.taskId = taskId;
+
+  const [result] = await db()
+    .update(credit)
+    .set({
+      metadata: JSON.stringify(metadata),
+    })
+    .where(eq(credit.id, markerId))
+    .returning();
+
+  return result || null;
+}
+
+export async function releaseFreeDailyVideoUsageForUser(markerId: string) {
+  if (!markerId) {
+    return null;
+  }
+
+  const [result] = await db()
+    .update(credit)
+    .set({
+      status: CreditStatus.DELETED,
+      deletedAt: new Date(),
+    })
+    .where(eq(credit.id, markerId))
+    .returning();
+
+  return result;
+}
+
+export async function releaseFreeDailyVideoUsageForTask({
+  taskId,
+  tx,
+}: {
+  taskId: string;
+  tx?: any;
+}) {
+  if (!taskId) {
+    return null;
+  }
+
+  const executor = tx || db();
+  const [result] = await executor
+    .update(credit)
+    .set({
+      status: CreditStatus.DELETED,
+      deletedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(credit.transactionType, CreditTransactionType.GRANT),
+        eq(credit.transactionScene, CreditTransactionScene.REWARD),
+        eq(credit.status, CreditStatus.ACTIVE),
+        like(
+          credit.metadata,
+          `%\"type\":\"${FREE_DAILY_VIDEO_USAGE_METADATA_TYPE}\"%`
+        ),
+        like(credit.metadata, `%\"taskId\":\"${taskId}\"%`)
+      )
+    )
+    .returning();
+
+  return result || null;
 }
 
 // grant credits for user

@@ -1,0 +1,148 @@
+# HappyHorse-1.0: Alibaba's #1 AI Video Model — Everything You Actually Need to Know
+
+HappyHorse-1.0 showed up anonymously on the Artificial Analysis Video Arena around April 7, 2026. No press release, no launch event — just a model no one had heard of quietly climbing the leaderboard until it sat at number one in every category. By the time Alibaba confirmed on April 10 that they'd built it, the damage was already done: Seedance 2.0 had been dethroned, and the AI video community had a new benchmark to obsess over.
+
+Here's what Happy Horse AI is, where it came from, how it actually compares to Seedance 2.0 and everything else in the field right now, and what the open-source situation really looks like — cutting through the noise.
+
+---
+
+## What is Happy Horse AI?
+
+HappyHorse-1.0 is a video generation model from Alibaba that does something most competitors still can't: it generates video and synchronized audio in a single pass. Text-to-video, image-to-video, native lip-sync across seven languages — all without the separate audio post-production step that every other workflow currently requires.
+
+The model generates clips at up to 1080p, runs on a single NVIDIA H100 GPU, and produces a 5-second output in roughly 38 seconds. It supports both text prompts and image inputs, making it workable for anyone building social content, marketing videos, or character-driven narratives.
+
+What made the community stop and pay attention wasn't the features list — it was the Artificial Analysis numbers. Happy Horse didn't just beat the competition. It beat them by margins that hadn't been seen in AI video benchmarking before.
+
+---
+
+## Who made Happy Horse? The Alibaba connection
+
+The short version: Alibaba built it, and the man behind it is **Zhang Di** — the engineer who previously built Kling AI at Kuaishou before returning to Alibaba in November 2025.
+
+Zhang Di has an unusual position in this story. He built Kling — one of the strongest AI video models before HappyHorse arrived — spent time at Bilibili, then came back to Alibaba to lead the **Future Life Lab**, a team inside Alibaba's Taotian Group under the ATH AI Innovation Unit. The unit itself was only formally established on March 16, 2026. Less than five months later, his team had the #1 ranked video model in the world.
+
+The model is believed to be an optimized iteration of daVinci-MagiHuman, an open-source project from Sand.ai and GAIR Lab published in late March 2026 — though Alibaba hasn't confirmed this directly.
+
+The anonymous launch was deliberate. Chinese AI companies have used this tactic before (Xiaomi did it with MiMo-V2). Submit under a pseudonym, let the model prove itself in blind testing against real users, then reveal once the leaderboard speaks for itself. It worked.
+
+---
+
+## Happy Horse AI video generation: what makes it different
+
+The benchmark gap is the obvious answer, but it's worth understanding *what* is actually performing better.
+
+Happy Horse's core architectural difference is its **unified audio-video Transformer**. Most AI video pipelines are two steps: generate video, then add audio separately. HappyHorse generates both in one inference pass — the audio (dialogue, ambient sound, Foley effects) is baked into the same model weights, not bolted on afterward. This is the same direction Google's Veo 3 pioneered in mid-2025, but HappyHorse applies it with a single-stream 40-layer self-attention design that processes text, image, video, and audio tokens together.
+
+The practical result is lip-sync that doesn't require a separate model, native-language dialogue in seven languages, and audio that's temporally aligned with the visual output rather than fitted to it.
+
+On the Artificial Analysis arena — where real users compare outputs in blind head-to-head tests — the numbers look like this:
+
+| Category | HappyHorse-1.0 | Seedance 2.0 | Gap |
+|---|---|---|---|
+| Text-to-video (no audio) | ~1,384 Elo | ~1,273 Elo | +111 |
+| Image-to-video (no audio) | ~1,415 Elo | ~1,358 Elo | +57 |
+| Text-to-video (with audio) | ~1,236 Elo | ~1,224 Elo | +12 |
+
+A 111-point Elo gap in text-to-video is substantial. In practice, it translates to roughly a 58–59% win rate in blind matchups. That's not a marginal improvement — it's closer to a generation gap.
+
+You can try the model yourself at [HappyHorse AI Video Studio](https://www.happyhorse-ai.app/ai-video-studio) without needing to navigate the patchwork of third-party sites that have appeared since the reveal.
+
+---
+
+## Happy Horse AI vs Seedance 2.0: honest comparison
+
+This is the comparison everyone wants. Seedance 2.0 was the benchmark leader before HappyHorse arrived — ByteDance's team built something genuinely strong, and it's still the right answer for most production workflows today. Here's where the two models actually differ:
+
+| | HappyHorse-1.0 | Seedance 2.0 |
+|---|---|---|
+| Developer | Alibaba ATH / Future Life Lab | ByteDance Seed team |
+| T2V Elo (no audio) | **1,384** | 1,273 |
+| I2V Elo (no audio) | **1,415** | 1,358 |
+| API availability | ❌ Beta only | ✅ Live (fal.ai, Dreamina, CapCut) |
+| Clip length | ~5–8 seconds | Up to 15 seconds |
+| Input flexibility | Text + image | Up to 9 images + 3 videos + 3 audio clips |
+| Native audio | ✅ 7 languages | ✅ 8+ languages |
+| Open source | Promised, not released | Closed source |
+| Pricing | Unannounced | Credit-based, ~$0.022/sec |
+
+The honest summary: HappyHorse wins the benchmark. Seedance 2.0 wins on availability, clip length, and input flexibility. If you need to ship something this week, Seedance is still the tool. If you want to test what's currently producing the highest-quality outputs in blind user preference testing, HappyHorse is it.
+
+Seedance's 15-second clips and multi-input support matter a lot for longer-form production workflows. HappyHorse's 5–8 second outputs are better suited to short-form content — social clips, hooks, product moments, portrait-style video with dialogue.
+
+---
+
+## How Happy Horse compares to Kling, Sora, Veo, and Runway
+
+The broader competitive picture changed significantly in early April 2026. A few notes on each:
+
+**Kling 3.0 (Kuaishou)** sits at around Elo 1,240 — 144 points behind HappyHorse. The irony is obvious: Zhang Di built Kling before leaving Kuaishou, and his new model has now surpassed it. Kling compensates with 4K resolution and clips up to 3 minutes, which are real advantages for certain workflows.
+
+**Sora (OpenAI)** is effectively done. OpenAI announced Sora's shutdown in late March 2026 — the API sunsets September 24. HappyHorse leads Sora 2 Pro by 189 Elo points. The AI video generation field has effectively handed market leadership to Chinese labs.
+
+**Veo 3/3.1 (Google)** trails by 165–174 Elo points but remains the strongest option for cinematic stability and 4K output. Google's model is commercially available and production-ready.
+
+**Runway Gen-4.5** trails by 161 Elo points. Still the most flexible option for VFX, stylized content, and creative experimentation, but no native audio generation.
+
+The pattern: HappyHorse wins quality tests. Every other model wins on access. Whether that matters depends entirely on what you're building.
+
+---
+
+## Is Happy Horse AI open source? What's on GitHub?
+
+This is the question the community has been asking since the reveal, and the answer as of now is: **not yet, despite the promise**.
+
+Alibaba has committed to releasing the base model, distilled model, super-resolution module, and full inference code under an Apache 2.0 license. A HuggingFace model card exists at `huggingface.co/happyhorse-ai/happyhorse-1.0`. The team's communications suggest open-source release is planned.
+
+As of April 12, 2026: the GitHub link on the official site says "coming soon." No weights have been released. The only active GitHub repository is a community-maintained information collection (brooks376/Happy-Horse-1.0), which explicitly states it isn't official and that model weights haven't dropped.
+
+If the Apache 2.0 release happens, it would be the highest-ranking open-source video model by a wide margin — current open-source leaders sit around Elo 1,100–1,130, over 250 points below HappyHorse. That would be a significant shift for anyone running self-hosted inference or building on top of open weights. Hardware requirements, when weights do release, will be steep: NVIDIA H100 or A100 with 48GB+ VRAM is the baseline, with FP8 quantization available for single-GPU deployment.
+
+For now, the practical path to HappyHorse output is through platforms that have integrated the model — including [HappyHorse AI Video Studio](https://www.happyhorse-ai.app/ai-video-studio), which provides direct access without requiring API keys or GPU setup.
+
+---
+
+## Is Happy Horse AI free?
+
+No official pricing has been announced. The model is in a beta testing phase, and Alibaba's team has indicated pricing will be announced at launch.
+
+One important warning: **the number of third-party sites using the HappyHorse name has grown rapidly since the April 10 reveal.** Chinese tech media have explicitly flagged this problem. At least a dozen domains have appeared — happyhorse-ai.com, happyhorseai.com, happy-horse.ai, happy-horse.art, happyhorse.app, happyhorse.video, happyhorse.mobi, happyhourse.com (note the misspelling), and others. Several offer subscription plans at $19.90–$59.90/month.
+
+These are third-party wrapper services. If you're evaluating HappyHorse, verify what you're actually paying for before subscribing to any of them.
+
+---
+
+## When was Happy Horse AI released?
+
+The model first appeared anonymously on the Artificial Analysis Video Arena around **April 7, 2026**. Alibaba publicly confirmed ownership on **April 10, 2026**, via a newly created X (Twitter) account and through CNBC and Bloomberg reporting. The development timeline was approximately five months — Zhang Di returned to Alibaba in November 2025 and the model reached the leaderboard in early April.
+
+It remains in beta as of mid-April 2026. No general availability date has been announced.
+
+---
+
+## What Happy Horse is actually best at
+
+Based on current benchmark data and community testing, the model performs best in specific scenarios:
+
+- **Portrait and talking-head video** — single-character scenes with dialogue, native lip-sync, and face rendering. This is where the Elo gap over competitors is widest.
+- **Short-form social content** — the 5–8 second clip length maps naturally to platform hooks, TikTok intros, Reel openers.
+- **Multilingual content** — native audio generation across seven languages without a separate dubbing pipeline.
+- **Image-to-video animation** — the image-to-video Elo (1,415) is even stronger than text-to-video.
+
+The community testing has also surfaced the limitations. Quality degrades in multi-character scenes and complex dynamic scenarios. The model's performance advantage is most concentrated in portrait-style, voice-forward content — which, to be fair, covers a large share of what most creators actually need.
+
+---
+
+## The bigger picture
+
+HappyHorse-1.0 landed at a specific moment: right after OpenAI exited the market, with ByteDance facing copyright disputes with Hollywood studios over Seedance's global rollout, and with Google still sitting behind closed API gates. The AI video generation leaderboard is now dominated by Chinese companies — Alibaba, ByteDance, and Kuaishou hold the top positions.
+
+Whether HappyHorse converts its benchmark lead into product dominance depends on two things: the open-source release (which would unlock self-hosted deployments globally) and the API launch (which would bring it into competition with Seedance's existing distribution advantages).
+
+For now, it's the best AI video model in blind human preference testing. The gap to second place is real and large. The question is when — and whether — that performance becomes accessible at production scale.
+
+If you want to test HappyHorse output without waiting for the API launch, [HappyHorse AI Video Studio](https://www.happyhorse-ai.app/ai-video-studio) has the model available now.
+
+---
+
+*Benchmark data sourced from the Artificial Analysis Video Arena as of April 12, 2026. Elo scores reflect human preference testing across blind head-to-head comparisons. All competitor availability and pricing information is current as of publication — AI video generation is a fast-moving space and details change frequently.*

@@ -1,5 +1,3 @@
-import { getTranslations } from 'next-intl/server';
-
 import {
   PaymentInterval,
   PaymentOrder,
@@ -17,181 +15,122 @@ import {
 } from '@/shared/models/order';
 import { getUserInfo } from '@/shared/models/user';
 import { getPaymentService } from '@/shared/services/payment';
-import { PricingCurrency } from '@/shared/types/blocks/pricing';
+import {
+  getCheckoutCurrency,
+  getCreditPackByProductId,
+  getPricingSnapshot,
+  getSubscriptionPlanByProductId,
+  isCreditPackProductId,
+  isSubscriptionPlanProductId,
+} from '@/shared/services/pricing';
+
+type CheckoutRequestPayload = {
+  product_id?: string;
+  currency?: string;
+  locale?: string;
+  payment_provider?: string;
+  metadata?: Record<string, string>;
+};
+
+const STRIPE_PRICE_ID_FALLBACKS: Record<string, string> = {
+  plan_standard_monthly:
+    process.env.STRIPE_PRICE_PLAN_STANDARD_MONTHLY ||
+    'price_1TLUynLXVz3sZh2WPm5sTqpg',
+  plan_premium_monthly:
+    process.env.STRIPE_PRICE_PLAN_PREMIUM_MONTHLY ||
+    'price_1TLUzqLXVz3sZh2WcMVeR9v8',
+  plan_standard_yearly:
+    process.env.STRIPE_PRICE_PLAN_STANDARD_YEARLY ||
+    'price_1TLV1LLXVz3sZh2WmxASQIYo',
+  plan_premium_yearly:
+    process.env.STRIPE_PRICE_PLAN_PREMIUM_YEARLY ||
+    'price_1TLV2fLXVz3sZh2WbMRhpxju',
+  credit_pack_starter:
+    process.env.STRIPE_PRICE_CREDIT_PACK_STARTER ||
+    'price_1TLV4XLXVz3sZh2WHNeAdc9Z',
+  credit_pack_standard:
+    process.env.STRIPE_PRICE_CREDIT_PACK_STANDARD ||
+    'price_1TLV5bLXVz3sZh2Wg2FFdfjL',
+  credit_pack_premium:
+    process.env.STRIPE_PRICE_CREDIT_PACK_PREMIUM ||
+    'price_1TLV6VLXVz3sZh2Wws20DLSD',
+};
 
 export async function POST(req: Request) {
   try {
     const { product_id, currency, locale, payment_provider, metadata } =
-      await req.json();
+      (await req.json()) as CheckoutRequestPayload;
+
     if (!product_id) {
       return respErr('product_id is required');
     }
 
-    const t = await getTranslations({
-      locale: locale || 'en',
-      namespace: 'pages.pricing',
-    });
-    const pricing = t.raw('page.sections.pricing');
+    const subscriptionPlan = getSubscriptionPlanByProductId(product_id);
+    const creditPack = getCreditPackByProductId(product_id);
 
-    const pricingItem = pricing.items.find(
-      (item: any) => item.product_id === product_id
-    );
-
-    if (!pricingItem) {
+    if (!subscriptionPlan && !creditPack) {
       return respErr('pricing item not found');
     }
 
-    if (!pricingItem.product_id && !pricingItem.amount) {
-      return respErr('invalid pricing item');
+    const checkoutCurrency = getCheckoutCurrency();
+    if (currency && currency.toLowerCase() !== checkoutCurrency) {
+      return respErr('unsupported currency');
     }
 
-    // get sign user
     const user = await getUserInfo();
     if (!user || !user.email) {
       return respErr('no auth, please sign in');
     }
 
-    // get configs
+    const pricingSnapshot = await getPricingSnapshot(user.id);
+    if (
+      isSubscriptionPlanProductId(product_id) &&
+      pricingSnapshot.validSubscriptionProductIds.includes(product_id)
+    ) {
+      return respErr('you already have this plan active');
+    }
+
+    if (
+      isCreditPackProductId(product_id) &&
+      !pricingSnapshot.canPurchaseCreditPack
+    ) {
+      return respErr('active subscription required before buying credit packs');
+    }
+
     const configs = await getAllConfigs();
 
-    // choose payment provider
-    let paymentProviderName = payment_provider || '';
-    if (!paymentProviderName) {
-      paymentProviderName = configs.default_payment_provider;
-    }
+    let paymentProviderName = payment_provider || configs.default_payment_provider;
     if (!paymentProviderName) {
       return respErr('no payment provider configured');
     }
 
-    // Validate payment provider against allowed providers
-    // First check currency-specific payment_providers if currency is provided
-    let allowedProviders: string[] | undefined;
-
-    if (
-      currency &&
-      currency.toLowerCase() !== (pricingItem.currency || 'usd').toLowerCase()
-    ) {
-      const selectedCurrencyData = pricingItem.currencies?.find(
-        (c: PricingCurrency) =>
-          c.currency.toLowerCase() === currency.toLowerCase()
-      );
-      allowedProviders = selectedCurrencyData?.payment_providers;
-    }
-
-    // Fallback to default payment_providers if not found in currency config
-    if (!allowedProviders || allowedProviders.length === 0) {
-      allowedProviders = pricingItem.payment_providers;
-    }
-
-    // If payment_providers is configured, validate the selected provider
-    if (allowedProviders && allowedProviders.length > 0) {
-      if (!allowedProviders.includes(paymentProviderName)) {
-        return respErr(
-          `payment provider ${paymentProviderName} is not supported for this currency`
-        );
-      }
-    }
-
-    // get default payment provider
     const paymentService = await getPaymentService();
-
     const paymentProvider = paymentService.getProvider(paymentProviderName);
     if (!paymentProvider || !paymentProvider.name) {
       return respErr('no payment provider configured');
     }
 
-    // checkout currency and amount - calculate from server-side data only (never trust client input)
-    // Security: currency can be provided by frontend, but amount must be calculated server-side
-    const defaultCurrency = (pricingItem.currency || 'usd').toLowerCase();
-    let checkoutCurrency = defaultCurrency;
-    let checkoutAmount = pricingItem.amount;
-
-    // If currency is provided, validate it and find corresponding amount from server-side data
-    if (currency) {
-      const requestedCurrency = currency.toLowerCase();
-
-      // Check if requested currency is the default currency
-      if (requestedCurrency === defaultCurrency) {
-        checkoutCurrency = defaultCurrency;
-        checkoutAmount = pricingItem.amount;
-      } else if (pricingItem.currencies && pricingItem.currencies.length > 0) {
-        // Find amount for the requested currency in currencies list
-        const selectedCurrencyData = pricingItem.currencies.find(
-          (c: PricingCurrency) => c.currency.toLowerCase() === requestedCurrency
-        );
-        if (selectedCurrencyData) {
-          // Valid currency found, use it
-          checkoutCurrency = requestedCurrency;
-          checkoutAmount = selectedCurrencyData.amount;
-        }
-        // If currency not found in list, fallback to default (already set above)
-      }
-      // If no currencies list exists, fallback to default (already set above)
-    }
-
-    // get payment interval
-    const paymentInterval: PaymentInterval =
-      pricingItem.interval || PaymentInterval.ONE_TIME;
-
-    // get payment type
-    const paymentType =
-      paymentInterval === PaymentInterval.ONE_TIME
-        ? PaymentType.ONE_TIME
-        : PaymentType.SUBSCRIPTION;
+    const amountCents = subscriptionPlan
+      ? subscriptionPlan.amountCents
+      : creditPack!.amountCents;
+    const paymentInterval = subscriptionPlan
+      ? subscriptionPlan.interval
+      : PaymentInterval.ONE_TIME;
+    const paymentType = subscriptionPlan
+      ? PaymentType.SUBSCRIPTION
+      : PaymentType.ONE_TIME;
+    const productName = subscriptionPlan
+      ? subscriptionPlan.productName
+      : creditPack!.productName;
+    const planName = subscriptionPlan?.planName || '';
+    const creditsAmount = subscriptionPlan
+      ? subscriptionPlan.monthlyCredits
+      : creditPack!.credits;
+    const creditsValidDays = subscriptionPlan
+      ? subscriptionPlan.validDays
+      : creditPack!.validDays;
 
     const orderNo = getSnowId();
-
-    // get payment product id from pricing table in local file
-    // First try to get currency-specific payment_product_id
-    let paymentProductId = '';
-
-    // If currency is provided and different from default, check currency-specific payment_product_id
-    if (currency && currency.toLowerCase() !== defaultCurrency) {
-      const selectedCurrencyData = pricingItem.currencies?.find(
-        (c: PricingCurrency) =>
-          c.currency.toLowerCase() === currency.toLowerCase()
-      );
-      if (selectedCurrencyData?.payment_product_id) {
-        paymentProductId = selectedCurrencyData.payment_product_id;
-      }
-    }
-
-    // Fallback to default payment_product_id if not found in currency config
-    if (!paymentProductId) {
-      paymentProductId = pricingItem.payment_product_id || '';
-    }
-
-    // If still not found, get from payment provider's config
-    if (!paymentProductId) {
-      paymentProductId = await getPaymentProductId(
-        pricingItem.product_id,
-        paymentProviderName,
-        checkoutCurrency
-      );
-    }
-
-    // get preset promotion code for product_id
-    const promotionCode = await getPromotionCode(
-      product_id,
-      paymentProviderName,
-      checkoutCurrency
-    );
-
-    // build checkout price with correct amount for selected currency
-    const checkoutPrice: PaymentPrice = {
-      amount: checkoutAmount,
-      currency: checkoutCurrency,
-    };
-
-    if (!paymentProductId) {
-      // checkout price validation
-      if (!checkoutPrice.amount || !checkoutPrice.currency) {
-        return respErr('invalid checkout price');
-      }
-    } else {
-      paymentProductId = paymentProductId.trim();
-    }
-
     let callbackBaseUrl = `${configs.app_url}`;
     if (locale && locale !== configs.default_locale) {
       callbackBaseUrl += `/${locale}`;
@@ -202,9 +141,19 @@ export async function POST(req: Request) {
         ? `${callbackBaseUrl}/settings/billing`
         : `${callbackBaseUrl}/settings/payments`;
 
-    // build checkout order
+    const checkoutPrice: PaymentPrice = {
+      amount: amountCents,
+      currency: checkoutCurrency,
+    };
+
+    const promotionCode = await getPromotionCode(
+      product_id,
+      paymentProviderName,
+      checkoutCurrency
+    );
+
     const checkoutOrder: PaymentOrder = {
-      description: pricingItem.product_name,
+      description: productName,
       customer: {
         name: user.name,
         email: user.email,
@@ -214,27 +163,28 @@ export async function POST(req: Request) {
         app_name: configs.app_name,
         order_no: orderNo,
         user_id: user.id,
+        product_id,
         ...(metadata || {}),
       },
       successUrl: `${configs.app_url}/api/payment/callback?order_no=${orderNo}`,
       cancelUrl: `${callbackBaseUrl}/pricing`,
+      price: checkoutPrice,
     };
 
-    // checkout with predefined product
-    if (paymentProductId) {
-      checkoutOrder.productId = paymentProductId;
-    }
-
-    // checkout dynamically
-    checkoutOrder.price = checkoutPrice;
-    if (paymentType === PaymentType.SUBSCRIPTION) {
-      // subscription mode
+    if (subscriptionPlan) {
       checkoutOrder.plan = {
         interval: paymentInterval,
-        name: pricingItem.product_name,
+        name: productName,
       };
-    } else {
-      // one-time mode
+    }
+
+    const paymentProductId = await getPaymentProductId(
+      product_id,
+      paymentProviderName,
+      checkoutCurrency
+    );
+    if (paymentProductId) {
+      checkoutOrder.productId = paymentProductId.trim();
     }
 
     if (promotionCode) {
@@ -244,44 +194,39 @@ export async function POST(req: Request) {
     }
 
     const currentTime = new Date();
-
-    // build order info
     const order: NewOrder = {
       id: getUuid(),
-      orderNo: orderNo,
+      orderNo,
       userId: user.id,
       userEmail: user.email,
       status: OrderStatus.PENDING,
-      amount: checkoutAmount, // use the amount for selected currency
+      amount: amountCents,
       currency: checkoutCurrency,
-      productId: pricingItem.product_id,
-      paymentType: paymentType,
-      paymentInterval: paymentInterval,
+      productId: product_id,
+      paymentType,
+      paymentInterval,
       paymentProvider: paymentProvider.name,
       checkoutInfo: JSON.stringify(checkoutOrder),
       createdAt: currentTime,
-      productName: pricingItem.product_name,
-      description: pricingItem.description,
-      callbackUrl: callbackUrl,
-      creditsAmount: pricingItem.credits,
-      creditsValidDays: pricingItem.valid_days,
-      planName: pricingItem.plan_name || '',
-      paymentProductId: paymentProductId,
+      productName,
+      description: productName,
+      callbackUrl,
+      creditsAmount,
+      creditsValidDays,
+      planName,
+      paymentProductId: paymentProductId || '',
       discountCode: promotionCode,
     };
 
-    // create order
     await createOrder(order);
 
     try {
-      // create payment
       const result = await paymentProvider.createPayment({
         order: checkoutOrder,
       });
 
-      // update order status to created, waiting for payment
       await updateOrderByOrderNo(orderNo, {
-        status: OrderStatus.CREATED, // means checkout created, waiting for payment
+        status: OrderStatus.CREATED,
         checkoutInfo: JSON.stringify(result.checkoutParams),
         checkoutResult: JSON.stringify(result.checkoutResult),
         checkoutUrl: result.checkoutInfo.checkoutUrl,
@@ -291,9 +236,8 @@ export async function POST(req: Request) {
 
       return respData(result.checkoutInfo);
     } catch (e: any) {
-      // update order status to completed, means checkout failed
       await updateOrderByOrderNo(orderNo, {
-        status: OrderStatus.COMPLETED, // means checkout failed
+        status: OrderStatus.COMPLETED,
         checkoutInfo: JSON.stringify(checkoutOrder),
       });
 
@@ -305,14 +249,16 @@ export async function POST(req: Request) {
   }
 }
 
-// get payemt product id from payment provider's config
 async function getPaymentProductId(
   productId: string,
   provider: string,
   checkoutCurrency: string
 ) {
+  if (provider === 'stripe') {
+    return STRIPE_PRICE_ID_FALLBACKS[productId];
+  }
+
   if (provider !== 'creem') {
-    // currently only creem supports payment product id mapping
     return;
   }
 
@@ -331,14 +277,12 @@ async function getPaymentProductId(
   }
 }
 
-// get promotion code from payment provider's config
 async function getPromotionCode(
   productId: string,
   provider: string,
   checkoutCurrency: string
 ) {
   if (provider !== 'stripe') {
-    // currently only stripe supports promotion code mapping
     return;
   }
 

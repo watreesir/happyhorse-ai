@@ -1,535 +1,679 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Check, Loader2 } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import {
+  Check,
+  Coins,
+  Loader2,
+  Sparkles,
+  X,
+  Zap,
+} from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 
-import { SmartIcon } from '@/shared/blocks/common';
-import { PaymentModal } from '@/shared/blocks/payment/payment-modal';
+import { signIn } from '@/core/auth/client';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { useAppContext } from '@/shared/contexts/app';
-import { getCookie } from '@/shared/lib/cookie';
 import { cn } from '@/shared/lib/utils';
-import { Subscription } from '@/shared/models/subscription';
-import {
-  PricingCurrency,
-  PricingItem,
-  Pricing as PricingType,
-} from '@/shared/types/blocks/pricing';
+import type { Pricing as PricingSection } from '@/shared/types/blocks/pricing';
+import type {
+  PricingDisplayCardKey,
+  PricingDisplayCatalog,
+  PricingDisplayCreditPack,
+  PricingDisplayCycle,
+  PricingDisplayFeature,
+  PricingDisplayPlan,
+} from '@/shared/types/pricing-display';
 
-// Helper function to get all available currencies from a pricing item
-function getCurrenciesFromItem(item: PricingItem | null): PricingCurrency[] {
-  if (!item) return [];
-
-  // Always include the default currency first
-  const defaultCurrency: PricingCurrency = {
-    currency: item.currency,
-    amount: item.amount,
-    price: item.price || '',
-    original_price: item.original_price || '',
+type PricingProps = {
+  section: PricingSection & {
+    data?: {
+      pricingCatalog?: PricingDisplayCatalog;
+    };
   };
-
-  // Add additional currencies if available
-  if (item.currencies && item.currencies.length > 0) {
-    return [defaultCurrency, ...item.currencies];
-  }
-
-  return [defaultCurrency];
-}
-
-// Helper function to select initial currency based on locale
-function getInitialCurrency(
-  currencies: PricingCurrency[],
-  locale: string,
-  defaultCurrency: string
-): string {
-  if (currencies.length === 0) return defaultCurrency;
-
-  // If locale is 'zh', prefer CNY
-  if (locale === 'zh') {
-    const cnyCurrency = currencies.find(
-      (c) => c.currency.toLowerCase() === 'cny'
-    );
-    if (cnyCurrency) {
-      return cnyCurrency.currency;
-    }
-  }
-
-  // Otherwise return default currency
-  return defaultCurrency;
-}
-
-export function Pricing({
-  section,
-  className,
-  currentSubscription,
-}: {
-  section: PricingType;
   className?: string;
-  currentSubscription?: Subscription;
+  pricingCatalog?: PricingDisplayCatalog;
+};
+
+function isFreeCard(cardKey: PricingDisplayCardKey) {
+  return cardKey === 'monthly-free' || cardKey === 'yearly-free';
+}
+
+function featureToneClass(
+  tone: PricingDisplayFeature['tone'],
+  isHighlighted: boolean
+) {
+  if (tone === 'negative') {
+    return 'text-rose-500 dark:text-rose-300';
+  }
+  if (tone === 'accent') {
+    return isHighlighted
+      ? 'text-emerald-300 dark:text-emerald-300'
+      : 'text-emerald-700 dark:text-emerald-300';
+  }
+  if (tone === 'neutral') {
+    return 'text-zinc-600 dark:text-zinc-400';
+  }
+  return isHighlighted
+    ? 'text-zinc-100 dark:text-zinc-100'
+    : 'text-zinc-800 dark:text-zinc-200';
+}
+
+function tierGlowClass(tier: PricingDisplayPlan['tier']) {
+  if (tier === 'free') {
+    return 'shadow-[0_24px_64px_-38px_rgba(16,185,129,0.45)]';
+  }
+  if (tier === 'standard') {
+    return 'shadow-[0_24px_64px_-38px_rgba(56,189,248,0.45)]';
+  }
+  if (tier === 'premium') {
+    return 'shadow-[0_24px_64px_-38px_rgba(168,85,247,0.42)]';
+  }
+  return 'shadow-[0_24px_64px_-38px_rgba(245,158,11,0.42)]';
+}
+
+function tierAccentClass(tier: PricingDisplayPlan['tier']) {
+  if (tier === 'free') {
+    return 'text-emerald-500 dark:text-emerald-300';
+  }
+  if (tier === 'standard') {
+    return 'text-sky-500 dark:text-sky-300';
+  }
+  if (tier === 'premium') {
+    return 'text-violet-500 dark:text-violet-300';
+  }
+  return 'text-amber-500 dark:text-amber-300';
+}
+
+function FeatureIcon({
+  feature,
+  highlighted,
+}: {
+  feature: PricingDisplayFeature;
+  highlighted: boolean;
 }) {
-  const locale = useLocale();
-  const t = useTranslations('pages.pricing.messages');
-
-  const {
-    user,
-    isShowPaymentModal,
-    setIsShowSignModal,
-    setIsShowPaymentModal,
-    configs,
-  } = useAppContext();
-
-  const [group, setGroup] = useState(() => {
-    // find current pricing item
-    const currentItem = section.items?.find(
-      (i) => i.product_id === currentSubscription?.productId
-    );
-
-    // First look for a group with is_featured set to true
-    const featuredGroup = section.groups?.find((g) => g.is_featured);
-    // If no featured group exists, fall back to the first group
+  if (feature.icon === 'x') {
     return (
-      currentItem?.group || featuredGroup?.name || section.groups?.[0]?.name
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/10 text-rose-500 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-300">
+        <X className="h-3.5 w-3.5" />
+      </span>
     );
-  });
+  }
 
-  // current pricing item
-  const [pricingItem, setPricingItem] = useState<PricingItem | null>(null);
+  if (feature.icon === 'dot') {
+    return (
+      <span
+        className={cn(
+          'mt-2 h-1.5 w-1.5 shrink-0 rounded-full',
+          highlighted ? 'bg-emerald-300' : 'bg-zinc-400 dark:bg-zinc-500'
+        )}
+      />
+    );
+  }
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [productId, setProductId] = useState<string | null>(null);
+  return (
+    <span
+      className={cn(
+        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+        highlighted
+          ? 'border-emerald-400/25 bg-emerald-300/10 text-emerald-300'
+          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-300'
+      )}
+    >
+      <Check className="h-3.5 w-3.5" />
+    </span>
+  );
+}
 
-  // Currency state management for each item
-  // Store selected currency and displayed item for each product_id
-  const [itemCurrencies, setItemCurrencies] = useState<
-    Record<string, { selectedCurrency: string; displayedItem: PricingItem }>
-  >({});
+function PlanCard({
+  plan,
+  copy,
+  isCurrent,
+  isEmphasized,
+  isRecommended,
+  isLoading,
+  onAction,
+}: {
+  plan: PricingDisplayPlan;
+  copy: PricingDisplayCatalog['copy'];
+  isCurrent: boolean;
+  isEmphasized: boolean;
+  isRecommended: boolean;
+  isLoading: boolean;
+  onAction: (plan: PricingDisplayPlan) => void;
+}) {
+  const highlighted = isEmphasized;
 
-  // Initialize currency states for all items
+  return (
+    <article
+      className={cn(
+        'relative flex h-full min-h-[640px] flex-col overflow-hidden rounded-[30px] border px-6 py-6 transition-all duration-200',
+        highlighted
+          ? cn(
+              'border-emerald-400/45 bg-zinc-950 text-white ring-1 ring-emerald-300/25',
+              tierGlowClass(plan.tier)
+            )
+          : isRecommended
+            ? cn(
+                'border-violet-300/28 bg-white/90 text-zinc-950 dark:border-violet-400/18 dark:bg-zinc-950/72 dark:text-white',
+                tierGlowClass(plan.tier)
+              )
+            : 'border-zinc-200/80 bg-white/88 text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950/62 dark:text-white'
+      )}
+    >
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-x-0 top-0 h-px opacity-80',
+          highlighted
+            ? 'bg-gradient-to-r from-transparent via-emerald-300 to-transparent'
+            : 'bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-700'
+        )}
+      />
+
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <p
+            className={cn(
+              'text-[28px] font-semibold tracking-tight',
+              highlighted ? 'text-white' : tierAccentClass(plan.tier)
+            )}
+          >
+            {plan.title}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isRecommended && !isCurrent ? (
+            <Badge className="rounded-full bg-violet-500/12 px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-violet-600 uppercase dark:bg-violet-400/12 dark:text-violet-200">
+              {plan.badgeLabel}
+            </Badge>
+          ) : null}
+          {isCurrent ? (
+            <Badge className="rounded-full bg-emerald-500/14 px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-emerald-200 uppercase dark:bg-emerald-400/12 dark:text-emerald-200">
+              {copy.currentLabel}
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mb-6 flex min-h-[92px] flex-col justify-end">
+        {plan.originalPriceLabel ? (
+          <div className="mb-1 flex items-end gap-2">
+            <span className="text-sm font-medium text-zinc-400 line-through decoration-zinc-400/70">
+              {plan.originalPriceLabel}
+            </span>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-end gap-2">
+          <span className="text-5xl font-semibold tracking-tight">
+            {plan.priceLabel}
+          </span>
+          {plan.unitLabel ? (
+            <span
+              className={cn(
+                'pb-1 text-sm font-medium',
+                highlighted ? 'text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'
+              )}
+            >
+              {plan.unitLabel}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        onClick={() => onAction(plan)}
+        disabled={isLoading || isCurrent || plan.ctaMode === 'disabled'}
+        className={cn(
+          'mb-6 h-12 rounded-full text-sm font-semibold shadow-none transition',
+          plan.ctaMode === 'contact'
+            ? 'border border-zinc-300 bg-zinc-100 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-500 dark:hover:bg-zinc-800'
+            : highlighted
+              ? 'bg-emerald-400 text-zinc-950 hover:bg-emerald-300'
+              : 'bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200',
+          isCurrent || plan.ctaMode === 'disabled'
+            ? 'cursor-not-allowed bg-zinc-200 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+            : '',
+          isLoading ? 'cursor-wait' : ''
+        )}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {plan.ctaLabel}
+          </>
+        ) : isCurrent ? (
+          copy.currentLabel
+        ) : (
+          plan.ctaLabel
+        )}
+      </Button>
+
+      <div className="mb-5 h-px bg-gradient-to-r from-transparent via-zinc-300/70 to-transparent dark:via-zinc-700/70" />
+
+      <div className="space-y-3">
+        {plan.features.map((feature) => (
+          <div key={`${plan.cardKey}-${feature.text}`} className="flex gap-3">
+            <FeatureIcon feature={feature} highlighted={highlighted} />
+            <p
+              className={cn(
+                'text-sm leading-6',
+                featureToneClass(feature.tone, highlighted)
+              )}
+            >
+              {feature.text}
+            </p>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function CreditPackCard({
+  pack,
+  isLoading,
+  onPurchase,
+}: {
+  pack: PricingDisplayCreditPack;
+  isLoading: boolean;
+  onPurchase: (pack: PricingDisplayCreditPack) => void;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-[28px] border border-emerald-500/12 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(15,23,42,0.08)_48%,rgba(20,184,166,0.18))] p-6 shadow-[0_24px_70px_-42px_rgba(16,185,129,0.45)] dark:border-emerald-400/10 dark:bg-[linear-gradient(135deg,rgba(16,185,129,0.15),rgba(20,20,20,0.82)_55%,rgba(20,184,166,0.18))]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />
+      <div className="mb-3 flex items-center justify-center gap-2 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+        <Zap className="h-5 w-5 text-amber-400" />
+        <span>{pack.creditsLabel}</span>
+      </div>
+      <p className="mb-6 text-center text-lg font-medium text-zinc-700 dark:text-zinc-300">
+        {pack.priceLabel}
+      </p>
+      <Button
+        type="button"
+        onClick={() => onPurchase(pack)}
+        disabled={isLoading}
+        className="h-12 w-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-green-300 text-zinc-950 hover:from-emerald-300 hover:via-teal-300 hover:to-lime-300"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {pack.ctaLabel}
+          </>
+        ) : (
+          pack.ctaLabel
+        )}
+      </Button>
+    </article>
+  );
+}
+
+export function Pricing({ section, className, pricingCatalog }: PricingProps) {
+  const locale = useLocale();
+  const searchParams = useSearchParams();
+  const { configs, fetchUserCredits, fetchUserInfo, isCheckSign, user } =
+    useAppContext();
+
+  const catalog = pricingCatalog ?? section.data?.pricingCatalog;
+  const plansRef = useRef<HTMLDivElement>(null);
+  const handledNoticeRef = useRef<string | null>(null);
+  const [selectedCycle, setSelectedCycle] = useState<PricingDisplayCycle>(
+    catalog?.defaultCycle ?? 'monthly'
+  );
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+
+  const scrollToPlans = useCallback(() => {
+    plansRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
   useEffect(() => {
-    if (section.items && section.items.length > 0) {
-      const initialCurrencyStates: Record<
-        string,
-        { selectedCurrency: string; displayedItem: PricingItem }
-      > = {};
+    if (!catalog) return;
+    setSelectedCycle(catalog.defaultCycle);
+  }, [catalog]);
 
-      section.items.forEach((item) => {
-        const currencies = getCurrenciesFromItem(item);
-        const selectedCurrency = getInitialCurrency(
-          currencies,
-          locale,
-          item.currency
-        );
+  useEffect(() => {
+    if (!catalog) return;
 
-        // Create displayed item with selected currency
-        const currencyData = currencies.find(
-          (c) => c.currency.toLowerCase() === selectedCurrency.toLowerCase()
-        );
+    const notice = searchParams?.get('notice') || '';
+    const focus = searchParams?.get('focus') || '';
+    const key = `${notice}|${focus}`;
 
-        const displayedItem = currencyData
-          ? {
-              ...item,
-              currency: currencyData.currency,
-              amount: currencyData.amount,
-              price: currencyData.price,
-              original_price: currencyData.original_price,
-              // Override with currency-specific payment settings if available
-              payment_product_id:
-                currencyData.payment_product_id || item.payment_product_id,
-              payment_providers:
-                currencyData.payment_providers || item.payment_providers,
-            }
-          : item;
-
-        initialCurrencyStates[item.product_id] = {
-          selectedCurrency,
-          displayedItem,
-        };
-      });
-
-      setItemCurrencies(initialCurrencyStates);
-    }
-  }, [section.items, locale]);
-
-  // Handler for currency change
-  const handleCurrencyChange = (productId: string, currency: string) => {
-    const item = section.items?.find((i) => i.product_id === productId);
-    if (!item) return;
-
-    const currencies = getCurrenciesFromItem(item);
-    const currencyData = currencies.find(
-      (c) => c.currency.toLowerCase() === currency.toLowerCase()
-    );
-
-    if (currencyData) {
-      const displayedItem = {
-        ...item,
-        currency: currencyData.currency,
-        amount: currencyData.amount,
-        price: currencyData.price,
-        original_price: currencyData.original_price,
-        // Override with currency-specific payment settings if available
-        payment_product_id:
-          currencyData.payment_product_id || item.payment_product_id,
-        payment_providers:
-          currencyData.payment_providers || item.payment_providers,
-      };
-
-      setItemCurrencies((prev) => ({
-        ...prev,
-        [productId]: {
-          selectedCurrency: currency,
-          displayedItem,
-        },
-      }));
-    }
-  };
-
-  const handlePayment = async (item: PricingItem) => {
-    if (!user) {
-      setIsShowSignModal(true);
+    if (!notice || handledNoticeRef.current === key) {
       return;
     }
 
-    // Use displayed item with selected currency
-    const displayedItem =
-      itemCurrencies[item.product_id]?.displayedItem || item;
+    handledNoticeRef.current = key;
 
-    if (configs.select_payment_enabled === 'true') {
-      setPricingItem(displayedItem);
-      setIsShowPaymentModal(true);
-    } else {
-      handleCheckout(displayedItem, configs.default_payment_provider);
-    }
-  };
-
-  const getAffiliateMetadata = ({
-    paymentProvider,
-  }: {
-    paymentProvider: string;
-  }) => {
-    const affiliateMetadata: Record<string, string> = {};
-
-    // get Affonso referral
-    if (
-      configs.affonso_enabled === 'true' &&
-      ['stripe', 'creem'].includes(paymentProvider)
-    ) {
-      const affonsoReferral = getCookie('affonso_referral') || '';
-      affiliateMetadata.affonso_referral = affonsoReferral;
+    if (focus === 'plans' || focus === 'subscriptions') {
+      window.setTimeout(() => {
+        scrollToPlans();
+      }, 80);
     }
 
-    // get PromoteKit referral
-    if (
-      configs.promotekit_enabled === 'true' &&
-      ['stripe'].includes(paymentProvider)
-    ) {
-      const promotekitReferral =
-        typeof window !== 'undefined' && (window as any).promotekit_referral
-          ? (window as any).promotekit_referral
-          : getCookie('promotekit_referral') || '';
-      affiliateMetadata.promotekit_referral = promotekitReferral;
+    if (notice === 'credits-required' || notice === 'subscription-required') {
+      toast.success(catalog.copy.creditsRequiredToast, {
+        position: 'bottom-right',
+      });
     }
+  }, [catalog, scrollToPlans, searchParams]);
 
-    return affiliateMetadata;
-  };
+  const triggerGoogleSignIn = useCallback(async () => {
+    const callbackURL =
+      `${window.location.pathname}${window.location.search}${window.location.hash}` ||
+      '/';
 
-  const handleCheckout = async (
-    item: PricingItem,
-    paymentProvider?: string
-  ) => {
     try {
-      if (!user) {
-        setIsShowSignModal(true);
+      await signIn.social({
+        provider: 'google',
+        callbackURL,
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('pricing google sign in failed:', error);
+      }
+      window.location.assign('/sign-in');
+    }
+  }, []);
+
+  const startCheckout = useCallback(
+    async (productId: string) => {
+      if (!catalog) {
         return;
       }
 
-      const affiliateMetadata = getAffiliateMetadata({
-        paymentProvider: paymentProvider || '',
-      });
+      const paymentProvider = configs.default_payment_provider || '';
 
-      const params = {
-        product_id: item.product_id,
-        currency: item.currency,
-        locale: locale || 'en',
-        payment_provider: paymentProvider || '',
-        metadata: affiliateMetadata,
-      };
+      setLoadingKey(productId);
+      try {
+        const response = await fetch('/api/payment/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            currency: 'usd',
+            locale,
+            payment_provider: paymentProvider,
+          }),
+        });
 
-      setIsLoading(true);
-      setProductId(item.product_id);
+        if (!response.ok) {
+          throw new Error(`request failed with status ${response.status}`);
+        }
 
-      const response = await fetch('/api/payment/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
+        const payload = (await response.json()) as {
+          code: number;
+          message?: string;
+          data?: {
+            checkoutUrl?: string;
+          };
+        };
 
-      if (response.status === 401) {
-        setIsLoading(false);
-        setProductId(null);
-        setPricingItem(null);
-        setIsShowSignModal(true);
+        if (payload.code !== 0) {
+          const message = payload.message || 'checkout failed';
+          const normalized = message.toLowerCase();
+
+          if (
+            normalized.includes('no auth') ||
+            normalized.includes('sign in')
+          ) {
+            await triggerGoogleSignIn();
+            return;
+          }
+
+          if (normalized.includes('already have this plan active')) {
+            toast.success(catalog.copy.currentPlanToast, {
+              position: 'bottom-right',
+            });
+            await fetchUserInfo();
+            await fetchUserCredits();
+            return;
+          }
+
+          if (normalized.includes('active subscription required')) {
+            toast.success(catalog.copy.creditPackLockedToast, {
+              position: 'bottom-right',
+            });
+            scrollToPlans();
+            return;
+          }
+
+          throw new Error(message);
+        }
+
+        const checkoutUrl = payload.data?.checkoutUrl;
+        if (!checkoutUrl) {
+          throw new Error('checkout url not found');
+        }
+
+        window.location.href = checkoutUrl;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'checkout failed';
+        toast.error(message, {
+          position: 'bottom-right',
+        });
+      } finally {
+        setLoadingKey(null);
+      }
+    },
+    [
+      catalog,
+      configs.default_payment_provider,
+      fetchUserCredits,
+      fetchUserInfo,
+      locale,
+      scrollToPlans,
+      triggerGoogleSignIn,
+    ]
+  );
+
+  const handlePlanAction = useCallback(
+    async (plan: PricingDisplayPlan) => {
+      if (!catalog) {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(`request failed with status ${response.status}`);
+      const isCurrent =
+        (!catalog.hasPaidSubscription && plan.tier === 'free') ||
+        catalog.currentPlanCard === plan.cardKey;
+
+      if (isCurrent || plan.ctaMode === 'disabled') {
+        return;
       }
 
-      const { code, message, data } = await response.json();
-      if (code !== 0) {
-        throw new Error(message);
+      if (!user && !isCheckSign) {
+        await triggerGoogleSignIn();
+        return;
       }
 
-      const { checkoutUrl } = data;
-      if (!checkoutUrl) {
-        throw new Error('checkout url not found');
+      if (plan.ctaMode === 'contact') {
+        try {
+          await navigator.clipboard.writeText(catalog.supportEmail);
+          toast.success(catalog.copy.copiedEmailToast, {
+            position: 'bottom-right',
+          });
+        } catch {
+          window.location.href = `mailto:${catalog.supportEmail}`;
+        }
+        return;
       }
 
-      window.location.href = checkoutUrl;
-    } catch (e: any) {
-      console.log('checkout failed: ', e);
-      toast.error('checkout failed: ' + e.message);
+      if (!plan.productId) {
+        return;
+      }
 
-      setIsLoading(false);
-      setProductId(null);
-    }
-  };
+      await startCheckout(plan.productId);
+    },
+    [catalog, isCheckSign, startCheckout, triggerGoogleSignIn, user]
+  );
 
-  useEffect(() => {
-    if (section.items) {
-      const featuredItem = section.items.find((i) => i.is_featured);
-      setProductId(featuredItem?.product_id || section.items[0]?.product_id);
-      setIsLoading(false);
-    }
-  }, [section.items]);
+  const handleCreditPackPurchase = useCallback(
+    async (pack: PricingDisplayCreditPack) => {
+      if (!catalog) {
+        return;
+      }
+
+      if (!user && !isCheckSign) {
+        await triggerGoogleSignIn();
+        return;
+      }
+
+      if (!catalog.canPurchaseCreditPack) {
+        toast.success(catalog.copy.creditPackLockedToast, {
+          position: 'bottom-right',
+        });
+        scrollToPlans();
+        return;
+      }
+
+      await startCheckout(pack.productId);
+    },
+    [
+      catalog,
+      isCheckSign,
+      scrollToPlans,
+      startCheckout,
+      triggerGoogleSignIn,
+      user,
+    ]
+  );
+
+  const visiblePlans = useMemo(
+    () => catalog?.subscriptions[selectedCycle] ?? [],
+    [catalog, selectedCycle]
+  );
+
+  if (!catalog) {
+    return null;
+  }
 
   return (
     <section
       id={section.id}
       className={cn(
-        'py-24 md:py-36',
-        section.className,
-        'landing-section-surface',
+        'relative overflow-hidden px-4 py-16 sm:px-6 lg:px-8',
         className
       )}
     >
-      <div className="mx-auto mb-12 px-4 text-center md:px-8">
-        {section.sr_only_title && (
-          <h1 className="sr-only">{section.sr_only_title}</h1>
-        )}
-        <h2 className="mb-6 text-3xl font-bold text-pretty lg:text-4xl">
-          {section.title}
-        </h2>
-        <p className="text-muted-foreground mx-auto mb-4 max-w-xl lg:max-w-none lg:text-lg">
-          {section.description}
-        </p>
-      </div>
-
-      <div className="container">
-        {section.groups && section.groups.length > 0 && (
-          <div className="mx-auto mt-8 mb-16 flex w-full justify-center md:max-w-lg">
-            <Tabs value={group} onValueChange={setGroup} className="">
-              <TabsList>
-                {section.groups.map((item, i) => {
-                  return (
-                    <TabsTrigger key={i} value={item.name || ''}>
-                      {item.title}
-                      {item.label && (
-                        <Badge className="ml-2">{item.label}</Badge>
-                      )}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </Tabs>
-          </div>
-        )}
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-10 text-center">
+          {section.title ? (
+            <h1 className="text-foreground text-4xl font-semibold tracking-tight sm:text-5xl">
+              {section.title}
+            </h1>
+          ) : null}
+          {section.description ? (
+            <p className="text-foreground/70 mx-auto mt-4 max-w-3xl text-base leading-7 sm:text-lg">
+              {section.description}
+            </p>
+          ) : null}
+        </div>
 
         <div
-          className={`mx-auto mt-0 grid w-full gap-6 md:grid-cols-${
-            section.items?.filter((item) => !item.group || item.group === group)
-              ?.length
-          }`}
+          ref={plansRef}
+          className="relative overflow-hidden rounded-[36px] border border-zinc-200/80 bg-white/70 p-4 shadow-[0_34px_100px_-60px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/66"
         >
-          {section.items?.map((item: PricingItem, idx) => {
-            if (item.group && item.group !== group) {
-              return null;
-            }
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.08),transparent_28%)] dark:bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.14),transparent_28%)]" />
 
-            let isCurrentPlan = false;
-            if (
-              currentSubscription &&
-              currentSubscription.productId === item.product_id
-            ) {
-              isCurrentPlan = true;
-            }
-
-            // Get currency state for this item
-            const currencyState = itemCurrencies[item.product_id];
-            const displayedItem = currencyState?.displayedItem || item;
-            const selectedCurrency =
-              currencyState?.selectedCurrency || item.currency;
-            const currencies = getCurrenciesFromItem(item);
-
-            return (
-              <Card key={idx} className="landing-panel-surface relative">
-                {item.label && (
-                  <span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br/increasing from-emerald-400 to-teal-300 px-3 py-1 text-xs font-medium text-emerald-950 ring-1 ring-white/20 ring-offset-1 ring-offset-gray-950/5 ring-inset">
-                    {item.label}
-                  </span>
+          <div className="relative mb-8 flex flex-col items-center gap-4 pt-3">
+            <div className="inline-flex rounded-full border border-zinc-200 bg-zinc-100/85 p-1 dark:border-zinc-800 dark:bg-zinc-900/85">
+              <button
+                type="button"
+                onClick={() => setSelectedCycle('monthly')}
+                className={cn(
+                  'rounded-full px-5 py-2 text-sm font-semibold transition',
+                  selectedCycle === 'monthly'
+                    ? 'bg-white text-zinc-950 shadow-sm dark:bg-zinc-100 dark:text-zinc-950'
+                    : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                 )}
+              >
+                {catalog.copy.monthlyLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedCycle('yearly')}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition',
+                  selectedCycle === 'yearly'
+                    ? 'bg-white text-zinc-950 shadow-sm dark:bg-zinc-100 dark:text-zinc-950'
+                    : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                )}
+              >
+                <span>{catalog.copy.yearlyLabel}</span>
+                <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[11px] font-bold tracking-[0.12em] text-zinc-950 uppercase">
+                  {catalog.copy.yearlyDiscountLabel}
+                </span>
+              </button>
+            </div>
 
-                <CardHeader>
-                  <CardTitle className="font-medium">
-                    <h3 className="text-sm font-medium">{item.title}</h3>
-                  </CardTitle>
+          </div>
 
-                  <div className="my-3 flex items-baseline gap-2">
-                    {displayedItem.original_price && (
-                      <span className="text-muted-foreground text-sm line-through">
-                        {displayedItem.original_price}
-                      </span>
-                    )}
+          <div className="relative grid gap-5 lg:grid-cols-4">
+            {visiblePlans.map((plan) => {
+              const isCurrent =
+                (!catalog.hasPaidSubscription && plan.tier === 'free') ||
+                catalog.currentPlanCard === plan.cardKey;
+              const isEmphasized = catalog.hasPaidSubscription
+                ? catalog.currentPlanCard === plan.cardKey
+                : plan.cardKey === catalog.recommendedPlanCard;
+              const isRecommended = plan.cardKey === catalog.recommendedPlanCard;
 
-                    <div className="my-3 block text-2xl font-semibold">
-                      <span className="text-primary">
-                        {displayedItem.price}
-                      </span>{' '}
-                      {displayedItem.unit ? (
-                        <span className="text-muted-foreground text-sm font-normal">
-                          {displayedItem.unit}
-                        </span>
-                      ) : (
-                        ''
-                      )}
-                    </div>
+              return (
+                <PlanCard
+                  key={plan.cardKey}
+                  plan={plan}
+                  copy={catalog.copy}
+                  isCurrent={isCurrent}
+                  isEmphasized={isEmphasized}
+                  isRecommended={isRecommended}
+                  isLoading={loadingKey === (plan.productId || plan.cardKey)}
+                  onAction={handlePlanAction}
+                />
+              );
+            })}
+          </div>
 
-                    {currencies.length > 1 && (
-                      <Select
-                        value={selectedCurrency}
-                        onValueChange={(currency) =>
-                          handleCurrencyChange(item.product_id, currency)
-                        }
-                      >
-                        <SelectTrigger
-                          size="sm"
-                          className="border-muted-foreground/30 bg-background/50 h-6 min-w-[60px] px-2 text-xs"
-                        >
-                          <SelectValue placeholder="Currency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currencies.map((currency) => (
-                            <SelectItem
-                              key={currency.currency}
-                              value={currency.currency}
-                              className="text-xs"
-                            >
-                              {currency.currency.toUpperCase()}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
+          <div className="relative mt-12 rounded-[32px] border border-zinc-200/70 bg-zinc-50/80 p-6 dark:border-zinc-800 dark:bg-zinc-950/72">
+            <div className="mb-8 text-center">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/8 px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-emerald-600 uppercase dark:border-emerald-400/15 dark:bg-emerald-400/8 dark:text-emerald-200">
+                <Coins className="h-3.5 w-3.5" />
+                {catalog.copy.creditPackTitle}
+              </div>
+              <h2 className="text-foreground text-3xl font-semibold tracking-tight">
+                {catalog.copy.creditPackTitle}
+              </h2>
+              <p className="text-foreground/68 mx-auto mt-3 max-w-3xl text-base leading-7">
+                {catalog.copy.creditPackDescription}
+              </p>
+            </div>
 
-                  <CardDescription className="text-sm">
-                    {item.description}
-                  </CardDescription>
-                  {item.tip && (
-                    <span className="text-muted-foreground text-sm">
-                      {item.tip}
-                    </span>
-                  )}
+            <div className="grid gap-4 lg:grid-cols-3">
+              {catalog.creditPacks.map((pack) => (
+                <CreditPackCard
+                  key={pack.productId}
+                  pack={pack}
+                  isLoading={loadingKey === pack.productId}
+                  onPurchase={handleCreditPackPurchase}
+                />
+              ))}
+            </div>
 
-                  {isCurrentPlan ? (
-                    <Button
-                      variant="outline"
-                      className="mt-4 h-9 w-full px-4 py-2"
-                      disabled
-                    >
-                      <span className="hidden text-sm md:block">
-                        {t('current_plan')}
-                      </span>
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => handlePayment(item)}
-                      disabled={isLoading}
-                      className={cn(
-                        'focus-visible:ring-ring inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
-                        'mt-4 h-9 w-full px-4 py-2',
-                        'bg-primary text-primary-foreground hover:bg-primary/90 border-[0.5px] border-white/25 shadow-md shadow-black/20'
-                      )}
-                    >
-                      {isLoading && item.product_id === productId ? (
-                        <>
-                          <Loader2 className="size-4 animate-spin" />
-                          <span className="block">{t('processing')}</span>
-                        </>
-                      ) : (
-                        <>
-                          {item.button?.icon && (
-                            <SmartIcon
-                              name={item.button?.icon as string}
-                              className="size-4"
-                            />
-                          )}
-                          <span className="block">{item.button?.title}</span>
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <hr className="border-dashed" />
-
-                  {item.features_title && (
-                    <p className="text-sm font-medium">{item.features_title}</p>
-                  )}
-                  <ul className="list-outside space-y-3 text-sm">
-                    {item.features?.map((item, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <Check className="size-3" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            );
-          })}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-dashed border-emerald-500/20 bg-emerald-500/6 px-4 py-3 text-center text-sm text-emerald-700 dark:border-emerald-400/16 dark:bg-emerald-400/8 dark:text-emerald-200">
+              <Sparkles className="h-4 w-4" />
+              <span>{catalog.copy.subscriptionNoticeLabel}</span>
+            </div>
+          </div>
         </div>
       </div>
-
-      <PaymentModal
-        isLoading={isLoading}
-        pricingItem={pricingItem}
-        onCheckout={(item, paymentProvider) =>
-          handleCheckout(item, paymentProvider)
-        }
-      />
     </section>
   );
 }

@@ -11,6 +11,10 @@ import {
 import { AIMediaType } from '@/extensions/ai';
 import { getCookieFromHeader } from '@/shared/lib/cookie';
 import { getUuid } from '@/shared/lib/hash';
+import {
+  getFreeDailyCreditsAmount,
+  getFreeDailyVideoLimit,
+} from '@/shared/services/pricing';
 
 export const GUEST_TRIAL_TOKEN_COOKIE = 'hh_guest_trial_token';
 export const GUEST_DEVICE_ID_COOKIE = 'hh_guest_device_id';
@@ -32,11 +36,6 @@ function parsePositiveInt(input: string | undefined, fallback: number) {
   return parsed;
 }
 
-const GUEST_TRIAL_TOTAL_CREDITS = parsePositiveInt(
-  process.env.GUEST_TRIAL_TOTAL_CREDITS,
-  5
-);
-const GUEST_TRIAL_MAX_TASKS = parsePositiveInt(process.env.GUEST_TRIAL_MAX_TASKS, 1);
 const GUEST_TRIAL_MAX_NEW_TOKENS_PER_IP_24H = parsePositiveInt(
   process.env.GUEST_TRIAL_MAX_NEW_TOKENS_PER_IP_24H,
   3
@@ -47,6 +46,20 @@ const GUEST_TRIAL_MAX_NEW_TOKENS_PER_DEVICE_24H = parsePositiveInt(
 );
 
 type GuestTrialQuotaRow = typeof guestTrialQuota.$inferSelect;
+
+function getGuestTrialTotalCredits() {
+  return parsePositiveInt(
+    process.env.GUEST_TRIAL_TOTAL_CREDITS,
+    getFreeDailyCreditsAmount()
+  );
+}
+
+function getGuestTrialMaxTasks() {
+  return parsePositiveInt(
+    process.env.GUEST_TRIAL_MAX_TASKS,
+    getFreeDailyVideoLimit()
+  );
+}
 
 function hashValue(input: string) {
   return createHash('sha256').update(input).digest('hex');
@@ -188,7 +201,7 @@ async function createQuotaIfNeeded({
     tokenHash,
     deviceHash,
     ipHash,
-    remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
+    remainingCredits: getGuestTrialTotalCredits(),
     usedTaskCount: 0,
     blocked: false,
     blockReason: null,
@@ -225,7 +238,7 @@ async function syncDailyCredits({
     const [updatedQuota] = await tx
       .update(guestTrialQuota)
       .set({
-        remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
+        remainingCredits: getGuestTrialTotalCredits(),
         usedTaskCount: 0,
         lastSeenAt: now,
         consumedAt: null,
@@ -238,7 +251,7 @@ async function syncDailyCredits({
         updatedQuota ||
         ({
           ...quota,
-          remainingCredits: GUEST_TRIAL_TOTAL_CREDITS,
+          remainingCredits: getGuestTrialTotalCredits(),
           usedTaskCount: 0,
           lastSeenAt: now,
           consumedAt: null,
@@ -332,7 +345,7 @@ export async function ensureGuestTrialSession({
     if (created) {
       return {
         remainingCredits: toInt(quota.remainingCredits),
-        totalCredits: GUEST_TRIAL_TOTAL_CREDITS,
+        totalCredits: getGuestTrialTotalCredits(),
         usedTaskCount: toInt(quota.usedTaskCount),
         claimedDaily: true,
         dayKey: getDateKey(now),
@@ -343,7 +356,7 @@ export async function ensureGuestTrialSession({
 
     return {
       remainingCredits: toInt(synced.quota.remainingCredits),
-      totalCredits: GUEST_TRIAL_TOTAL_CREDITS,
+        totalCredits: getGuestTrialTotalCredits(),
       usedTaskCount: toInt(synced.quota.usedTaskCount),
       claimedDaily: synced.claimedDaily,
       dayKey: synced.dayKey,
@@ -394,7 +407,10 @@ export async function reserveGuestTrialCredits({
     const remainingCredits = toInt(activeQuota.remainingCredits);
     const usedTaskCount = toInt(activeQuota.usedTaskCount);
 
-    if (usedTaskCount >= GUEST_TRIAL_MAX_TASKS || remainingCredits < safeCredits) {
+    if (
+      usedTaskCount >= getGuestTrialMaxTasks() ||
+      remainingCredits < safeCredits
+    ) {
       throw new Error('guest trial exhausted, please sign in');
     }
 
@@ -438,12 +454,13 @@ export async function refundGuestTrialCredits({
     }
 
     const nextRemainingCredits = Math.min(
-      GUEST_TRIAL_TOTAL_CREDITS,
+      getGuestTrialTotalCredits(),
       toInt(quota.remainingCredits) + safeCredits
     );
     const nextUsedTaskCount = Math.max(0, toInt(quota.usedTaskCount) - 1);
     const shouldClearConsumedAt =
-      nextRemainingCredits >= GUEST_TRIAL_TOTAL_CREDITS && nextUsedTaskCount === 0;
+      nextRemainingCredits >= getGuestTrialTotalCredits() &&
+      nextUsedTaskCount === 0;
 
     const [updatedQuota] = await tx
       .update(guestTrialQuota)

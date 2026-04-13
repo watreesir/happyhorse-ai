@@ -36,6 +36,11 @@ import {
   UpdateSubscription,
   updateSubscriptionBySubscriptionNo,
 } from '../models/subscription';
+import {
+  getAnchoredMonthlyGrantWindow,
+  getSubscriptionPlanByProductId,
+} from './pricing';
+import { buildAnchoredMonthlyGrantMetadata } from './subscription-grants';
 
 /**
  * get payment service with configs
@@ -117,6 +122,115 @@ export async function getPaymentService(
   paymentService = getPaymentServiceWithConfigs(configs);
 
   return paymentService;
+}
+
+function resolvePaymentReferenceDate(session: PaymentSession) {
+  const paidAt = session.paymentInfo?.paidAt;
+  if (paidAt instanceof Date) {
+    return paidAt;
+  }
+  if (typeof paidAt === 'string' || typeof paidAt === 'number') {
+    const parsed = new Date(paidAt);
+    if (Number.isFinite(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  return new Date();
+}
+
+function buildOrderCreditGrant({
+  order,
+  subscriptionInfo,
+  subscriptionNo,
+  transactionScene,
+  source,
+  session,
+}: {
+  order: Pick<
+    Order | NewOrder,
+    | 'creditsAmount'
+    | 'creditsValidDays'
+    | 'orderNo'
+    | 'productId'
+    | 'productName'
+    | 'userId'
+    | 'userEmail'
+    | 'planName'
+  >;
+  subscriptionInfo?: PaymentSession['subscriptionInfo'];
+  subscriptionNo?: string;
+  transactionScene: CreditTransactionScene;
+  source: 'checkout' | 'renewal';
+  session: PaymentSession;
+}): NewCredit | undefined {
+  if (!order.creditsAmount || order.creditsAmount <= 0) {
+    return undefined;
+  }
+
+  const subscriptionPlan = getSubscriptionPlanByProductId(order.productId);
+  const isAnchoredMonthlyGrant =
+    !!subscriptionPlan &&
+    subscriptionPlan.monthlyGrantMode === 'anchored-monthly' &&
+    !!subscriptionInfo?.currentPeriodStart &&
+    !!subscriptionInfo?.currentPeriodEnd &&
+    !!subscriptionNo;
+
+  if (isAnchoredMonthlyGrant) {
+    const grantWindow = getAnchoredMonthlyGrantWindow({
+      currentPeriodStart: new Date(subscriptionInfo!.currentPeriodStart!),
+      currentPeriodEnd: new Date(subscriptionInfo!.currentPeriodEnd!),
+      now: resolvePaymentReferenceDate(session),
+    });
+
+    return {
+      id: getUuid(),
+      userId: order.userId,
+      userEmail: order.userEmail,
+      orderNo: order.orderNo,
+      subscriptionNo,
+      transactionNo: getSnowId(),
+      transactionType: CreditTransactionType.GRANT,
+      transactionScene,
+      credits: subscriptionPlan.monthlyCredits,
+      remainingCredits: subscriptionPlan.monthlyCredits,
+      description: `${order.planName || subscriptionPlan.planName} monthly credits`,
+      expiresAt: grantWindow.grantEnd,
+      status: CreditStatus.ACTIVE,
+      metadata: buildAnchoredMonthlyGrantMetadata({
+        subscription: {
+          subscriptionNo,
+          productId: order.productId || subscriptionPlan.productId,
+          planName: order.planName || subscriptionPlan.planName,
+        },
+        grantKey: grantWindow.grantKey,
+        source,
+      }),
+    };
+  }
+
+  const expiresAt = calculateCreditExpirationTime({
+    creditsValidDays: order.creditsValidDays || 0,
+    currentPeriodEnd: subscriptionInfo?.currentPeriodEnd,
+  });
+
+  return {
+    id: getUuid(),
+    userId: order.userId,
+    userEmail: order.userEmail,
+    orderNo: order.orderNo,
+    subscriptionNo,
+    transactionNo: getSnowId(),
+    transactionType: CreditTransactionType.GRANT,
+    transactionScene,
+    credits: order.creditsAmount,
+    remainingCredits: order.creditsAmount,
+    description:
+      transactionScene === CreditTransactionScene.PAYMENT
+        ? `${order.productName} credits`
+        : `${order.planName || order.productName} monthly credits`,
+    expiresAt,
+    status: CreditStatus.ACTIVE,
+  };
 }
 
 /**
@@ -214,37 +328,17 @@ export async function handleCheckoutSuccess({
       );
     }
 
-    // grant credit for order
-    let newCredit: NewCredit | undefined = undefined;
-    if (order.creditsAmount && order.creditsAmount > 0) {
-      const credits = order.creditsAmount;
-      const expiresAt =
-        credits > 0
-          ? calculateCreditExpirationTime({
-              creditsValidDays: order.creditsValidDays || 0,
-              currentPeriodEnd: subscriptionInfo?.currentPeriodEnd,
-            })
-          : null;
-
-      newCredit = {
-        id: getUuid(),
-        userId: order.userId,
-        userEmail: order.userEmail,
-        orderNo: order.orderNo,
-        subscriptionNo: newSubscription?.subscriptionNo,
-        transactionNo: getSnowId(),
-        transactionType: CreditTransactionType.GRANT,
-        transactionScene:
-          order.paymentType === PaymentType.SUBSCRIPTION
-            ? CreditTransactionScene.SUBSCRIPTION
-            : CreditTransactionScene.PAYMENT,
-        credits: credits,
-        remainingCredits: credits,
-        description: `Grant credit`,
-        expiresAt: expiresAt,
-        status: CreditStatus.ACTIVE,
-      };
-    }
+    const newCredit = buildOrderCreditGrant({
+      order,
+      subscriptionInfo,
+      subscriptionNo: newSubscription?.subscriptionNo,
+      transactionScene:
+        order.paymentType === PaymentType.SUBSCRIPTION
+          ? CreditTransactionScene.SUBSCRIPTION
+          : CreditTransactionScene.PAYMENT,
+      source: 'checkout',
+      session,
+    });
 
     await updateOrderInTransaction({
       orderNo,
@@ -351,37 +445,17 @@ export async function handlePaymentSuccess({
       );
     }
 
-    // grant credit for order
-    let newCredit: NewCredit | undefined = undefined;
-    if (order.creditsAmount && order.creditsAmount > 0) {
-      const credits = order.creditsAmount;
-      const expiresAt =
-        credits > 0
-          ? calculateCreditExpirationTime({
-              creditsValidDays: order.creditsValidDays || 0,
-              currentPeriodEnd: subscriptionInfo?.currentPeriodEnd,
-            })
-          : null;
-
-      newCredit = {
-        id: getUuid(),
-        userId: order.userId,
-        userEmail: order.userEmail,
-        orderNo: order.orderNo,
-        subscriptionNo: newSubscription?.subscriptionNo,
-        transactionNo: getSnowId(),
-        transactionType: CreditTransactionType.GRANT,
-        transactionScene:
-          order.paymentType === PaymentType.SUBSCRIPTION
-            ? CreditTransactionScene.SUBSCRIPTION
-            : CreditTransactionScene.PAYMENT,
-        credits: credits,
-        remainingCredits: credits,
-        description: `Grant credit`,
-        expiresAt: expiresAt,
-        status: CreditStatus.ACTIVE,
-      };
-    }
+    const newCredit = buildOrderCreditGrant({
+      order,
+      subscriptionInfo,
+      subscriptionNo: newSubscription?.subscriptionNo,
+      transactionScene:
+        order.paymentType === PaymentType.SUBSCRIPTION
+          ? CreditTransactionScene.SUBSCRIPTION
+          : CreditTransactionScene.PAYMENT,
+      source: 'checkout',
+      session,
+    });
 
     await updateOrderInTransaction({
       orderNo,
@@ -473,37 +547,14 @@ export async function handleSubscriptionRenewal({
       subscriptionResult: JSON.stringify(session.subscriptionResult),
     };
 
-    // grant credit for renewal order
-    let newCredit: NewCredit | undefined = undefined;
-    if (order.creditsAmount && order.creditsAmount > 0) {
-      const credits = order.creditsAmount;
-      const expiresAt =
-        credits > 0
-          ? calculateCreditExpirationTime({
-              creditsValidDays: order.creditsValidDays || 0,
-              currentPeriodEnd: subscriptionInfo?.currentPeriodEnd,
-            })
-          : null;
-
-      newCredit = {
-        id: getUuid(),
-        userId: order.userId,
-        userEmail: order.userEmail,
-        orderNo: order.orderNo,
-        subscriptionNo: subscription.subscriptionNo,
-        transactionNo: getSnowId(),
-        transactionType: CreditTransactionType.GRANT,
-        transactionScene:
-          order.paymentType === PaymentType.SUBSCRIPTION
-            ? CreditTransactionScene.SUBSCRIPTION
-            : CreditTransactionScene.PAYMENT,
-        credits: credits,
-        remainingCredits: credits,
-        description: `Grant credit`,
-        expiresAt: expiresAt,
-        status: CreditStatus.ACTIVE,
-      };
-    }
+    const newCredit = buildOrderCreditGrant({
+      order,
+      subscriptionInfo,
+      subscriptionNo: subscription.subscriptionNo,
+      transactionScene: CreditTransactionScene.RENEWAL,
+      source: 'renewal',
+      session,
+    });
 
     await updateSubscriptionInTransaction({
       subscriptionNo,

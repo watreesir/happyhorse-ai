@@ -325,7 +325,80 @@
     }
   },
   "messages": {
-    "current_plan": "Current Plan",
-    "processing": "Processing"
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "yearly_discount": "-20%"
+    },
+    "units": {
+      "per_month": "/ month"
+    },
+    "plans": {
+      "free": "Free",
+      "standard": "Standard",
+      "premium": "Premium",
+      "unlimited": "Unlimited"
+    },
+    "badges": {
+      "recommended": "Recommended"
+    },
+    "actions": {
+      "current": "Current",
+      "choose_plan": "Choose Plan",
+      "contact_us": "Contact Us",
+      "buy_credit_pack": "Purchase"
+    },
+    "values": {
+      "free_daily_credits": "65",
+      "free_daily_videos": "1",
+      "monthly_standard_videos": "13",
+      "monthly_premium_videos": "32",
+      "yearly_standard_videos": "154",
+      "yearly_premium_videos": "384"
+    },
+    "features": {
+      "daily_credits": "{count} Credits daily",
+      "daily_videos": "{count} video (720p, 5s) daily",
+      "free_text_only": "Only Text to video accessible",
+      "free_portrait_locked": "Portrait upload feature unaccessible",
+      "monthly_credits": "{count} monthly credits",
+      "generated_videos": "Generate {count} videos (720p, 5s)",
+      "portrait_enabled": "Portrait upload feature accessible",
+      "unlock_credit_packs": "Unlock credit packs",
+      "queue_priority": "Maximized queue priority",
+      "unlimited_downloads": "Unlimited downloads per day",
+      "normal_support": "Normal customer support",
+      "dedicated_support": "Dedicated customer support",
+      "model_upcoming": "Happy Horse 2.0 Model (upcoming)",
+      "advanced_access": "Early access to advanced AI features",
+      "capacity_boost": "2.5x capacity vs Standard",
+      "unlimited_credits": "Unlimited credits",
+      "api_access": "API access",
+      "unlimited_includes_all": "All Standard & Premium features included"
+    },
+    "credit_pack": {
+      "title": "Credit Pack",
+      "description": "One-time credits for active subscribers. Purchased credits stay valid for 365 days and are used after your monthly subscription credits.",
+      "notice": "Credit Packs unlock after an active paid subscription is in place.",
+      "plan_credits": "{count} credits",
+      "plans": {
+        "starter": {
+          "title": "Starter"
+        },
+        "standard": {
+          "title": "Standard"
+        },
+        "premium": {
+          "title": "Premium"
+        }
+      }
+    },
+    "toasts": {
+      "email_copied": "Support email copied.",
+      "sign_in_required": "Please sign in to continue.",
+      "credits_required": "Your credits are insufficient. A subscription is required.",
+      "credit_pack_locked": "You haven't completed a subscription yet.",
+      "current_plan": "This plan is already active."
+    }
   }
 }

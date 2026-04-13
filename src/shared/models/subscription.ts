@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, or } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import { subscription } from '@/config/db/schema';
@@ -149,6 +149,7 @@ export async function getSubscriptions({
  * get current subscription
  */
 export async function getCurrentSubscription(userId: string) {
+  const now = new Date();
   const [result] = await db()
     .select()
     .from(subscription)
@@ -159,13 +160,34 @@ export async function getCurrentSubscription(userId: string) {
           SubscriptionStatus.ACTIVE,
           SubscriptionStatus.PENDING_CANCEL,
           SubscriptionStatus.TRIALING,
-        ])
+        ]),
+        or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, now))
       )
     )
     .orderBy(desc(subscription.createdAt))
     .limit(1);
 
   return result;
+}
+
+export async function getValidSubscriptions(userId: string) {
+  const now = new Date();
+
+  return db()
+    .select()
+    .from(subscription)
+    .where(
+      and(
+        eq(subscription.userId, userId),
+        inArray(subscription.status, [
+          SubscriptionStatus.ACTIVE,
+          SubscriptionStatus.PENDING_CANCEL,
+          SubscriptionStatus.TRIALING,
+        ]),
+        or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, now))
+      )
+    )
+    .orderBy(desc(subscription.createdAt));
 }
 
 /**
