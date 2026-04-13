@@ -288,6 +288,23 @@ export async function queryVideoTask(taskId: string): Promise<VideoTaskRecord> {
   };
 }
 
+export async function deleteVideoTask(taskId: string) {
+  const response = await fetch(`/api/ai/video-tasks/${taskId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`request failed with status: ${response.status}`);
+  }
+
+  const payload = (await response.json()) as ApiResponse<{
+    id: string;
+    deleted: boolean;
+  }>;
+
+  return ensureSuccess(payload, 'Unable to delete video task');
+}
+
 export function toLifecycle(status: string): StudioTaskLifecycle {
   if (status === AITaskStatus.PENDING) return 'queued';
   if (status === AITaskStatus.PROCESSING) return 'processing';

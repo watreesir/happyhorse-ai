@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -10,6 +11,7 @@ import { toStudioErrorMessage } from '../_lib/error-messages';
 import { VIDEO_STUDIO_REFRESH_EVENT, dispatchVideoStudioRefresh } from '../_lib/events';
 import { StudioCopy, StudioErrorCopy } from '../_lib/types';
 import {
+  deleteVideoTask,
   listVideoTasks,
   mapTaskToDraft,
   refreshPendingTasks,
@@ -59,6 +61,7 @@ export function MyCreationsPanel({
   const [items, setItems] = useState<ReturnType<typeof mapTaskToDraft>[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const inFlightRef = useRef(false);
   const pendingRequestRef = useRef<{ page: number; refreshing: boolean } | null>(null);
 
@@ -138,6 +141,28 @@ export function MyCreationsPanel({
     dispatchVideoStudioRefresh('creations-refresh');
   };
 
+  const handleDelete = useCallback(
+    async (taskId: string) => {
+      if (deletingId) return;
+
+      if (!window.confirm(copy.actions.deleteConfirm)) {
+        return;
+      }
+
+      try {
+        setDeletingId(taskId);
+        await deleteVideoTask(taskId);
+        toast.success(copy.actions.deleteSuccess);
+        dispatchVideoStudioRefresh('creations-refresh');
+      } catch (deleteError: any) {
+        toast.error(toStudioErrorMessage(deleteError, errors, 'deleteFailed'));
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [copy.actions, deletingId, errors]
+  );
+
   return (
     <section className="rounded-2xl border border-zinc-200/80 bg-white/95 p-5 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-dashed border-zinc-200 pb-4 dark:border-zinc-700/60">
@@ -198,6 +223,8 @@ export function MyCreationsPanel({
                 item={item}
                 statusLabels={statusLabels}
                 actionsCopy={copy.actions}
+                onDelete={() => void handleDelete(item.id)}
+                isDeleting={deletingId === item.id}
               />
             ))}
           </div>

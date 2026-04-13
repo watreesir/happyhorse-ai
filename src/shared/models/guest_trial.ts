@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { and, count, desc, eq, gt } from 'drizzle-orm';
+import { and, count, desc, eq, gt, isNull } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import {
@@ -545,7 +545,8 @@ export async function getGuestVideoTasksByToken({
   const tokenHash = toGuestTokenHash(token);
   const condition = and(
     eq(guestTrialQuota.tokenHash, tokenHash),
-    eq(aiTask.mediaType, AIMediaType.VIDEO)
+    eq(aiTask.mediaType, AIMediaType.VIDEO),
+    isNull(aiTask.deletedAt)
   );
 
   const [totalRow] = await db()

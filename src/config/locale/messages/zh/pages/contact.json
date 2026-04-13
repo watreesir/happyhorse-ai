@@ -1,0 +1,163 @@
+{
+  "metadata": {
+    "title": "联系我们 | Happy Horse AI",
+    "description": "联系 Happy Horse AI 团队，解决使用问题、积分与订阅问题、创作者合作或内容安全举报。每封邮件我们都亲自阅读并回复。",
+    "keywords": "happy horse ai 联系方式, happy horse ai 客服, happyhorse-ai.app 支持"
+  },
+  "page": {
+    "title": "联系我们",
+    "show_sections": ["hero", "support", "resources", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "联系 Happy Horse AI 团队",
+        "highlight_text": "Happy Horse AI 团队",
+        "description": "每封邮件我们都亲自阅读。来信时附上生成 ID 或具体错误描述，能帮助我们更快定位问题、减少来回确认。",
+        "badge_text": "工作日 24 小时内回复",
+        "default_tab": "text-to-video",
+        "background_image": {
+          "src": "",
+          "alt": "联系 Happy Horse AI"
+        },
+        "generate_button": "开始创作",
+        "tabs": [
+          {
+            "key": "text-to-video",
+            "label": "文字生成视频",
+            "placeholder": "描述你想要生成的视频内容..."
+          },
+          {
+            "key": "image-to-video",
+            "label": "图片生成视频",
+            "placeholder": "描述图片应如何动起来..."
+          },
+          {
+            "key": "reference-to-video",
+            "label": "参考生成视频",
+            "placeholder": "描述视频风格和内容..."
+          },
+          {
+            "key": "video-edit",
+            "label": "视频编辑",
+            "placeholder": "描述你想要对视频进行的编辑..."
+          }
+        ]
+      },
+      "support": {
+        "id": "support",
+        "title": "你需要哪方面的帮助？",
+        "description": "所有问题请发送至 support@happyhorse-ai.app，选择对应场景后，附上相关信息可以帮助我们更快处理你的请求。",
+        "items": [
+          {
+            "title": "使用与技术问题",
+            "description": "生成报错、输出质量异常、上传失败，或工作流中途中断等情况，请附上生成 ID 和简要描述。常见问题的排查方法也可以在博客中找到，在来信之前先查一查，往往能更快解决问题。",
+            "icon": "RiCustomerServiceLine"
+          },
+          {
+            "title": "积分与订阅问题",
+            "description": "积分扣除异常、订阅变更、付款失败或退款申请，请附上账号邮箱和相关交易日期。价格页面详细说明了每个方案包含的积分数量和计费规则，来信前可先核对一下。",
+            "icon": "RiMoneyDollarCircleLine"
+          },
+          {
+            "title": "创作者与媒体合作",
+            "description": "如果你是内容创作者、MCN 机构或媒体，有兴趣与 Happy Horse AI 合作推广、内容共创或产品评测，欢迎来信简要介绍你的平台和受众规模。合作类邮件我们会在 2 个工作日内回复。",
+            "icon": "RiHandshakeLine"
+          },
+          {
+            "title": "内容安全举报",
+            "description": "如发现违反使用规范的生成内容，或需要申请紧急下架，请附上内容链接或生成 ID，并说明举报原因。安全类邮件享有最高优先级处理，7 天 4 小时内响应。",
+            "icon": "RiShieldCheckLine"
+          }
+        ]
+      },
+      "resources": {
+        "block": "features-list",
+        "id": "resources",
+        "label": "自助查询",
+        "title": "来信之前，先查这里",
+        "description": "很多常见问题——从工作流选择到方案差异——在这些页面里都已经有详细说明。先自助查询往往比等待回复更快。",
+        "buttons": [
+          {
+            "title": "查看价格方案",
+            "url": "/pricing",
+            "target": "_self",
+            "icon": "Sparkles"
+          },
+          {
+            "title": "浏览博客",
+            "url": "/blog",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "RiArticleLine"
+          }
+        ],
+        "items": [
+          {
+            "title": "我该用哪个工作流？",
+            "description": "只有文字提示就用文生视频；有图片素材就用图生视频；需要精细控制风格和运动就用参考生成视频；已有视频片段想修改就用视频编辑。",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "积分是怎么扣的？",
+            "description": "每次生成根据分辨率和时长消耗积分。价格页面列出了各工作流的单次积分消耗，以及每个方案包含的积分总量。",
+            "icon": "RiCoinLine"
+          },
+          {
+            "title": "在哪里查看生成记录？",
+            "description": "已保存的生成结果可以在账号控制台中查看。保存数量上限因方案而异，详情参见价格页面的方案对比。",
+            "icon": "RiHistoryLine"
+          }
+        ],
+        "className": "bg-muted"
+      },
+      "faq": {
+        "id": "faq",
+        "title": "回复时效与注意事项",
+        "description": "我们是一支精简的小团队。以下是关于回复速度和邮件处理流程的真实说明。",
+        "items": [
+          {
+            "question": "通常多久会收到回复？",
+            "answer": "使用和积分类问题：工作日 24 小时内。内容安全举报：每周 7 天、4 小时内响应。创作者与媒体合作：2 个工作日内。我们不使用自动首次回复系统，你的邮件会直接由团队成员阅读处理。"
+          },
+          {
+            "question": "来信时应该附上哪些信息？",
+            "answer": "技术问题请附上：生成 ID（在控制台中可查）、所用工作流（文生视频、图生视频、参考生成视频或视频编辑）、输出参数设置，以及问题的简要描述。积分和订阅问题请附上：账号邮箱和相关交易日期或订单号。"
+          },
+          {
+            "question": "生成失败了，积分会退回来吗？",
+            "answer": "会。如果生成因平台错误失败且已扣除积分，我们核实后会予以返还。来信时请附上生成 ID。完整的退款条款请参阅服务条款页面。"
+          },
+          {
+            "question": "超出回复时效还没收到回复怎么办？",
+            "answer": "请直接回复你最初发送的那封邮件，而不是重新发一封新邮件。回复会自动归入同一个会话，并将你的问题重新提至处理队列靠前位置。"
+          },
+          {
+            "question": "有没有更紧急的联系方式？",
+            "answer": "内容安全举报会自动进入 4 小时响应通道。对于其他类型的问题，最有效的方法是在一封邮件里把信息写完整发给 support@happyhorse-ai.app——信息不全往往导致反复确认，反而拖慢处理速度。"
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "现在发送邮件给我们",
+        "description": "直接发邮件至 support@happyhorse-ai.app，没有工单系统，没有自动排队。团队成员会亲自阅读并回复你的问题。",
+        "buttons": [
+          {
+            "title": "发送邮件",
+            "url": "mailto:support@happyhorse-ai.app",
+            "target": "_self",
+            "icon": "Mail"
+          },
+          {
+            "title": "进入 AI 视频工作室",
+            "url": "/ai-video-studio",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Zap"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

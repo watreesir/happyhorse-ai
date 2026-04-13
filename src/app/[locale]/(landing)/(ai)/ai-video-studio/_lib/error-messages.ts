@@ -22,7 +22,7 @@ export function toStudioErrorMessage(
   copy: StudioErrorCopy,
   fallback: keyof Pick<
     StudioErrorCopy,
-    'submitFailed' | 'queryFailed' | 'listFailed'
+    'submitFailed' | 'queryFailed' | 'listFailed' | 'deleteFailed'
   >
 ) {
   const rawMessage = getErrorMessage(error);

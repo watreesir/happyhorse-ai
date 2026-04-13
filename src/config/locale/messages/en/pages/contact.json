@@ -1,0 +1,163 @@
+{
+  "metadata": {
+    "title": "Contact Us | Happy Horse AI",
+    "description": "Reach the Happy Horse AI team for general support, billing questions, creator partnerships, or content concerns. We read every message personally.",
+    "keywords": "happy horse ai contact, happy horse ai support, happyhorse-ai.app support"
+  },
+  "page": {
+    "title": "Contact Us",
+    "show_sections": ["hero", "support", "resources", "faq", "cta"],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Talk to the Happy Horse AI Team",
+        "highlight_text": "Happy Horse AI Team",
+        "description": "We read every message personally. For faster help, include any generation IDs or error details in your first email.",
+        "badge_text": "We reply within 24 hours",
+        "default_tab": "text-to-video",
+        "background_image": {
+          "src": "",
+          "alt": "Contact Happy Horse AI"
+        },
+        "generate_button": "Start Creating",
+        "tabs": [
+          {
+            "key": "text-to-video",
+            "label": "Text to Video",
+            "placeholder": "Describe the video you want to generate..."
+          },
+          {
+            "key": "image-to-video",
+            "label": "Image to Video",
+            "placeholder": "Describe how the image should animate..."
+          },
+          {
+            "key": "reference-to-video",
+            "label": "Reference to Video",
+            "placeholder": "Describe the video style and content..."
+          },
+          {
+            "key": "video-edit",
+            "label": "Video Edit",
+            "placeholder": "Describe the edits you want to make..."
+          }
+        ]
+      },
+      "support": {
+        "id": "support",
+        "title": "What Can We Help With?",
+        "description": "Send all enquiries to support@happyhorse-ai.app — choose the topic below to know what information helps us respond faster.",
+        "items": [
+          {
+            "title": "General Support",
+            "description": "Generation errors, unexpected output quality, upload failures, or anything that stopped a workflow mid-run. Include the generation ID and a brief description of what went wrong. You can also check the Blog for step-by-step guides on common issues before writing in.",
+            "icon": "RiCustomerServiceLine"
+          },
+          {
+            "title": "Billing & Credits",
+            "description": "Questions about credit deductions, subscription changes, payment failures, or refund eligibility. Include your account email and the relevant transaction date. Before writing in, the Pricing page lists exactly what each plan includes and how credits are counted.",
+            "icon": "RiMoneyDollarCircleLine"
+          },
+          {
+            "title": "Creator & Media Partnerships",
+            "description": "If you are a content creator, agency, or media outlet interested in working with Happy Horse AI — whether for co-promotion, product coverage, or integration — reach out with a brief summary of your platform and audience. We reply to all partnership enquiries within 2 business days.",
+            "icon": "RiHandshakeLine"
+          },
+          {
+            "title": "Content & Safety",
+            "description": "To report a generation that violates our usage policy or to request expedited removal of specific content, email us with the content link or generation ID and the reason for the request. Safety escalations are prioritised above all other enquiry types.",
+            "icon": "RiShieldCheckLine"
+          }
+        ]
+      },
+      "resources": {
+        "block": "features-list",
+        "id": "resources",
+        "title": "Check These First",
+        "label": "Self-Service",
+        "description": "A large share of common questions — from workflow choices to plan differences — are already answered in these pages. Checking them first often gets you unblocked faster than waiting for a reply.",
+        "buttons": [
+          {
+            "title": "Compare Plans",
+            "url": "/pricing",
+            "target": "_self",
+            "icon": "Sparkles"
+          },
+          {
+            "title": "Read the Blog",
+            "url": "/blog",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "RiArticleLine"
+          }
+        ],
+        "items": [
+          {
+            "title": "Which workflow should I use?",
+            "description": "Text to Video is the fastest starting point from a prompt alone. Image to Video works from still frames. Reference to Video gives you the most control over style and motion. Video Edit lets you revise an existing clip.",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "How do credits work?",
+            "description": "Each generation consumes credits based on resolution and duration. The Pricing page shows the credit cost per workflow and the credit totals included in each plan.",
+            "icon": "RiCoinLine"
+          },
+          {
+            "title": "Where can I see my generation history?",
+            "description": "Saved generations are accessible from your account dashboard. The number of saved slots varies by plan — check the Pricing page for a side-by-side comparison.",
+            "icon": "RiHistoryLine"
+          }
+        ],
+        "className": "bg-muted"
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Response Times & What to Expect",
+        "description": "We operate with a small, focused team. Here is an honest picture of how quickly we respond and what happens after you write in.",
+        "items": [
+          {
+            "question": "How quickly will I get a reply?",
+            "answer": "General support and billing questions: within 24 hours on business days. Content and safety escalations: within 4 hours, seven days a week. Creator and media partnership enquiries: within 2 business days. We do not use automated first-reply systems — your message goes directly to a team member."
+          },
+          {
+            "question": "What should I include in my support email?",
+            "answer": "For generation issues: the generation ID (shown in your dashboard), the workflow you used (Text to Video, Image to Video, Reference to Video, or Video Edit), your output settings, and a brief description of the problem. For billing issues: your account email and the transaction date or invoice number."
+          },
+          {
+            "question": "Can I get a refund if a generation fails?",
+            "answer": "Yes. If a generation fails due to a platform error and credits are deducted, we will restore them after reviewing the case. Include the generation ID in your email. Our full refund terms are outlined in the Terms of Service."
+          },
+          {
+            "question": "I have not heard back — what should I do?",
+            "answer": "If you have not received a reply within the timeframes above, reply to your original email rather than sending a new one. Replies thread automatically and move your case back to the top of the queue."
+          },
+          {
+            "question": "Is there a way to reach you faster for urgent issues?",
+            "answer": "Content and safety issues are automatically escalated to a 4-hour response window. For all other enquiries, the fastest path is a clear, detailed email to support@happyhorse-ai.app — partial information often causes back-and-forth that slows resolution."
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "Ready to Send a Message?",
+        "description": "Email us directly at support@happyhorse-ai.app — no ticket numbers, no automated queues. A team member will read your message and reply.",
+        "buttons": [
+          {
+            "title": "Email Support",
+            "url": "mailto:support@happyhorse-ai.app",
+            "target": "_self",
+            "icon": "Mail"
+          },
+          {
+            "title": "View AI Video Studio",
+            "url": "/ai-video-studio",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Zap"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}

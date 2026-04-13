@@ -20,7 +20,8 @@
     "serverBusy": "Service is busy right now. Please try again shortly.",
     "submitFailed": "Unable to submit this task right now.",
     "queryFailed": "Unable to refresh task status right now.",
-    "listFailed": "Unable to load task list right now."
+    "listFailed": "Unable to load task list right now.",
+    "deleteFailed": "Unable to delete this video right now."
   },
   "tabs": {
     "create": {
@@ -131,6 +132,9 @@
       "refreshButton": "Refresh",
       "refreshingButton": "Refreshing",
       "generatingLabel": "Generating",
+      "previewButton": "Preview",
+      "previewTitle": "Video Preview",
+      "previewHint": "Review the latest output in a larger player.",
       "downloadButton": "Download",
       "loading": "Loading recent tasks...",
       "errorFallback": "Unable to load recent activity. Please refresh.",
@@ -158,7 +162,14 @@
     "nextLabel": "Next",
     "actions": {
       "view": "View",
+      "previewButton": "Preview",
+      "previewTitle": "Video Preview",
+      "previewHint": "Review your output in a larger playback window.",
       "download": "Download",
+      "delete": "Delete",
+      "deleting": "Deleting",
+      "deleteConfirm": "Delete this video from your studio list? This action cannot be undone.",
+      "deleteSuccess": "Video removed from your studio list.",
       "unavailable": "Output file is still syncing. Please refresh in a moment."
     }
   }

@@ -5,29 +5,49 @@ import {
   AlertCircle,
   Clock3,
   Download,
+  Expand,
   LoaderCircle,
   PlayCircle,
+  Trash2,
 } from 'lucide-react';
 
-import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
+import { cn } from '@/shared/lib/utils';
 
 import { VideoDraft, VideoPalette, VideoStatus } from '../_lib/types';
 
 type VideoCardMode = 'default' | 'compact' | 'inspiration';
+
+type VideoCardActionsCopy = {
+  view: string;
+  previewButton: string;
+  previewTitle: string;
+  previewHint: string;
+  download: string;
+  delete?: string;
+  deleting?: string;
+  deleteConfirm?: string;
+  deleteSuccess?: string;
+  unavailable: string;
+};
 
 type VideoCardProps = {
   item: VideoDraft;
   mode?: VideoCardMode;
   actionLabel?: string;
   onAction?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
   statusLabels: Record<VideoStatus, string>;
   generatingLabel?: string;
-  actionsCopy?: {
-    view: string;
-    download: string;
-    unavailable: string;
-  };
+  actionsCopy?: VideoCardActionsCopy;
 };
 
 const PALETTE_CLASS: Record<VideoPalette, string> = {
@@ -68,11 +88,14 @@ export function VideoCard({
   mode = 'default',
   actionLabel,
   onAction,
+  onDelete,
+  isDeleting = false,
   statusLabels,
   generatingLabel = 'Generating',
   actionsCopy,
 }: VideoCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const compact = mode === 'compact';
   const inspiration = mode === 'inspiration';
   const hasPreview = Boolean(item.previewUrl);
@@ -81,16 +104,17 @@ export function VideoCard({
   const showMediaActions =
     !compact && !inspiration && item.status === 'ready' && Boolean(mediaActions);
   const showCompactDownload = compact && !inspiration && Boolean(mediaActions?.download);
+  const showCompactPreview = compact && !inspiration && hasPreview && Boolean(mediaActions?.previewButton);
+  const showDeleteAction = !compact && !inspiration && Boolean(onDelete && mediaActions?.delete);
   const compactDownloadDisabled = item.status !== 'ready' || !hasPreview || isDownloading;
 
   const openPreview = () => {
     if (!item.previewUrl) return;
-    window.open(item.previewUrl, '_blank', 'noopener,noreferrer');
+    setIsPreviewOpen(true);
   };
 
   const downloadPreview = async () => {
-    if (!item.previewUrl) return;
-    if (isDownloading) return;
+    if (!item.previewUrl || isDownloading) return;
 
     try {
       setIsDownloading(true);
@@ -118,140 +142,233 @@ export function VideoCard({
   };
 
   return (
-    <article
-      className={cn(
-        'group overflow-hidden border bg-white/95 shadow-[0_8px_20px_-14px_rgba(17,24,39,0.7)] transition-colors dark:bg-zinc-900/70',
-        compact ? 'rounded-xl p-3' : 'rounded-2xl p-4',
-        inspiration
-          ? 'border-zinc-200/80 dark:border-zinc-700/80'
-          : 'border-zinc-200/70 dark:border-zinc-700/70'
-      )}
-    >
-      <div
+    <>
+      <article
         className={cn(
-          'relative overflow-hidden rounded-xl border text-white',
-          PALETTE_CLASS[item.palette]
+          'group overflow-hidden border bg-white/95 shadow-[0_8px_20px_-14px_rgba(17,24,39,0.7)] transition-colors dark:bg-zinc-900/70',
+          compact ? 'rounded-xl p-3' : 'rounded-2xl p-4',
+          inspiration
+            ? 'border-zinc-200/80 dark:border-zinc-700/80'
+            : 'border-zinc-200/70 dark:border-zinc-700/70'
         )}
-        style={{ aspectRatio: item.aspectRatio }}
       >
-        {hasPreview ? (
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            src={item.previewUrl ?? undefined}
-            preload="metadata"
-            muted
-            playsInline
-          />
-        ) : null}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.26),transparent_50%),radial-gradient(circle_at_85%_88%,rgba(255,255,255,0.12),transparent_40%)]" />
-        {hasPreview ? <div className="absolute inset-0 bg-black/10" /> : null}
-        {isGeneratingTask ? (
-          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm dark:border-emerald-300/30 dark:bg-emerald-500/15 dark:text-emerald-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {generatingLabel}
-          </div>
-        ) : null}
-        <div className="absolute inset-0 grid place-items-center">
-          <span className="rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-medium tracking-wide backdrop-blur">
-            {item.lengthLabel} · {item.aspectRatio.replace(/\s+/g, '')}
-          </span>
-        </div>
+        <div
+          className={cn(
+            'relative overflow-hidden rounded-xl border text-white',
+            PALETTE_CLASS[item.palette]
+          )}
+          style={{ aspectRatio: item.aspectRatio }}
+        >
+          {hasPreview ? (
+            <video
+              className="absolute inset-0 h-full w-full object-cover"
+              src={item.previewUrl ?? undefined}
+              preload="metadata"
+              muted
+              playsInline
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.26),transparent_50%),radial-gradient(circle_at_85%_88%,rgba(255,255,255,0.12),transparent_40%)]" />
+          {hasPreview ? <div className="absolute inset-0 bg-black/10" /> : null}
+          {isGeneratingTask ? (
+            <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm dark:border-emerald-300/30 dark:bg-emerald-500/15 dark:text-emerald-200">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              {generatingLabel}
+            </div>
+          ) : null}
 
-        {inspiration && actionLabel ? (
-          <div className="absolute inset-x-0 bottom-0 flex translate-y-2 justify-center px-3 pb-3 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-            <Button
+          {showCompactPreview ? (
+            <button
               type="button"
-              size="sm"
-              className="h-8 rounded-full bg-white text-zinc-900 hover:bg-zinc-100"
-              onClick={onAction}
+              onClick={openPreview}
+              className="absolute top-2 right-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/65"
+              aria-label={mediaActions?.previewButton}
             >
-              {actionLabel}
-            </Button>
+              <Expand className="h-4 w-4" />
+            </button>
+          ) : null}
+
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-medium tracking-wide backdrop-blur">
+              {item.lengthLabel} · {item.aspectRatio.replace(/\s+/g, '')}
+            </span>
           </div>
-        ) : null}
-      </div>
 
-      <div className={cn('space-y-2', compact ? 'mt-2.5' : 'mt-3')}>
-        <div className="flex items-start justify-between gap-2">
-          <h4
-            className={cn(
-              'font-medium text-zinc-900 dark:text-zinc-100',
-              compact ? 'line-clamp-1 text-sm' : 'line-clamp-2 text-[15px]'
-            )}
-          >
-            {item.title}
-          </h4>
-          <span
-            className={cn(
-              'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
-              statusClass(item.status)
-            )}
-          >
-            <StatusIcon status={item.status} />
-            {statusLabels[item.status]}
-          </span>
-        </div>
-
-        {!compact ? (
-          <p className="line-clamp-2 text-[13px] text-zinc-600 dark:text-zinc-300">
-            {item.prompt}
-          </p>
-        ) : null}
-
-        <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-          <span>{item.updatedLabel}</span>
-          <span>{item.lengthLabel}</span>
-        </div>
-
-        {showMediaActions ? (
-          hasPreview ? (
-            <div className="flex items-center gap-2 pt-0.5">
+          {inspiration && actionLabel ? (
+            <div className="absolute inset-x-0 bottom-0 flex translate-y-2 justify-center px-3 pb-3 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
-                className="h-7 rounded-full px-3 text-xs"
-                onClick={openPreview}
+                className="h-8 rounded-full bg-white text-zinc-900 hover:bg-zinc-100"
+                onClick={onAction}
               >
-                {mediaActions?.view}
+                {actionLabel}
               </Button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className={cn('space-y-2', compact ? 'mt-2.5' : 'mt-3')}>
+          <div className="flex items-start justify-between gap-2">
+            <h4
+              className={cn(
+                'font-medium text-zinc-900 dark:text-zinc-100',
+                compact ? 'line-clamp-1 text-sm' : 'line-clamp-2 text-[15px]'
+              )}
+            >
+              {item.title}
+            </h4>
+            <span
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
+                statusClass(item.status)
+              )}
+            >
+              <StatusIcon status={item.status} />
+              {statusLabels[item.status]}
+            </span>
+          </div>
+
+          {!compact ? (
+            <p className="line-clamp-2 text-[13px] text-zinc-600 dark:text-zinc-300">
+              {item.prompt}
+            </p>
+          ) : null}
+
+          <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <span>{item.updatedLabel}</span>
+            <span>{item.lengthLabel}</span>
+          </div>
+
+          {showMediaActions ? (
+            hasPreview ? (
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-full px-3 text-xs"
+                  onClick={openPreview}
+                >
+                  {mediaActions?.view}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 rounded-full px-3 text-xs"
+                  onClick={downloadPreview}
+                  disabled={isDownloading}
+                >
+                  {mediaActions?.download}
+                </Button>
+                {showDeleteAction ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full px-3 text-xs"
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    {isDeleting ? mediaActions?.deleting : mediaActions?.delete}
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-2 pt-0.5">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {mediaActions?.unavailable}
+                </p>
+                {showDeleteAction ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full px-3 text-xs"
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    {isDeleting ? mediaActions?.deleting : mediaActions?.delete}
+                  </Button>
+                ) : null}
+              </div>
+            )
+          ) : null}
+
+          {showCompactDownload ? (
+            <div className="pt-0.5">
               <Button
                 type="button"
                 size="sm"
                 className="h-7 rounded-full px-3 text-xs"
                 onClick={downloadPreview}
-                disabled={isDownloading}
+                disabled={compactDownloadDisabled}
               >
+                {isDownloading ? (
+                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
                 {mediaActions?.download}
               </Button>
             </div>
-          ) : (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {mediaActions?.unavailable}
-            </p>
-          )
-        ) : null}
+          ) : null}
+        </div>
+      </article>
 
-        {showCompactDownload ? (
-          <div className="pt-0.5">
-            <Button
-              type="button"
-              size="sm"
-              className="h-7 rounded-full px-3 text-xs"
-              onClick={downloadPreview}
-              disabled={compactDownloadDisabled}
-            >
-              {isDownloading ? (
-                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              {mediaActions?.download}
-            </Button>
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent
+          className="max-h-[92vh] max-w-[min(96vw,1200px)] gap-0 overflow-hidden border-zinc-800 bg-zinc-950 p-0 text-zinc-100"
+          showCloseButton
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>
+              {mediaActions?.previewTitle || mediaActions?.view || item.title}
+            </DialogTitle>
+            <DialogDescription>
+              {mediaActions?.previewHint || mediaActions?.unavailable || item.prompt}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex min-h-[60vh] items-center justify-center bg-black p-3 sm:p-5">
+            {hasPreview ? (
+              <video
+                className="max-h-[78vh] w-full rounded-xl bg-black object-contain"
+                src={item.previewUrl ?? undefined}
+                controls
+                playsInline
+                preload="metadata"
+                autoPlay
+              />
+            ) : null}
           </div>
-        ) : null}
-      </div>
-    </article>
+
+          <div className="border-t border-white/10 px-4 py-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <p className="truncate text-sm font-semibold text-zinc-100">{item.title}</p>
+                <p className="text-xs text-zinc-400">
+                  {item.lengthLabel} · {item.aspectRatio.replace(/\s+/g, '')}
+                </p>
+              </div>
+              {mediaActions?.previewHint ? (
+                <p className="max-w-xl text-xs text-zinc-400">{mediaActions.previewHint}</p>
+              ) : null}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -20,7 +20,8 @@
     "serverBusy": "服务当前较忙，请稍后再试。",
     "submitFailed": "当前无法提交任务，请稍后重试。",
     "queryFailed": "当前无法刷新任务状态，请稍后重试。",
-    "listFailed": "当前无法加载任务列表，请稍后重试。"
+    "listFailed": "当前无法加载任务列表，请稍后重试。",
+    "deleteFailed": "当前无法删除这个视频，请稍后重试。"
   },
   "tabs": {
     "create": {
@@ -131,6 +132,9 @@
       "refreshButton": "刷新",
       "refreshingButton": "刷新中",
       "generatingLabel": "Generating",
+      "previewButton": "预览",
+      "previewTitle": "视频预览",
+      "previewHint": "在更大的播放窗口中查看当前输出。",
       "downloadButton": "下载",
       "loading": "正在加载最近任务...",
       "errorFallback": "最近记录加载失败，请点击刷新重试。",
@@ -158,7 +162,14 @@
     "nextLabel": "下一页",
     "actions": {
       "view": "查看",
+      "previewButton": "预览",
+      "previewTitle": "视频预览",
+      "previewHint": "在更大的播放窗口中查看作品。",
       "download": "下载",
+      "delete": "删除",
+      "deleting": "删除中",
+      "deleteConfirm": "确认从你的作品列表中删除这个视频吗？此操作不可撤销。",
+      "deleteSuccess": "该视频已从你的作品列表中移除。",
       "unavailable": "结果文件仍在同步，请稍后刷新重试。"
     }
   }

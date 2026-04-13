@@ -154,7 +154,12 @@ export function HistoryPanel({ copy, statusLabels, errors }: HistoryPanelProps) 
               generatingLabel={copy.generatingLabel}
               actionsCopy={{
                 view: '',
+                previewButton: copy.previewButton,
+                previewTitle: copy.previewTitle,
+                previewHint: copy.previewHint,
                 download: copy.downloadButton,
+                delete: '',
+                deleting: '',
                 unavailable: '',
               }}
             />

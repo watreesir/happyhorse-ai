@@ -85,6 +85,7 @@ export type StudioErrorCopy = {
   submitFailed: string;
   queryFailed: string;
   listFailed: string;
+  deleteFailed: string;
 };
 
 export type StudioCopy = {
@@ -189,6 +190,9 @@ export type StudioCopy = {
       refreshButton: string;
       refreshingButton: string;
       generatingLabel: string;
+      previewButton: string;
+      previewTitle: string;
+      previewHint: string;
       downloadButton: string;
       loading: string;
       errorFallback: string;
@@ -211,7 +215,14 @@ export type StudioCopy = {
     nextLabel: string;
     actions: {
       view: string;
+      previewButton: string;
+      previewTitle: string;
+      previewHint: string;
       download: string;
+      delete: string;
+      deleting: string;
+      deleteConfirm: string;
+      deleteSuccess: string;
       unavailable: string;
     };
   };

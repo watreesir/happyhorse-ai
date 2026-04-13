@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import { aiTask, credit } from '@/config/db/schema';
@@ -56,6 +56,16 @@ export async function createAITask(newAITask: NewAITask) {
 export async function findAITaskById(id: string) {
   const [result] = await db().select().from(aiTask).where(eq(aiTask.id, id));
   return result;
+}
+
+export async function softDeleteAITaskById(id: string) {
+  const [result] = await db()
+    .update(aiTask)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(aiTask.id, id), isNull(aiTask.deletedAt)))
+    .returning();
+
+  return result || null;
 }
 
 export async function findAITaskByProviderTaskId({
@@ -161,7 +171,8 @@ export async function getAITasksCount({
         userId ? eq(aiTask.userId, userId) : undefined,
         mediaType ? eq(aiTask.mediaType, mediaType) : undefined,
         provider ? eq(aiTask.provider, provider) : undefined,
-        status ? eq(aiTask.status, status) : undefined
+        status ? eq(aiTask.status, status) : undefined,
+        isNull(aiTask.deletedAt)
       )
     );
 
@@ -193,7 +204,8 @@ export async function getAITasks({
         userId ? eq(aiTask.userId, userId) : undefined,
         mediaType ? eq(aiTask.mediaType, mediaType) : undefined,
         provider ? eq(aiTask.provider, provider) : undefined,
-        status ? eq(aiTask.status, status) : undefined
+        status ? eq(aiTask.status, status) : undefined,
+        isNull(aiTask.deletedAt)
       )
     )
     .orderBy(desc(aiTask.createdAt))
