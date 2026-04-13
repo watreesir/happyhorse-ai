@@ -17,7 +17,9 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); s=d['page']['sections']; print\\('introduce:', json.dumps\\(s.get\\('introduce',{}\\).get\\('description',''\\), ensure_ascii=False\\)\\); print\\('benefits:', json.dumps\\(s.get\\('benefits',{}\\).get\\('description',''\\), ensure_ascii=False\\)\\)\")",
       "Bash(grep -rn \"happyhorse-ai\\\\|APP_URL\\\\|app_url\" /Users/zhangdeyuan/my-shipany-project/.env*)",
       "Bash(find /Users/zhangdeyuan/my-shipany-project/src/app/[locale]/\\\\\\(landing\\\\\\)/blog -type f)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Bash(node -e ':*)",
+      "Bash(npx tsc:*)"
     ],
     "additionalDirectories": [
       "/Users/zhangdeyuan/.claude/projects/-Users-zhangdeyuan-my-shipany-project"
