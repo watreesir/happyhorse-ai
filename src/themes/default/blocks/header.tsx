@@ -385,8 +385,8 @@ export function Header({ header }: { header: HeaderType }) {
           )}
         >
           <div className="container">
-            <div className="relative flex flex-wrap items-center justify-between lg:py-5">
-              <div className="flex justify-between gap-8 max-lg:h-14 max-lg:w-full max-lg:border-b">
+            <div className="relative flex flex-wrap items-center justify-between lg:flex-nowrap lg:py-5">
+              <div className="flex items-center justify-between gap-8 max-lg:h-14 max-lg:w-full max-lg:border-b lg:min-w-0 lg:flex-1">
                 {/* Brand Logo */}
                 {brand && <BrandLogo brand={brand} />}
 
@@ -434,8 +434,8 @@ export function Header({ header }: { header: HeaderType }) {
               )}
 
               {/* Header right section: theme toggler, locale selector, sign, buttons */}
-              <div className="mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
-                <div className="flex w-full flex-row items-center gap-4 sm:flex-row sm:gap-6 sm:space-y-0 md:w-fit">
+              <div className="mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 md:flex-nowrap lg:ml-6 lg:m-0 lg:flex lg:w-auto lg:flex-none lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+                <div className="flex w-full flex-row items-center gap-4 sm:flex-row sm:gap-6 sm:space-y-0 lg:w-auto">
                   {header.buttons &&
                     header.buttons.map((button, idx) => (
                       <Link
