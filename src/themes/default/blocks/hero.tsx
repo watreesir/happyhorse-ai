@@ -1050,9 +1050,7 @@ export function Hero({
               </p>
             )}
 
-          </div>
-
-          {/* Settings panel — below input card, z-index within hero stacking context */}
+          {/* Settings panel — inside bottomBarRef so click-outside works correctly */}
           {settingsOpen && (
             <SettingsPanel
               tab={activeTab}
@@ -1066,6 +1064,7 @@ export function Hero({
               setAudioSetting={setAudioSetting}
             />
           )}
+          </div>
         </div>
       </div>
     </section>
