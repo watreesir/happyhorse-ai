@@ -14,6 +14,10 @@
     "nav": {
       "items": [
         {
+          "title": "价格",
+          "url": "/pricing"
+        },
+        {
           "title": "AI Video Studio",
           "url": "/ai-video-studio"
         },
@@ -58,12 +62,14 @@
           ]
         },
         {
-          "title": "价格",
-          "url": "/pricing"
-        },
-        {
           "title": "博客",
           "url": "/blog"
+        },
+        {
+          "title": "Earn",
+          "url": "https://happyhorseaistudio.affonso.io",
+          "target": "_blank",
+          "badge": "40%"
         }
       ]
     },

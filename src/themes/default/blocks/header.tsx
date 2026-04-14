@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { DollarSign, Menu, X } from 'lucide-react';
 
 import { Link, usePathname } from '@/core/i18n/navigation';
 import {
@@ -140,29 +140,40 @@ export function Header({ header }: { header: HeaderType }) {
         viewport={false}
         className="**:data-[slot=navigation-menu-content]:top-10 max-lg:hidden"
       >
-        <NavigationMenuList className="gap-2">
+        <NavigationMenuList className="gap-1">
           {header.nav?.items?.map((item, idx) => {
             const isActive = isNavItemActive(item);
 
             if (!item.children || item.children.length === 0) {
+              const badge = (item as any).badge as string | undefined;
               return (
                 <NavigationMenuItem key={idx}>
-                  <Link
-                    href={item.url || ''}
-                    target={item.target || '_self'}
-                    className={cn(
-                      desktopNavItemClass,
-                      isActive && desktopNavActiveClass
+                  <div className="relative">
+                    {badge && (
+                      <div className="pointer-events-none absolute -top-[17px] inset-x-0 z-10 flex justify-center">
+                        <span className="flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1.5 py-[3px] text-[9px] font-bold leading-none text-emerald-400 ring-1 ring-emerald-500/25 whitespace-nowrap dark:text-emerald-400">
+                          <DollarSign className="size-2" />
+                          <span>{badge}</span>
+                        </span>
+                      </div>
                     )}
-                  >
-                    {item.icon && (
-                      <SmartIcon
-                        name={item.icon as string}
-                        className={desktopNavIconClass}
-                      />
-                    )}
-                    <span>{item.title}</span>
-                  </Link>
+                    <Link
+                      href={item.url || ''}
+                      target={item.target || '_self'}
+                      className={cn(
+                        desktopNavItemClass,
+                        isActive && desktopNavActiveClass
+                      )}
+                    >
+                      {item.icon && (
+                        <SmartIcon
+                          name={item.icon as string}
+                          className={desktopNavIconClass}
+                        />
+                      )}
+                      <span>{item.title}</span>
+                    </Link>
+                  </div>
                 </NavigationMenuItem>
               );
             }
