@@ -622,7 +622,6 @@ export function Hero({
         normalizedMessage.includes('积分不足');
       const shouldPromptSignIn =
         isInsufficientCredits ||
-        normalizedMessage.includes('free daily video limit reached') ||
         normalizedMessage.includes('guest trial exhausted') ||
         normalizedMessage.includes('guest trial risk blocked');
 

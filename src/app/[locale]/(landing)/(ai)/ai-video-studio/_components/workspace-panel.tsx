@@ -205,7 +205,6 @@ function shouldRedirectToPricing(error: unknown) {
 
   return (
     message.includes('insufficient credit') ||
-    message.includes('free daily video limit reached') ||
     message.includes('guest trial exhausted') ||
     message.includes('guest trial risk blocked')
   );

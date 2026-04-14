@@ -14,10 +14,7 @@ import {
   updateAITaskById,
 } from '@/shared/models/ai_task';
 import {
-  attachFreeDailyVideoUsageMarkerToTask,
   claimDailyCreditsForUser,
-  reserveFreeDailyVideoUsageForUser,
-  releaseFreeDailyVideoUsageForUser,
 } from '@/shared/models/credit';
 import {
   ensureGuestTrialSystemUser,
@@ -102,7 +99,6 @@ export async function POST(request: Request) {
 
   let reservedTaskId: string | null = null;
   let reservedCreditId: string | null = null;
-  let reservedFreeDailyVideoMarkerId: string | null = null;
   let reservedGuestToken: string | null = null;
   let reservedGuestCredits = 0;
   let isGuestTask = false;
@@ -188,16 +184,6 @@ export async function POST(request: Request) {
 
       if (pricingSnapshot.freeDailyEligible) {
         await claimDailyCreditsForUser(user);
-
-        const reservation = await reserveFreeDailyVideoUsageForUser({
-          user,
-        });
-
-        if (!reservation.reserved) {
-          throw new Error('free daily video limit reached');
-        }
-
-        reservedFreeDailyVideoMarkerId = reservation.markerId;
       }
     }
 
@@ -223,12 +209,6 @@ export async function POST(request: Request) {
     const reservedTask = await createAITask(newAITask);
     reservedTaskId = reservedTask.id;
     reservedCreditId = reservedTask.creditId || null;
-    if (reservedFreeDailyVideoMarkerId) {
-      await attachFreeDailyVideoUsageMarkerToTask({
-        markerId: reservedFreeDailyVideoMarkerId,
-        taskId: reservedTask.id,
-      });
-    }
     if (isGuestTask && reservedGuestToken) {
       await linkGuestTaskToToken({
         token: reservedGuestToken,
@@ -314,22 +294,10 @@ export async function POST(request: Request) {
       }
     }
 
-    if (reservedFreeDailyVideoMarkerId && !externalTaskCreated) {
-      try {
-        await releaseFreeDailyVideoUsageForUser(reservedFreeDailyVideoMarkerId);
-      } catch (releaseError) {
-        console.error(
-          'failed to release free daily video usage marker:',
-          releaseError
-        );
-      }
-    }
-
     console.log('generate failed', e);
     if (
       typeof errorMessage === 'string' &&
-      (errorMessage.toLowerCase().includes('insufficient credits') ||
-        errorMessage.toLowerCase().includes('free daily video limit reached'))
+      errorMessage.toLowerCase().includes('insufficient credits')
     ) {
       return respErr(errorMessage);
     }

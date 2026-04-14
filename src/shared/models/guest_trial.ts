@@ -11,10 +11,7 @@ import {
 import { AIMediaType } from '@/extensions/ai';
 import { getCookieFromHeader } from '@/shared/lib/cookie';
 import { getUuid } from '@/shared/lib/hash';
-import {
-  getFreeDailyCreditsAmount,
-  getFreeDailyVideoLimit,
-} from '@/shared/services/pricing';
+import { getFreeDailyCreditsAmount } from '@/shared/services/pricing';
 
 export const GUEST_TRIAL_TOKEN_COOKIE = 'hh_guest_trial_token';
 export const GUEST_DEVICE_ID_COOKIE = 'hh_guest_device_id';
@@ -51,13 +48,6 @@ function getGuestTrialTotalCredits() {
   return parsePositiveInt(
     process.env.GUEST_TRIAL_TOTAL_CREDITS,
     getFreeDailyCreditsAmount()
-  );
-}
-
-function getGuestTrialMaxTasks() {
-  return parsePositiveInt(
-    process.env.GUEST_TRIAL_MAX_TASKS,
-    getFreeDailyVideoLimit()
   );
 }
 
@@ -407,10 +397,7 @@ export async function reserveGuestTrialCredits({
     const remainingCredits = toInt(activeQuota.remainingCredits);
     const usedTaskCount = toInt(activeQuota.usedTaskCount);
 
-    if (
-      usedTaskCount >= getGuestTrialMaxTasks() ||
-      remainingCredits < safeCredits
-    ) {
+    if (remainingCredits < safeCredits) {
       throw new Error('guest trial exhausted, please sign in');
     }
 
