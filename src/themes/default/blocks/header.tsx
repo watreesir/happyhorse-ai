@@ -93,12 +93,13 @@ export function Header({ header }: { header: HeaderType }) {
     ? {
         ...header.brand,
         className: cn(
-          'group rounded-full px-2.5 py-1.5 transition-all duration-200',
+          'group shrink-0 rounded-full px-1.5 py-1.5 transition-all duration-200',
+          'space-x-2 lg:space-x-2.5',
           isOverlayHeader
             ? 'text-foreground dark:text-white dark:[text-shadow:0_1px_14px_rgba(0,0,0,0.45)]'
             : 'text-foreground',
           '[&_img]:rounded-xl [&_img]:shadow-[0_10px_28px_rgba(0,0,0,0.22)]',
-          '[&_span]:text-[1.08rem] [&_span]:font-semibold [&_span]:tracking-[0.08em]',
+          '[&_span]:whitespace-nowrap [&_span]:text-[1.08rem] [&_span]:font-semibold [&_span]:tracking-[0.08em]',
           header.brand.className
         ),
       }
