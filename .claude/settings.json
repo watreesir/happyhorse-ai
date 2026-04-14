@@ -19,7 +19,10 @@
       "Bash(find /Users/zhangdeyuan/my-shipany-project/src/app/[locale]/\\\\\\(landing\\\\\\)/blog -type f)",
       "WebFetch(domain:localhost)",
       "Bash(node -e ':*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(xargs ls:*)",
+      "Bash(grep -l \"Popover\\\\|Dropdown\" /Users/zhangdeyuan/my-shipany-project/src/shared/components/ui/*.tsx)",
+      "Bash(find /Users/zhangdeyuan/my-shipany-project/src/shared/components/ui -type f \\\\\\( -name \"*popover*\" -o -name \"*hover*\" \\\\\\) -exec basename {} \\\\;)"
     ],
     "additionalDirectories": [
       "/Users/zhangdeyuan/.claude/projects/-Users-zhangdeyuan-my-shipany-project"

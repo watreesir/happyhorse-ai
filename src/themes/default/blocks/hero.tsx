@@ -226,7 +226,7 @@ function SettingsPanel({
     'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/15 dark:hover:text-white/90';
 
   return (
-    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 absolute right-0 bottom-full left-0 z-30 mb-2 overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
+    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 absolute right-0 top-full left-0 z-30 mt-[5px] overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
       <div className="space-y-4 p-4">
         {/* Video Length */}
         <div>
@@ -768,7 +768,7 @@ export function Hero({
         </div>
 
         {/* ── Input card ────────────────────────────────────────────────────── */}
-        <div className="border-foreground/10 bg-background/72 mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
+        <div className="relative border-foreground/10 bg-background/72 mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
           {activeTab === 'text-to-video' && (
             <div className="mb-3">
               <UploadZone
@@ -1049,21 +1049,22 @@ export function Hero({
               </p>
             )}
 
-            {/* Settings panel */}
-            {settingsOpen && (
-              <SettingsPanel
-                tab={activeTab}
-                duration={duration}
-                setDuration={setDuration}
-                resolution={resolution}
-                setResolution={setResolution}
-                ratio={ratio}
-                setRatio={setRatio}
-                audioSetting={audioSetting}
-                setAudioSetting={setAudioSetting}
-              />
-            )}
           </div>
+
+          {/* Settings panel — below input card */}
+          {settingsOpen && (
+            <SettingsPanel
+              tab={activeTab}
+              duration={duration}
+              setDuration={setDuration}
+              resolution={resolution}
+              setResolution={setResolution}
+              ratio={ratio}
+              setRatio={setRatio}
+              audioSetting={audioSetting}
+              setAudioSetting={setAudioSetting}
+            />
+          )}
         </div>
       </div>
     </section>
