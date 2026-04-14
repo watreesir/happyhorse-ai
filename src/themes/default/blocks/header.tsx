@@ -224,65 +224,110 @@ export function Header({ header }: { header: HeaderType }) {
   // Mobile menu using Accordion, shown on small screens
   const MobileMenu = ({ closeMenu }: { closeMenu: () => void }) => {
     return (
-      <nav
-        role="navigation"
-        className="w-full [--color-border:--alpha(var(--color-foreground)/5%)] [--color-muted:--alpha(var(--color-foreground)/5%)]"
-      >
-        <Accordion
-          type="single"
-          collapsible
-          className="-mx-4 mt-0.5 space-y-0.5 **:hover:no-underline"
-        >
-          {header.nav?.items?.map((item, idx) => {
-            return (
-              <AccordionItem
-                key={idx}
-                value={item.title || ''}
-                className="group relative border-b-0 before:pointer-events-none before:absolute before:inset-x-4 before:bottom-0 before:border-b"
-              >
-                {item.children && item.children.length > 0 ? (
-                  <>
-                    <AccordionTrigger className="data-[state=open]:bg-muted flex items-center justify-between px-4 py-3 text-lg **:!font-normal">
-                      {item.title}
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-5">
-                      <ul>
-                        {item.children?.map((subItem: NavItem, iidx) => (
-                          <li key={iidx}>
-                            <Link
-                              href={subItem.url || ''}
-                              onClick={closeMenu}
-                              className="text-foreground/88 grid grid-cols-[auto_1fr] items-center gap-2.5 px-4 py-2 text-base font-medium tracking-[0.02em]"
-                            >
-                              <div
-                                aria-hidden
-                                className="flex items-center justify-center *:size-4"
+      <div className="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col [--color-border:--alpha(var(--color-foreground)/5%)] [--color-muted:--alpha(var(--color-foreground)/5%)]">
+        <nav role="navigation" className="w-full flex-1 overflow-y-auto">
+          <Accordion
+            type="single"
+            collapsible
+            className="-mx-4 mt-0.5 space-y-0.5 **:hover:no-underline"
+          >
+            {header.nav?.items?.map((item, idx) => {
+              return (
+                <AccordionItem
+                  key={idx}
+                  value={item.title || ''}
+                  className="group relative border-b-0 before:pointer-events-none before:absolute before:inset-x-4 before:bottom-0 before:border-b"
+                >
+                  {item.children && item.children.length > 0 ? (
+                    <>
+                      <AccordionTrigger className="data-[state=open]:bg-muted flex items-center justify-between px-4 py-3 text-lg **:!font-normal">
+                        {item.title}
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-5">
+                        <ul>
+                          {item.children?.map((subItem: NavItem, iidx) => (
+                            <li key={iidx}>
+                              <Link
+                                href={subItem.url || ''}
+                                onClick={closeMenu}
+                                className="text-foreground/88 grid grid-cols-[auto_1fr] items-center gap-2.5 px-4 py-2 text-base font-medium tracking-[0.02em]"
                               >
-                                {subItem.icon && (
-                                  <SmartIcon name={subItem.icon as string} />
-                                )}
-                              </div>
-                              <div className="text-base">{subItem.title}</div>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </>
-                ) : (
-                  <Link
-                    href={item.url || ''}
-                    onClick={closeMenu}
-                    className="data-[state=open]:bg-muted text-foreground/88 flex items-center justify-between px-4 py-3 text-lg font-medium tracking-[0.02em] **:!font-normal"
-                  >
-                    {item.title}
-                  </Link>
-                )}
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      </nav>
+                                <div
+                                  aria-hidden
+                                  className="flex items-center justify-center *:size-4"
+                                >
+                                  {subItem.icon && (
+                                    <SmartIcon name={subItem.icon as string} />
+                                  )}
+                                </div>
+                                <div className="text-base">{subItem.title}</div>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </AccordionContent>
+                    </>
+                  ) : (
+                    <Link
+                      href={item.url || ''}
+                      onClick={closeMenu}
+                      className="data-[state=open]:bg-muted text-foreground/88 flex items-center justify-between px-4 py-3 text-lg font-medium tracking-[0.02em] **:!font-normal"
+                    >
+                      {item.title}
+                    </Link>
+                  )}
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </nav>
+
+        <div className="mt-auto border-t border-foreground/8 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-5">
+          {header.buttons && header.buttons.length > 0 ? (
+            <div className="mb-4 flex flex-col gap-3">
+              {header.buttons.map((button, idx) => (
+                <Link
+                  key={idx}
+                  href={button.url || ''}
+                  target={button.target || '_self'}
+                  onClick={closeMenu}
+                  className={cn(
+                    'focus-visible:ring-ring inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
+                    button.variant === 'outline'
+                      ? 'bg-background border-primary ring-foreground/10 hover:bg-muted/50 dark:ring-foreground/15 dark:hover:bg-muted/50 border border-transparent shadow-sm ring-1 shadow-black/15 duration-200'
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90 border-[0.5px] border-white/25 shadow-md ring-1 shadow-black/20 ring-(--ring-color) [--ring-color:color-mix(in_oklab,var(--color-foreground)15%,var(--color-primary))]'
+                  )}
+                >
+                  {button.icon && (
+                    <SmartIcon
+                      name={button.icon as string}
+                      className="size-4"
+                    />
+                  )}
+                  <span>{button.title}</span>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mb-4 flex items-center gap-4">
+            {header.show_theme ? (
+              <ThemeToggler className={utilityButtonClass} />
+            ) : null}
+            {header.show_locale ? (
+              <LocaleSelector className={utilityButtonClass} />
+            ) : null}
+          </div>
+
+          {header.show_sign ? (
+            <SignUser
+              userNav={header.user_nav}
+              variant="mobile-menu-auth"
+              mobileMenuOpen={isMobileMenuOpen}
+            />
+          ) : null}
+        </div>
+      </div>
     );
   };
 
@@ -347,31 +392,40 @@ export function Header({ header }: { header: HeaderType }) {
 
                 {/* Desktop Navigation Menu */}
                 {isLarge && <NavMenu />}
-                {/* Hamburger menu button for mobile navigation */}
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label={
-                    isMobileMenuOpen == true ? 'Close Menu' : 'Open Menu'
-                  }
-                  className="relative z-20 -m-2.5 -mr-3 block cursor-pointer p-2.5 lg:hidden"
-                >
-                  <Menu
-                    className={cn(
-                      'm-auto size-5 duration-200 in-data-[state=active]:scale-0 in-data-[state=active]:rotate-180 in-data-[state=active]:opacity-0',
-                      isOverlayHeader
-                        ? 'text-foreground/88 dark:text-white/88'
-                        : 'text-foreground/82'
-                    )}
-                  />
-                  <X
-                    className={cn(
-                      'absolute inset-0 m-auto size-5 scale-0 -rotate-180 opacity-0 duration-200 in-data-[state=active]:scale-100 in-data-[state=active]:rotate-0 in-data-[state=active]:opacity-100',
-                      isOverlayHeader
-                        ? 'text-foreground/88 dark:text-white/88'
-                        : 'text-foreground/82'
-                    )}
-                  />
-                </button>
+                <div className="flex items-center gap-2 lg:hidden">
+                  {header.show_sign ? (
+                    <SignUser
+                      userNav={header.user_nav}
+                      variant="compact-credits"
+                    />
+                  ) : null}
+
+                  {/* Hamburger menu button for mobile navigation */}
+                  <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    aria-label={
+                      isMobileMenuOpen == true ? 'Close Menu' : 'Open Menu'
+                    }
+                    className="relative z-20 -m-2.5 -mr-3 block cursor-pointer p-2.5"
+                  >
+                    <Menu
+                      className={cn(
+                        'm-auto size-5 duration-200 in-data-[state=active]:scale-0 in-data-[state=active]:rotate-180 in-data-[state=active]:opacity-0',
+                        isOverlayHeader
+                          ? 'text-foreground/88 dark:text-white/88'
+                          : 'text-foreground/82'
+                      )}
+                    />
+                    <X
+                      className={cn(
+                        'absolute inset-0 m-auto size-5 scale-0 -rotate-180 opacity-0 duration-200 in-data-[state=active]:scale-100 in-data-[state=active]:rotate-0 in-data-[state=active]:opacity-100',
+                        isOverlayHeader
+                          ? 'text-foreground/88 dark:text-white/88'
+                          : 'text-foreground/82'
+                      )}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Show mobile menu if needed */}
@@ -380,7 +434,7 @@ export function Header({ header }: { header: HeaderType }) {
               )}
 
               {/* Header right section: theme toggler, locale selector, sign, buttons */}
-              <div className="mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 in-data-[state=active]:flex max-lg:in-data-[state=active]:mt-6 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+              <div className="mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
                 <div className="flex w-full flex-row items-center gap-4 sm:flex-row sm:gap-6 sm:space-y-0 md:w-fit">
                   {header.buttons &&
                     header.buttons.map((button, idx) => (
@@ -412,7 +466,6 @@ export function Header({ header }: { header: HeaderType }) {
                   {header.show_locale ? (
                     <LocaleSelector className={utilityButtonClass} />
                   ) : null}
-                  <div className="flex-1 md:hidden"></div>
                   {header.show_sign ? (
                     <SignUser userNav={header.user_nav} />
                   ) : null}

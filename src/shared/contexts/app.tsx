@@ -14,6 +14,7 @@ import {
 import { getAuthClient } from '@/core/auth/client';
 import { envConfigs } from '@/config';
 import { locales } from '@/config/locale';
+import { markPendingAffonsoSignup } from '@/shared/lib/affiliate-client';
 import { User } from '@/shared/models/user';
 
 export interface ContextValue {
@@ -259,6 +260,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         const callbackURL = `${window.location.pathname}${window.location.search}${window.location.hash}` || '/';
         const authClient = getAuthClient(configs);
+        markPendingAffonsoSignup();
         await authClient.oneTap({
           callbackURL,
           onPromptNotification: (notification: any) => {

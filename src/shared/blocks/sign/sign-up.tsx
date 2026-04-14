@@ -20,6 +20,7 @@ import {
 } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
+import { reportAffonsoSignup } from '@/shared/lib/affiliate-client';
 
 import { SocialProviders } from './social-providers';
 
@@ -79,9 +80,11 @@ export function SignUp({
 
     const windowObject = window as any;
 
-    if (configs.affonso_enabled === 'true' && windowObject.Affonso) {
-      windowObject.Affonso.signup(userEmail);
-    }
+    reportAffonsoSignup({
+      configs,
+      email: userEmail,
+      name,
+    });
 
     if (configs.promotekit_enabled === 'true' && windowObject.promotekit) {
       windowObject.promotekit.refer(userEmail, stripeCustomerId);

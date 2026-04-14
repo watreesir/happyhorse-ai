@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+
 import {
   PaymentInterval,
   PaymentOrder,
@@ -58,6 +60,7 @@ const STRIPE_PRICE_ID_FALLBACKS: Record<string, string> = {
 
 export async function POST(req: Request) {
   try {
+    const cookieStore = await cookies();
     const { product_id, currency, locale, payment_provider, metadata } =
       (await req.json()) as CheckoutRequestPayload;
 
@@ -148,6 +151,7 @@ export async function POST(req: Request) {
       paymentProviderName,
       checkoutCurrency
     );
+    const affonsoReferral = cookieStore.get('affonso_referral')?.value || '';
 
     const checkoutOrder: PaymentOrder = {
       description: productName,
@@ -160,7 +164,13 @@ export async function POST(req: Request) {
         app_name: configs.app_name,
         order_no: orderNo,
         user_id: user.id,
+        userId: user.id,
         product_id,
+        ...(paymentProviderName === 'stripe' && affonsoReferral
+          ? {
+              affonso_referral: affonsoReferral,
+            }
+          : {}),
         ...(metadata || {}),
       },
       successUrl: `${configs.app_url}/api/payment/callback?order_no=${orderNo}`,

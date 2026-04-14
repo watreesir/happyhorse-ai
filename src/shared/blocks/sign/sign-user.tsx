@@ -29,6 +29,12 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { useAppContext } from '@/shared/contexts/app';
+import {
+  clearPendingAffonsoSignup,
+  hasRecentPendingAffonsoSignup,
+  markPendingAffonsoSignup,
+  reportAffonsoSignup,
+} from '@/shared/lib/affiliate-client';
 import { cn } from '@/shared/lib/utils';
 import { User as UserType } from '@/shared/models/user';
 import { NavItem, UserNav } from '@/shared/types/blocks/common';
@@ -45,10 +51,14 @@ export function SignUser({
   isScrolled,
   signButtonSize = 'sm',
   userNav,
+  variant = 'default',
+  mobileMenuOpen = false,
 }: {
   isScrolled?: boolean;
   signButtonSize?: 'default' | 'sm' | 'lg' | 'icon';
   userNav?: UserNav;
+  variant?: 'default' | 'compact-credits' | 'mobile-menu-auth';
+  mobileMenuOpen?: boolean;
 }) {
   const t = useTranslations('common.sign');
   const router = useRouter();
@@ -86,8 +96,20 @@ export function SignUser({
   const dailyCreditsCheckedRef = useRef(false);
   const guestCreditsCheckedRef = useRef(false);
   const authTransitionInitializedRef = useRef(false);
+  const affiliateSignupCheckedRef = useRef(false);
   const wasSignedInRef = useRef(false);
   const hadGuestStateRef = useRef(false);
+  const mobileMenuPromptAttemptedRef = useRef(false);
+
+  const isCompactCredits = variant === 'compact-credits';
+  const isMobileMenuAuth = variant === 'mobile-menu-auth';
+  const shouldRenderCredits = Boolean(userNav?.show_credits);
+
+  const creditsBadgeClassName = cn(
+    'inline-flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+    'border-emerald-200/80 bg-emerald-50/90 text-emerald-700',
+    'dark:border-emerald-400/30 dark:bg-emerald-500/12 dark:text-emerald-200'
+  );
 
   useEffect(() => {
     fetchConfigs();
@@ -100,6 +122,10 @@ export function SignUser({
 
   // show one tap if not initialized
   useEffect(() => {
+    if (isCompactCredits || isMobileMenuAuth) {
+      return;
+    }
+
     if (
       configs &&
       configs.google_client_id &&
@@ -111,7 +137,51 @@ export function SignUser({
       oneTapInitialized.current = true;
       showOneTap(configs);
     }
-  }, [configs, session, isPending]);
+  }, [configs, isCompactCredits, isMobileMenuAuth, session, isPending, showOneTap]);
+
+  useEffect(() => {
+    if (!isMobileMenuAuth) {
+      return;
+    }
+
+    if (!mobileMenuOpen) {
+      mobileMenuPromptAttemptedRef.current = false;
+    }
+  }, [isMobileMenuAuth, mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuAuth || !mobileMenuOpen || !mounted || isPending || displayUser?.id) {
+      return;
+    }
+
+    if (
+      !configs ||
+      !configs.google_client_id ||
+      configs.google_one_tap_enabled !== 'true'
+    ) {
+      return;
+    }
+
+    if (mobileMenuPromptAttemptedRef.current) {
+      return;
+    }
+
+    mobileMenuPromptAttemptedRef.current = true;
+
+    const timer = window.setTimeout(() => {
+      void showOneTap(configs);
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    configs,
+    displayUser?.id,
+    isMobileMenuAuth,
+    isPending,
+    mobileMenuOpen,
+    mounted,
+    showOneTap,
+  ]);
 
   // set user
   useEffect(() => {
@@ -260,6 +330,77 @@ export function SignUser({
   }, [displayUser?.id, guestCredits]);
 
   useEffect(() => {
+    if (!displayUser?.id) {
+      affiliateSignupCheckedRef.current = false;
+    }
+  }, [displayUser?.id]);
+
+  useEffect(() => {
+    if (!mounted || isPending || !displayUser?.id) {
+      return;
+    }
+
+    if (affiliateSignupCheckedRef.current) {
+      return;
+    }
+
+    if (typeof configs.affonso_enabled === 'undefined') {
+      return;
+    }
+
+    affiliateSignupCheckedRef.current = true;
+
+    if (!hasRecentPendingAffonsoSignup()) {
+      return;
+    }
+
+    const createdAt = displayUser.createdAt
+      ? new Date(displayUser.createdAt)
+      : null;
+    const isLikelyFreshAccount =
+      createdAt instanceof Date &&
+      Number.isFinite(createdAt.getTime()) &&
+      Date.now() - createdAt.getTime() < 10 * 60 * 1000;
+
+    if (!isLikelyFreshAccount || configs.affonso_enabled !== 'true') {
+      clearPendingAffonsoSignup();
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      for (let attempt = 0; attempt < 10 && !cancelled; attempt += 1) {
+        const reported = reportAffonsoSignup({
+          configs,
+          email: displayUser.email,
+          externalUserId: displayUser.id,
+          name: displayUser.name,
+        });
+
+        if (reported) {
+          clearPendingAffonsoSignup();
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    configs,
+    displayUser?.createdAt,
+    displayUser?.email,
+    displayUser?.id,
+    displayUser?.name,
+    isPending,
+    mounted,
+  ]);
+
+  useEffect(() => {
     if (!mounted || isPending) {
       return;
     }
@@ -307,6 +448,7 @@ export function SignUser({
       `${window.location.pathname}${window.location.search}${window.location.hash}` ||
       '/';
     try {
+      markPendingAffonsoSignup();
       await signIn.social({
         provider: 'google',
         callbackURL,
@@ -321,6 +463,41 @@ export function SignUser({
     router.push('/sign-in');
   };
 
+  if (isCompactCredits) {
+    if (!mounted || isCheckSign || !shouldRenderCredits) {
+      return null;
+    }
+
+    if (displayUser) {
+      return (
+        <Link
+          href="/settings/credits"
+          className={cn(
+            creditsBadgeClassName,
+            'min-w-[4.5rem] px-3 py-1.5 text-sm'
+          )}
+        >
+          <Coins className="h-3.5 w-3.5" />
+          <span className="tabular-nums">
+            {displayUser.credits?.remainingCredits ?? 0}
+          </span>
+        </Link>
+      );
+    }
+
+    return (
+      <span
+        className={cn(
+          creditsBadgeClassName,
+          'min-w-[4.5rem] px-3 py-1.5 text-sm'
+        )}
+      >
+        <Coins className="h-3.5 w-3.5" />
+        <span className="tabular-nums">{guestCredits ?? 0}</span>
+      </span>
+    );
+  }
+
   return (
     <>
       {isCheckSign || !mounted ? (
@@ -329,14 +506,10 @@ export function SignUser({
         </div>
       ) : displayUser ? (
         <div className="flex items-center gap-2">
-          {userNav?.show_credits && (
+          {shouldRenderCredits && (
             <Link
               href="/settings/credits"
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
-                'border-emerald-200/80 bg-emerald-50/90 text-emerald-700',
-                'dark:border-emerald-400/30 dark:bg-emerald-500/12 dark:text-emerald-200'
-              )}
+              className={creditsBadgeClassName}
             >
               <Coins className="h-3.5 w-3.5" />
               <span className="tabular-nums">
@@ -446,13 +619,21 @@ export function SignUser({
           </DropdownMenu>
         </div>
       ) : (
-        <div className="flex w-full flex-col space-y-3 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 md:w-fit">
-          {userNav?.show_credits && (
+        <div
+          className={cn(
+            'flex w-full flex-col',
+            isMobileMenuAuth
+              ? 'gap-4'
+              : 'space-y-3 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 md:w-fit'
+          )}
+        >
+          {shouldRenderCredits && (
             <span
               className={cn(
-                'inline-flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
-                'border-emerald-200/80 bg-emerald-50/90 text-emerald-700',
-                'dark:border-emerald-400/30 dark:bg-emerald-500/12 dark:text-emerald-200'
+                creditsBadgeClassName,
+                isMobileMenuAuth
+                  ? 'min-h-11 w-full justify-center rounded-2xl px-4 py-3 text-sm'
+                  : ''
               )}
             >
               <Coins className="h-3.5 w-3.5" />
@@ -460,18 +641,27 @@ export function SignUser({
             </span>
           )}
           <Button
-            size={signButtonSize}
+            size={isMobileMenuAuth ? 'lg' : signButtonSize}
             className={cn(
-              'cursor-pointer rounded-full border-emerald-500/70 bg-emerald-600 px-3.5 text-white shadow-[0_10px_24px_-16px_rgba(5,150,105,0.9)] ring-0 hover:bg-emerald-500',
+              'cursor-pointer border-emerald-500/70 bg-emerald-600 text-white shadow-[0_10px_24px_-16px_rgba(5,150,105,0.9)] ring-0 hover:bg-emerald-500',
               'dark:border-emerald-400/60 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400',
-              isScrolled && 'lg:hidden'
+              isMobileMenuAuth
+                ? 'min-h-12 w-full rounded-2xl px-4 text-base font-semibold'
+                : 'rounded-full px-3.5',
+              isScrolled && !isMobileMenuAuth && 'lg:hidden'
             )}
             onClick={() => void handleTopRightSignIn()}
           >
             <span className="inline-flex items-center gap-1.5">
-              <BellRing className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">{t('video_alerts_guide')}</span>
-              <span className="lg:hidden">{t('video_alerts_guide_short')}</span>
+              <BellRing className={cn('h-3.5 w-3.5', isMobileMenuAuth && 'h-4 w-4')} />
+              {isMobileMenuAuth ? (
+                <span>{t('video_alerts_guide')}</span>
+              ) : (
+                <>
+                  <span className="hidden lg:inline">{t('video_alerts_guide')}</span>
+                  <span className="lg:hidden">{t('video_alerts_guide_short')}</span>
+                </>
+              )}
             </span>
           </Button>
           <SignModal />

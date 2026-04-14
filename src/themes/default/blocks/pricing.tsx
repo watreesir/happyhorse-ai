@@ -17,6 +17,7 @@ import { signIn } from '@/core/auth/client';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { useAppContext } from '@/shared/contexts/app';
+import { markPendingAffonsoSignup } from '@/shared/lib/affiliate-client';
 import { cn } from '@/shared/lib/utils';
 import type { Pricing as PricingSection } from '@/shared/types/blocks/pricing';
 import type {
@@ -370,6 +371,7 @@ export function Pricing({ section, className, pricingCatalog }: PricingProps) {
       '/';
 
     try {
+      markPendingAffonsoSignup();
       await signIn.social({
         provider: 'google',
         callbackURL,

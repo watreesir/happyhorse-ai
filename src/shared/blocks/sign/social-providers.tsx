@@ -9,6 +9,7 @@ import { signIn } from '@/core/auth/client';
 import { defaultLocale } from '@/config/locale';
 import { Button } from '@/shared/components/ui/button';
 import { useAppContext } from '@/shared/contexts/app';
+import { markPendingAffonsoSignup } from '@/shared/lib/affiliate-client';
 import { cn } from '@/shared/lib/utils';
 import { Button as ButtonType } from '@/shared/types/blocks/common';
 
@@ -69,6 +70,7 @@ export function SocialProviders({
 
   const handleSignIn = async ({ provider }: { provider: string }) => {
     setLoading(true);
+    markPendingAffonsoSignup();
 
     // Open popup to the intermediate page that triggers signIn.social()
     const popupPath =

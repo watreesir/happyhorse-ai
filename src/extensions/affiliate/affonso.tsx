@@ -32,7 +32,7 @@ export class AffonsoAffiliateProvider implements AffiliateProvider {
           id={`${this.name}-script`}
           async
           defer
-          src="https://affonso.io/js/pixel.min.js"
+          src="https://cdn.affonso.io/js/pixel.min.js"
           data-affonso={this.configs.affonsoId}
           data-cookie_duration={this.configs.cookieDuration ?? 30}
           strategy="afterInteractive"

@@ -35,6 +35,7 @@ import {
 } from '@/shared/components/ui/dialog';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
+import { markPendingAffonsoSignup } from '@/shared/lib/affiliate-client';
 import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
@@ -378,6 +379,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       `${window.location.pathname}${window.location.search}${window.location.hash}` ||
       '/';
     try {
+      markPendingAffonsoSignup();
       await signIn.social({
         provider: 'google',
         callbackURL,
