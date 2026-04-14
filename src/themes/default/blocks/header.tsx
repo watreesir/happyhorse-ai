@@ -65,7 +65,7 @@ export function Header({ header }: { header: HeaderType }) {
     );
 
   const desktopNavItemClass = cn(
-    'inline-flex h-10 items-center gap-2 rounded-full px-3.5 py-0 text-[0.95rem] font-medium tracking-[0.03em] transition-all duration-200',
+    'inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 py-0 text-[0.95rem] font-medium whitespace-nowrap tracking-[0.03em] transition-all duration-200',
     isOverlayHeader
       ? 'text-foreground/88 hover:bg-foreground/7 hover:text-foreground dark:text-white/88 dark:hover:bg-black/28 dark:hover:text-white dark:[text-shadow:0_1px_14px_rgba(0,0,0,0.45)]'
       : 'text-foreground/82 hover:bg-foreground/6 hover:text-foreground'
@@ -178,7 +178,8 @@ export function Header({ header }: { header: HeaderType }) {
                     event.preventDefault();
                   }}
                   className={cn(
-                    '!h-10 !rounded-full !px-3.5 !py-0 !shadow-none',
+                    '!h-10 !shrink-0 !rounded-full !px-3.5 !py-0 !shadow-none',
+                    '!whitespace-nowrap',
                     '!text-[0.95rem] !font-medium !tracking-[0.03em]',
                     isOverlayHeader
                       ? '!text-foreground/88 hover:!bg-foreground/7 hover:!text-foreground data-[state=open]:!bg-foreground/7 data-[state=open]:!text-foreground data-[state=open]:ring-foreground/10 !bg-transparent data-[state=open]:ring-1 dark:!text-white/88 dark:[text-shadow:0_1px_14px_rgba(0,0,0,0.45)] dark:hover:!bg-black/28 dark:hover:!text-white dark:data-[state=open]:!bg-black/34 dark:data-[state=open]:!text-white dark:data-[state=open]:ring-white/12'
