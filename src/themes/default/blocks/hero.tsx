@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Coins } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -226,7 +227,7 @@ function SettingsPanel({
     'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/15 dark:hover:text-white/90';
 
   return (
-    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 absolute right-0 top-full left-0 z-30 mt-[5px] overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
+    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
       <div className="space-y-4 p-4">
         {/* Video Length */}
         <div>
@@ -420,17 +421,39 @@ export function Hero({
 
   // Click-outside to close settings
   const bottomBarRef = useRef<HTMLDivElement>(null);
+  const inputCardRef = useRef<HTMLDivElement>(null);
+  const settingsPanelRef = useRef<HTMLDivElement>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (
-        bottomBarRef.current &&
-        !bottomBarRef.current.contains(e.target as Node)
-      ) {
+      const inBottomBar = bottomBarRef.current?.contains(e.target as Node);
+      const inPanel = settingsPanelRef.current?.contains(e.target as Node);
+      if (!inBottomBar && !inPanel) {
         setSettingsOpen(false);
       }
     }
     if (settingsOpen) document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [settingsOpen]);
+
+  useEffect(() => {
+    if (!settingsOpen || !inputCardRef.current) {
+      setPanelPos(null);
+      return;
+    }
+    const updatePos = () => {
+      if (!inputCardRef.current) return;
+      const rect = inputCardRef.current.getBoundingClientRect();
+      setPanelPos({ top: rect.bottom + 5, left: rect.left, width: rect.width });
+    };
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
   }, [settingsOpen]);
 
   useEffect(() => {
@@ -768,7 +791,7 @@ export function Hero({
         </div>
 
         {/* ── Input card ────────────────────────────────────────────────────── */}
-        <div className="relative border-foreground/10 bg-background/72 mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
+        <div ref={inputCardRef} className="relative border-foreground/10 bg-background/72 mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
           {activeTab === 'text-to-video' && (
             <div className="mb-3">
               <UploadZone
@@ -1051,22 +1074,35 @@ export function Hero({
 
           </div>
 
-          {/* Settings panel — below input card */}
-          {settingsOpen && (
-            <SettingsPanel
-              tab={activeTab}
-              duration={duration}
-              setDuration={setDuration}
-              resolution={resolution}
-              setResolution={setResolution}
-              ratio={ratio}
-              setRatio={setRatio}
-              audioSetting={audioSetting}
-              setAudioSetting={setAudioSetting}
-            />
-          )}
         </div>
       </div>
+
+      {/* Settings panel — portal to body, fixed below input card */}
+      {settingsOpen && panelPos && createPortal(
+        <div
+          ref={settingsPanelRef}
+          style={{
+            position: 'fixed',
+            top: panelPos.top,
+            left: panelPos.left,
+            width: panelPos.width,
+            zIndex: 9999,
+          }}
+        >
+          <SettingsPanel
+            tab={activeTab}
+            duration={duration}
+            setDuration={setDuration}
+            resolution={resolution}
+            setResolution={setResolution}
+            ratio={ratio}
+            setRatio={setRatio}
+            audioSetting={audioSetting}
+            setAudioSetting={setAudioSetting}
+          />
+        </div>,
+        document.body
+      )}
     </section>
   );
 }
