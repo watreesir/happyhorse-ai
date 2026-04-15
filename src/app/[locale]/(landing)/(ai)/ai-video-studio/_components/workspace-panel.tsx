@@ -808,13 +808,14 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   };
 
   const handleSubmit = async () => {
-    if (activeTaskId) return;
+    if (taskLifecycle === 'submitting') return;
     if (isGuestUser) {
       notifyGuestGenerateHint();
     }
 
     setSubmitError(null);
     setHandoffNotice(null);
+    setActiveTaskId(null);
     setGuestPendingTaskId(null);
     pollFailureCountRef.current = 0;
     updateLifecycle('submitting');
@@ -872,11 +873,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     }
   };
 
-  const isSubmittingOrProcessing =
-    taskLifecycle === 'submitting' ||
-    taskLifecycle === 'queued' ||
-    taskLifecycle === 'processing' ||
-    Boolean(activeTaskId);
+  const isSubmitting = taskLifecycle === 'submitting';
   const hasUploading = useMemo(
     () => Object.values(uploadingMap).some(Boolean),
     [uploadingMap]
@@ -1351,15 +1348,13 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
         <Button
           type="button"
           onClick={handleSubmit}
-          disabled={isSubmittingOrProcessing || hasUploading}
+          disabled={isSubmitting || hasUploading}
           className="bg-primary text-primary-foreground hover:bg-primary/92 h-10 w-full rounded-xl text-sm font-semibold shadow-lg transition-all duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmittingOrProcessing ? (
+          {isSubmitting ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin" />
-              {taskLifecycle === 'submitting'
-                ? copy.statuses.submitting
-                : copy.runButton}
+              {copy.statuses.submitting}
             </>
           ) : (
             <span className="inline-flex items-center gap-1.5">
