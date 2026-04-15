@@ -2,7 +2,9 @@ import { respData, respErr } from '@/shared/lib/resp';
 import { deleteOwnedStorageFileByUrl } from '@/shared/services/storage';
 import {
   canGuestAccessTask,
+  claimGuestVideoTasksForUser,
   getGuestTrialTokenFromRequest,
+  isGuestTrialSystemUserId,
 } from '@/shared/models/guest_trial';
 import {
   findAITaskById,
@@ -86,20 +88,31 @@ export async function DELETE(
     }
 
     const user = await getUserInfo();
-    const guestToken = user ? '' : getGuestTrialTokenFromRequest(request);
+    const guestToken = getGuestTrialTokenFromRequest(request);
 
     if (!user && !guestToken) {
       return respErr('no auth');
     }
 
-    const task = await findAITaskById(taskId);
+    let task = await findAITaskById(taskId);
     if (!task) {
       return respErr('task not found');
     }
 
     if (user) {
       if (task.userId !== user.id) {
-        return respErr('no permission');
+        if (guestToken && isGuestTrialSystemUserId(task.userId)) {
+          await claimGuestVideoTasksForUser({
+            token: guestToken,
+            userId: user.id,
+            taskId,
+          });
+          task = await findAITaskById(taskId);
+        }
+
+        if (!task || task.userId !== user.id) {
+          return respErr('no permission');
+        }
       }
     } else {
       const hasAccess = await canGuestAccessTask({

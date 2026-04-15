@@ -2,6 +2,7 @@ import { AIMediaType } from '@/extensions/ai';
 import { respData, respErr } from '@/shared/lib/resp';
 import { getAITasks, getAITasksCount } from '@/shared/models/ai_task';
 import {
+  claimGuestVideoTasksForUser,
   getGuestTrialTokenFromRequest,
   getGuestVideoTasksByToken,
 } from '@/shared/models/guest_trial';
@@ -128,11 +129,19 @@ export async function GET(request: Request) {
     );
 
     const user = await getUserInfo();
+    const guestToken = getGuestTrialTokenFromRequest(request);
     let total = 0;
     let safePage = 1;
     let items: RawTask[] = [];
 
     if (user) {
+      if (guestToken) {
+        await claimGuestVideoTasksForUser({
+          token: guestToken,
+          userId: user.id,
+        });
+      }
+
       total = await getAITasksCount({
         userId: user.id,
         mediaType: AIMediaType.VIDEO,
@@ -146,7 +155,6 @@ export async function GET(request: Request) {
         limit,
       });
     } else {
-      const guestToken = getGuestTrialTokenFromRequest(request);
       if (!guestToken) {
         return respData({
           items: [],

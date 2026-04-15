@@ -37,6 +37,10 @@ export interface ContextValue {
     claimedDaily: boolean;
     dayKey: string;
   } | null>;
+  claimGuestTasks: () => Promise<{
+    claimedCount: number;
+    taskIds: string[];
+  } | null>;
   fetchUserInfo: () => Promise<void>;
   showOneTap: (configs: Record<string, string>) => Promise<void>;
 }
@@ -53,6 +57,11 @@ const ONE_TAP_AUTO_PROMPT_DELAY_MS = 3_000;
 type OneTapAutoPromptState = {
   windowStartAt: number;
   count: number;
+};
+
+type GuestTaskClaimResult = {
+  claimedCount: number;
+  taskIds: string[];
 };
 
 function normalizePathname(pathname: string) {
@@ -118,6 +127,15 @@ function writeOneTapAutoPromptState(state: OneTapAutoPromptState) {
   }
 }
 
+function dispatchGuestTaskClaimRefresh() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent('video-studio:refresh', {
+      detail: { reason: 'submit' },
+    })
+  );
+}
+
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [configs, setConfigs] = useState<Record<string, string>>({});
 
@@ -126,6 +144,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [guestCredits, setGuestCredits] = useState<number | null>(null);
   const userRef = useRef<User | null>(null);
   const oneTapAutoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const guestTaskClaimInFlightRef = useRef<Promise<GuestTaskClaimResult | null> | null>(null);
+  const guestTaskClaimedUserIdRef = useRef<string | null>(null);
 
   // is check sign (true during SSR and initial render to avoid hydration mismatch when auth is enabled)
   const [isCheckSign, setIsCheckSign] = useState(!!envConfigs.auth_secret);
@@ -233,6 +253,72 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const claimGuestTasks = useCallback(async () => {
+    const activeUserId = userRef.current?.id?.trim() || '';
+    if (!activeUserId) {
+      return null;
+    }
+
+    if (guestTaskClaimedUserIdRef.current === activeUserId) {
+      return {
+        claimedCount: 0,
+        taskIds: [],
+      };
+    }
+
+    if (guestTaskClaimInFlightRef.current) {
+      return guestTaskClaimInFlightRef.current;
+    }
+
+    guestTaskClaimInFlightRef.current = (async () => {
+      try {
+        const resp = await fetch('/api/guest/claim-tasks', {
+          method: 'POST',
+        });
+        if (!resp.ok) {
+          throw new Error(`fetch failed with status: ${resp.status}`);
+        }
+
+        const { code, message, data } = await resp.json();
+        if (code !== 0 || !data) {
+          throw new Error(message || 'claim guest tasks failed');
+        }
+
+        const claimedCount = Math.max(
+          0,
+          Number.parseInt(String(data.claimedCount), 10) || 0
+        );
+        const taskIds = Array.isArray(data.taskIds)
+          ? data.taskIds.filter(
+              (value: unknown): value is string => typeof value === 'string'
+            )
+          : [];
+
+        if ((userRef.current?.id?.trim() || '') === activeUserId) {
+          guestTaskClaimedUserIdRef.current = activeUserId;
+        }
+
+        if (claimedCount > 0) {
+          dispatchGuestTaskClaimRefresh();
+        }
+
+        return {
+          claimedCount,
+          taskIds,
+        };
+      } catch (e) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('claim guest tasks failed:', e);
+        }
+        return null;
+      } finally {
+        guestTaskClaimInFlightRef.current = null;
+      }
+    })();
+
+    return guestTaskClaimInFlightRef.current;
+  }, []);
+
   const showOneTap = useCallback(async (configs: Record<string, string>) => {
     try {
       if (typeof window === 'undefined') return;
@@ -289,6 +375,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
+    if (!user?.id) {
+      guestTaskClaimedUserIdRef.current = null;
+      return;
+    }
+
+    void claimGuestTasks();
+  }, [claimGuestTasks, user?.id]);
+
+  useEffect(() => {
     return () => {
       if (oneTapAutoTimerRef.current) {
         clearTimeout(oneTapAutoTimerRef.current);
@@ -311,6 +406,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       fetchConfigs,
       fetchUserCredits,
       fetchGuestCredits,
+      claimGuestTasks,
       fetchUserInfo,
       showOneTap,
     }),
@@ -324,6 +420,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       fetchConfigs,
       fetchUserCredits,
       fetchGuestCredits,
+      claimGuestTasks,
       fetchUserInfo,
       showOneTap,
     ]

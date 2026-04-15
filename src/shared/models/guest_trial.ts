@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { and, count, desc, eq, gt, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import {
@@ -557,4 +557,92 @@ export async function getGuestVideoTasksByToken({
     total: toInt(totalRow?.count),
     items: items.map((row: { task: typeof aiTask.$inferSelect }) => row.task),
   };
+}
+
+export async function claimGuestVideoTasksForUser({
+  token,
+  userId,
+  taskId,
+}: {
+  token: string;
+  userId: string;
+  taskId?: string;
+}) {
+  const safeToken = token.trim();
+  const safeUserId = userId.trim();
+  const safeTaskId = taskId?.trim() || '';
+
+  if (!safeToken || !safeUserId) {
+    return {
+      claimedCount: 0,
+      taskIds: [] as string[],
+    };
+  }
+
+  const tokenHash = toGuestTokenHash(safeToken);
+  const now = new Date();
+
+  return db().transaction(async (tx: any) => {
+    const quota = await getQuotaByTokenHash(tokenHash, tx);
+    if (!quota) {
+      return {
+        claimedCount: 0,
+        taskIds: [] as string[],
+      };
+    }
+
+    const rows = await tx
+      .select({ taskId: guestTrialTask.taskId })
+      .from(guestTrialTask)
+      .innerJoin(guestTrialQuota, eq(guestTrialTask.quotaId, guestTrialQuota.id))
+      .innerJoin(aiTask, eq(guestTrialTask.taskId, aiTask.id))
+      .where(
+        and(
+          eq(guestTrialQuota.tokenHash, tokenHash),
+          eq(aiTask.mediaType, AIMediaType.VIDEO),
+          eq(aiTask.userId, GUEST_TRIAL_SYSTEM_USER_ID),
+          isNull(aiTask.deletedAt),
+          safeTaskId ? eq(guestTrialTask.taskId, safeTaskId) : undefined
+        )
+      )
+      .orderBy(desc(guestTrialTask.createdAt));
+
+    const taskIds = rows
+      .map((row: { taskId: string }) => row.taskId)
+      .filter((value: string) => !!value);
+
+    if (!taskIds.length) {
+      await tx
+        .update(guestTrialQuota)
+        .set({ lastSeenAt: now })
+        .where(eq(guestTrialQuota.id, quota.id));
+
+      return {
+        claimedCount: 0,
+        taskIds: [] as string[],
+      };
+    }
+
+    await tx
+      .update(aiTask)
+      .set({
+        userId: safeUserId,
+        updatedAt: now,
+      })
+      .where(inArray(aiTask.id, taskIds));
+
+    await tx
+      .delete(guestTrialTask)
+      .where(inArray(guestTrialTask.taskId, taskIds));
+
+    await tx
+      .update(guestTrialQuota)
+      .set({ lastSeenAt: now })
+      .where(eq(guestTrialQuota.id, quota.id));
+
+    return {
+      claimedCount: taskIds.length,
+      taskIds,
+    };
+  });
 }

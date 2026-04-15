@@ -6,7 +6,9 @@ import {
 } from '@/shared/models/ai_task';
 import {
   canGuestAccessTask,
+  claimGuestVideoTasksForUser,
   getGuestTrialTokenFromRequest,
+  isGuestTrialSystemUserId,
 } from '@/shared/models/guest_trial';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
@@ -20,19 +22,30 @@ export async function POST(req: Request) {
     }
 
     const user = await getUserInfo();
-    const guestToken = user ? '' : getGuestTrialTokenFromRequest(req);
+    const guestToken = getGuestTrialTokenFromRequest(req);
     if (!user && !guestToken) {
       return respErr('no auth, please sign in');
     }
 
-    const task = await findAITaskById(taskId);
+    let task = await findAITaskById(taskId);
     if (!task || !task.taskId) {
       return respErr('task not found');
     }
 
     if (user) {
       if (task.userId !== user.id) {
-        return respErr('no permission');
+        if (guestToken && isGuestTrialSystemUserId(task.userId)) {
+          await claimGuestVideoTasksForUser({
+            token: guestToken,
+            userId: user.id,
+            taskId: task.id,
+          });
+          task = await findAITaskById(taskId);
+        }
+
+        if (!task || task.userId !== user.id) {
+          return respErr('no permission');
+        }
       }
     } else {
       const hasAccess = await canGuestAccessTask({

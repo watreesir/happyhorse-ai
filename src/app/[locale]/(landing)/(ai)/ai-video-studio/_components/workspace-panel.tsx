@@ -287,7 +287,8 @@ function FileBadge({
 export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { fetchUserCredits, isCheckSign, user } = useAppContext();
+  const { claimGuestTasks, fetchUserCredits, isCheckSign, user } =
+    useAppContext();
   const [draft, setDraft] = useState<VideoStudioDraft>(() => ({
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
     id: createDraftId(),
@@ -613,6 +614,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     let canceled = false;
     const poll = async () => {
       try {
+        if (user?.id) {
+          await claimGuestTasks();
+          if (canceled) return;
+        }
+
         const task = await queryVideoTask(activeTaskId);
         if (canceled) return;
         pollFailureCountRef.current = 0;
@@ -682,10 +688,12 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     };
   }, [
     activeTaskId,
+    claimGuestTasks,
     copy.statusRetrying,
     copy.statusSyncError,
     errors,
     fetchUserCredits,
+    user?.id,
   ]);
 
   // Listen for Recreate events dispatched by the Inspiration panel
