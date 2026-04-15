@@ -20,7 +20,6 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 import { dispatchVideoStudioRecreate } from '../_lib/events';
 import { StudioCopy } from '../_lib/types';
-import { createUploadedAssetFromUrl } from '../_lib/video-task-client';
 
 type InspirationPanelProps = {
   copy: StudioCopy['create']['inspiration'];
@@ -73,16 +72,11 @@ function InspirationCard({ item, recreateLabel }: InspirationCardProps) {
     if (loading) return;
     setLoading(true);
     try {
-      dispatchVideoStudioRecreate({
-        draft: {
-          mode: item.mode,
-          prompt: item.prompt,
-          i2vMode: item.i2vMode ?? 'first-frame',
-          imageFirstFrame: item.imageUrl
-            ? createUploadedAssetFromUrl(item.imageUrl, 'image', 'inspiration-frame')
-            : null,
-        },
-      });
+      const mode = item.mode;
+      const prompt = item.prompt;
+      const i2vMode = item.i2vMode ?? 'first-frame';
+      const imageUrl = item.imageUrl;
+      dispatchVideoStudioRecreate({ mode, prompt, i2vMode, imageUrl });
     } finally {
       setLoading(false);
     }
