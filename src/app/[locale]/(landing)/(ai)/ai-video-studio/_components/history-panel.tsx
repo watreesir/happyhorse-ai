@@ -6,9 +6,14 @@ import { RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
 import { toStudioErrorMessage } from '../_lib/error-messages';
-import { VIDEO_STUDIO_REFRESH_EVENT, dispatchVideoStudioRefresh } from '../_lib/events';
+import {
+  VIDEO_STUDIO_REFRESH_EVENT,
+  dispatchVideoStudioRecreate,
+  dispatchVideoStudioRefresh,
+} from '../_lib/events';
 import { StudioCopy, StudioErrorCopy, VideoDraft } from '../_lib/types';
 import {
+  buildRecreateDraftFromTask,
   listVideoTasks,
   mapTaskToDraft,
   refreshPendingTasks,
@@ -151,7 +156,13 @@ export function HistoryPanel({ copy, statusLabels, errors }: HistoryPanelProps) 
               mode="compact"
               statusLabels={statusLabels}
               generatingLabel={copy.generatingLabel}
+              onRecreate={() =>
+                dispatchVideoStudioRecreate({
+                  draft: buildRecreateDraftFromTask(item),
+                })
+              }
               actionsCopy={{
+                recreate: copy.recreateButton,
                 view: '',
                 previewButton: copy.previewButton,
                 previewTitle: copy.previewTitle,

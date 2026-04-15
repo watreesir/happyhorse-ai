@@ -7,6 +7,7 @@ import { cn } from '@/shared/lib/utils';
 import { INSPIRATION_ITEMS, InspirationItem } from '../_data/inspiration-items';
 import { dispatchVideoStudioRecreate } from '../_lib/events';
 import { StudioCopy } from '../_lib/types';
+import { createUploadedAssetFromUrl } from '../_lib/video-task-client';
 
 type InspirationPanelProps = {
   copy: StudioCopy['create']['inspiration'];
@@ -54,10 +55,14 @@ function InspirationCard({ item, recreateLabel }: InspirationCardProps) {
     setLoading(true);
     try {
       dispatchVideoStudioRecreate({
-        mode: item.mode,
-        prompt: item.prompt,
-        i2vMode: item.i2vMode ?? 'first-frame',
-        imageUrl: item.imageUrl,
+        draft: {
+          mode: item.mode,
+          prompt: item.prompt,
+          i2vMode: item.i2vMode ?? 'first-frame',
+          imageFirstFrame: item.imageUrl
+            ? createUploadedAssetFromUrl(item.imageUrl, 'image', 'inspiration-frame')
+            : null,
+        },
       });
     } finally {
       setLoading(false);

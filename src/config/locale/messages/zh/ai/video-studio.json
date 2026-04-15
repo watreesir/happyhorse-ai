@@ -132,6 +132,7 @@
       "refreshButton": "刷新",
       "refreshingButton": "刷新中",
       "generatingLabel": "Generating",
+      "recreateButton": "Recreate",
       "previewButton": "预览",
       "previewTitle": "视频预览",
       "previewHint": "在更大的播放窗口中查看当前输出。",
@@ -161,6 +162,7 @@
     "previousLabel": "上一页",
     "nextLabel": "下一页",
     "actions": {
+      "recreate": "Recreate",
       "view": "查看",
       "previewButton": "预览",
       "previewTitle": "视频预览",

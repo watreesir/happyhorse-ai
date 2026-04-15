@@ -8,6 +8,7 @@ import {
   Expand,
   LoaderCircle,
   PlayCircle,
+  RotateCcw,
   Trash2,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ import { VideoDraft, VideoPalette, VideoStatus } from '../_lib/types';
 type VideoCardMode = 'default' | 'compact' | 'inspiration';
 
 type VideoCardActionsCopy = {
+  recreate?: string;
   view: string;
   previewButton: string;
   previewTitle: string;
@@ -43,6 +45,7 @@ type VideoCardProps = {
   mode?: VideoCardMode;
   actionLabel?: string;
   onAction?: () => void;
+  onRecreate?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
   statusLabels: Record<VideoStatus, string>;
@@ -88,6 +91,7 @@ export function VideoCard({
   mode = 'default',
   actionLabel,
   onAction,
+  onRecreate,
   onDelete,
   isDeleting = false,
   statusLabels,
@@ -101,9 +105,10 @@ export function VideoCard({
   const hasPreview = Boolean(item.previewUrl);
   const mediaActions = actionsCopy ?? null;
   const isGeneratingTask = item.status === 'queued' || item.status === 'rendering';
-  const showMediaActions =
-    !compact && !inspiration && item.status === 'ready' && Boolean(mediaActions);
+  const showDefaultRecreate = !compact && !inspiration && Boolean(onRecreate && mediaActions?.recreate);
+  const showMediaActions = !compact && !inspiration && Boolean(mediaActions);
   const showCompactDownload = compact && !inspiration && Boolean(mediaActions?.download);
+  const showCompactRecreate = compact && !inspiration && Boolean(onRecreate && mediaActions?.recreate);
   const showCompactPreview = compact && !inspiration && hasPreview && Boolean(mediaActions?.previewButton);
   const showDeleteAction = !compact && !inspiration && Boolean(onDelete && mediaActions?.delete);
   const compactDownloadDisabled = item.status !== 'ready' || !hasPreview || isDownloading;
@@ -243,84 +248,134 @@ export function VideoCard({
           {showMediaActions ? (
             hasPreview ? (
               <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                {showDefaultRecreate ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full px-3 text-xs"
+                    onClick={onRecreate}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {mediaActions?.recreate}
+                  </Button>
+                ) : null}
+                {item.status === 'ready' ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 rounded-full px-3 text-xs"
+                      onClick={openPreview}
+                    >
+                      {mediaActions?.view}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 rounded-full px-3 text-xs"
+                      onClick={downloadPreview}
+                      disabled={isDownloading}
+                    >
+                      {mediaActions?.download}
+                    </Button>
+                  </>
+                ) : null}
+                {showDeleteAction ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full px-3 text-xs"
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    {isDeleting ? mediaActions?.deleting : mediaActions?.delete}
+                  </Button>
+                ) : null}
+              </div>
+            ) : showDefaultRecreate || showDeleteAction ? (
+              <div className="space-y-2 pt-0.5">
+                {item.status === 'ready' && mediaActions?.unavailable ? (
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {mediaActions.unavailable}
+                  </p>
+                ) : null}
+                {showDefaultRecreate ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full px-3 text-xs"
+                    onClick={onRecreate}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {mediaActions?.recreate}
+                  </Button>
+                ) : null}
+                {showDeleteAction ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full px-3 text-xs"
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    {isDeleting ? mediaActions?.deleting : mediaActions?.delete}
+                  </Button>
+                ) : null}
+              </div>
+            ) : item.status === 'ready' && mediaActions?.unavailable ? (
+              <div className="space-y-2 pt-0.5">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {mediaActions.unavailable}
+                </p>
+              </div>
+            ) : null
+          ) : null}
+
+          {showCompactDownload || showCompactRecreate ? (
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              {showCompactRecreate ? (
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   className="h-7 rounded-full px-3 text-xs"
-                  onClick={openPreview}
+                  onClick={onRecreate}
                 >
-                  {mediaActions?.view}
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {mediaActions?.recreate}
                 </Button>
+              ) : null}
+              {showCompactDownload ? (
                 <Button
                   type="button"
                   size="sm"
                   className="h-7 rounded-full px-3 text-xs"
                   onClick={downloadPreview}
-                  disabled={isDownloading}
+                  disabled={compactDownloadDisabled}
                 >
+                  {isDownloading ? (
+                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
                   {mediaActions?.download}
                 </Button>
-                {showDeleteAction ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-7 rounded-full px-3 text-xs"
-                    onClick={onDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                    {isDeleting ? mediaActions?.deleting : mediaActions?.delete}
-                  </Button>
-                ) : null}
-              </div>
-            ) : (
-              <div className="space-y-2 pt-0.5">
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {mediaActions?.unavailable}
-                </p>
-                {showDeleteAction ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-7 rounded-full px-3 text-xs"
-                    onClick={onDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                    {isDeleting ? mediaActions?.deleting : mediaActions?.delete}
-                  </Button>
-                ) : null}
-              </div>
-            )
-          ) : null}
-
-          {showCompactDownload ? (
-            <div className="pt-0.5">
-              <Button
-                type="button"
-                size="sm"
-                className="h-7 rounded-full px-3 text-xs"
-                onClick={downloadPreview}
-                disabled={compactDownloadDisabled}
-              >
-                {isDownloading ? (
-                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5" />
-                )}
-                {mediaActions?.download}
-              </Button>
+              ) : null}
             </div>
           ) : null}
         </div>

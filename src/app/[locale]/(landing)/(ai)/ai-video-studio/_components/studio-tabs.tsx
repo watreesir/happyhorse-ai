@@ -53,7 +53,7 @@ export function StudioTabs({ copy, createPanel, myCreationsPanel }: StudioTabsPr
   ];
 
   return (
-    <section className="space-y-5">
+    <section id="ai-video-studio-tabs" className="space-y-5">
       <div className="grid gap-2 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 p-2 dark:border-zinc-700/70 dark:bg-zinc-900/60 md:grid-cols-2">
         {tabs.map((tab) => (
           <button

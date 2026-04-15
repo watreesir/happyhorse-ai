@@ -696,54 +696,60 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     user?.id,
   ]);
 
-  // Listen for Recreate events dispatched by the Inspiration panel
   useEffect(() => {
-    const handleRecreateEvent = async (
-      e: CustomEvent<VideoStudioRecreateEventDetail>
-    ) => {
-      const { mode, prompt, i2vMode, imageUrl } = e.detail;
+    const applyRecreateDraft = (incomingDraft: Partial<VideoStudioDraft>) => {
+      const baseDraft: VideoStudioDraft = {
+        ...VIDEO_STUDIO_DEFAULT_DRAFT,
+        id: createDraftId(),
+        source: 'studio',
+      };
 
-      // Apply mode + prompt immediately; clear any previous first-frame image
-      setDraft((prev) =>
-        mergeStudioDraft(prev, { mode, prompt, i2vMode, imageFirstFrame: null })
-      );
+      clearGuestLoginModalTimer();
+      setShowGuestLoginModal(false);
+      pollFailureCountRef.current = 0;
+      setActiveTaskId(null);
+      setGuestPendingTaskId(null);
+      updateLifecycle('idle');
+      setDraft(mergeStudioDraft(baseDraft, incomingDraft));
       setSubmitError(null);
       setHandoffNotice(null);
+    };
 
-      // If image-to-video with a reference image, fetch → upload → fill slot
-      if (mode === 'image-to-video' && imageUrl) {
-        setUploading('imageFirstFrame', true);
-        try {
-          const res = await fetch(imageUrl);
-          const blob = await res.blob();
-          const filename = imageUrl.split('/').pop() ?? 'reference.jpg';
-          const file = new File([blob], filename, {
-            type: blob.type || 'image/jpeg',
-          });
-          const assets = await uploadStudioMediaFiles([file]);
-          if (assets[0]) {
-            setDraft((prev) =>
-              mergeStudioDraft(prev, { imageFirstFrame: assets[0] })
-            );
-          }
-        } catch {
-          // CORS or network failure — user can upload manually
-        } finally {
-          setUploading('imageFirstFrame', false);
-        }
+    const handleRecreateEvent = (
+      e: CustomEvent<VideoStudioRecreateEventDetail>
+    ) => {
+      const { draft: incomingDraft, mode, prompt, i2vMode, imageUrl } = e.detail;
+
+      if (incomingDraft) {
+        applyRecreateDraft(incomingDraft);
+        return;
       }
+
+      if (!mode) return;
+
+      applyRecreateDraft({
+        mode,
+        prompt: prompt ?? '',
+        i2vMode: i2vMode ?? 'first-frame',
+        imageFirstFrame: imageUrl
+          ? {
+              url: imageUrl,
+              name: imageUrl.split('/').pop() || 'reference.jpg',
+              mimeType: 'image/jpeg',
+              mediaType: 'image',
+            }
+          : null,
+      });
     };
 
     const listener: EventListener = (event) => {
-      void handleRecreateEvent(
-        event as CustomEvent<VideoStudioRecreateEventDetail>
-      );
+      handleRecreateEvent(event as CustomEvent<VideoStudioRecreateEventDetail>);
     };
 
     window.addEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
     return () =>
       window.removeEventListener(VIDEO_STUDIO_RECREATE_EVENT, listener);
-  }, []);
+  }, [clearGuestLoginModalTimer]);
 
   const handleUploadSingle = async (
     key: SingleUploadKey,

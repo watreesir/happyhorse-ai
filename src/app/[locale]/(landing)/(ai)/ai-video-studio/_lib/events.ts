@@ -1,4 +1,8 @@
-import { VideoStudioI2VMode, VideoStudioMode } from '@/shared/lib/video-studio-workflow';
+import {
+  VideoStudioDraft,
+  VideoStudioI2VMode,
+  VideoStudioMode,
+} from '@/shared/lib/video-studio-workflow';
 
 export const VIDEO_STUDIO_REFRESH_EVENT = 'video-studio:refresh';
 
@@ -24,9 +28,10 @@ export function dispatchVideoStudioRefresh(reason: VideoStudioRefreshReason) {
 export const VIDEO_STUDIO_RECREATE_EVENT = 'video-studio:recreate';
 
 export type VideoStudioRecreateEventDetail = {
-  mode: VideoStudioMode;
-  prompt: string;
-  i2vMode: VideoStudioI2VMode;
+  draft?: Partial<VideoStudioDraft>;
+  mode?: VideoStudioMode;
+  prompt?: string;
+  i2vMode?: VideoStudioI2VMode;
   /** Raw public image URL to fetch and upload into the first-frame slot */
   imageUrl?: string;
 };

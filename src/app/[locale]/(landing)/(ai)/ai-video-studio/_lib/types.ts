@@ -35,6 +35,9 @@ export type VideoDraft = {
   lengthLabel: string;
   aspectRatio: string;
   palette: VideoPalette;
+  model?: string;
+  scene?: string;
+  options?: Record<string, unknown> | null;
 };
 
 export type InspirationDraft = VideoDraft & {
@@ -190,6 +193,7 @@ export type StudioCopy = {
       refreshButton: string;
       refreshingButton: string;
       generatingLabel: string;
+      recreateButton: string;
       previewButton: string;
       previewTitle: string;
       previewHint: string;
@@ -214,6 +218,7 @@ export type StudioCopy = {
     previousLabel: string;
     nextLabel: string;
     actions: {
+      recreate: string;
       view: string;
       previewButton: string;
       previewTitle: string;

@@ -132,6 +132,7 @@
       "refreshButton": "Refresh",
       "refreshingButton": "Refreshing",
       "generatingLabel": "Generating",
+      "recreateButton": "Recreate",
       "previewButton": "Preview",
       "previewTitle": "Video Preview",
       "previewHint": "Review the latest output in a larger player.",
@@ -161,6 +162,7 @@
     "previousLabel": "Prev",
     "nextLabel": "Next",
     "actions": {
+      "recreate": "Recreate",
       "view": "View",
       "previewButton": "Preview",
       "previewTitle": "Video Preview",

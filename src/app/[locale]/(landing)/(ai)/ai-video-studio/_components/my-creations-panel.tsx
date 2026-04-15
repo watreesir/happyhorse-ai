@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -8,9 +9,14 @@ import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
 import { toStudioErrorMessage } from '../_lib/error-messages';
-import { VIDEO_STUDIO_REFRESH_EVENT, dispatchVideoStudioRefresh } from '../_lib/events';
+import {
+  VIDEO_STUDIO_REFRESH_EVENT,
+  dispatchVideoStudioRecreate,
+  dispatchVideoStudioRefresh,
+} from '../_lib/events';
 import { StudioCopy, StudioErrorCopy } from '../_lib/types';
 import {
+  buildRecreateDraftFromTask,
   deleteVideoTask,
   listVideoTasks,
   mapTaskToDraft,
@@ -54,6 +60,9 @@ export function MyCreationsPanel({
   statusLabels,
   errors,
 }: MyCreationsPanelProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -163,6 +172,25 @@ export function MyCreationsPanel({
     [copy.actions, deletingId, errors]
   );
 
+  const handleRecreate = useCallback(
+    (item: (typeof items)[number]) => {
+      dispatchVideoStudioRecreate({
+        draft: buildRecreateDraftFromTask(item),
+      });
+
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      params.set('studioTab', 'create');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById('ai-video-studio-tabs')
+          ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+    },
+    [pathname, router, searchParams]
+  );
+
   return (
     <section className="rounded-2xl border border-zinc-200/80 bg-white/95 p-5 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-dashed border-zinc-200 pb-4 dark:border-zinc-700/60">
@@ -223,6 +251,7 @@ export function MyCreationsPanel({
                 item={item}
                 statusLabels={statusLabels}
                 actionsCopy={copy.actions}
+                onRecreate={() => handleRecreate(item)}
                 onDelete={() => void handleDelete(item.id)}
                 isDeleting={deletingId === item.id}
               />
