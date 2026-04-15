@@ -14,7 +14,7 @@ type InspirationPanelProps = {
 
 export function InspirationPanel({ copy }: InspirationPanelProps) {
   return (
-    <section className="flex min-h-[520px] flex-col rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
+    <section className="flex min-h-[520px] max-h-[760px] flex-col rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
       <header className="mb-4 border-b border-dashed border-zinc-200 pb-3 dark:border-zinc-700/60">
         <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
           {copy.panelTitle}
@@ -26,7 +26,7 @@ export function InspirationPanel({ copy }: InspirationPanelProps) {
           {copy.empty}
         </div>
       ) : (
-        <div className="max-h-[700px] overflow-y-auto pr-1 [scrollbar-width:thin]">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 [scrollbar-width:thin]">
           <div className="columns-2 gap-2">
             {INSPIRATION_ITEMS.map((item) => (
               <div key={item.id} className="mb-2 break-inside-avoid">

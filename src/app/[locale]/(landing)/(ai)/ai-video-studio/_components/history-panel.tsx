@@ -104,13 +104,12 @@ export function HistoryPanel({ copy, statusLabels, errors }: HistoryPanelProps) 
   };
 
   return (
-    <section className="flex min-h-[520px] flex-col rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
-      <header className="mb-4 flex items-start justify-between gap-2 border-b border-dashed border-zinc-200 pb-3 dark:border-zinc-700/60">
+    <section className="flex min-h-[520px] max-h-[760px] flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
+      <header className="mb-4 flex shrink-0 items-start justify-between gap-2 border-b border-dashed border-zinc-200 pb-3 dark:border-zinc-700/60">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
             {copy.panelTitle}
           </h3>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{copy.panelHint}</p>
         </div>
         <Button
           type="button"
@@ -144,7 +143,7 @@ export function HistoryPanel({ copy, statusLabels, errors }: HistoryPanelProps) 
           {copy.empty}
         </div>
       ) : (
-        <div className="space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
+        <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
           {items.map((item) => (
             <VideoCard
               key={item.id}

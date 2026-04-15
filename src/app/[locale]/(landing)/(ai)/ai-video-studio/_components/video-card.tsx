@@ -154,14 +154,13 @@ export function VideoCard({
       >
         <div
           className={cn(
-            'relative overflow-hidden rounded-xl border text-white',
+            'relative aspect-video overflow-hidden rounded-xl border text-white',
             PALETTE_CLASS[item.palette]
           )}
-          style={{ aspectRatio: item.aspectRatio }}
         >
           {hasPreview ? (
             <video
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-contain"
               src={item.previewUrl ?? undefined}
               preload="metadata"
               muted
