@@ -234,12 +234,6 @@ export function VideoCard({
             </span>
           </div>
 
-          {!compact ? (
-            <p className="line-clamp-2 text-[13px] text-zinc-600 dark:text-zinc-300">
-              {item.prompt}
-            </p>
-          ) : null}
-
           <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
             <span>{item.updatedLabel}</span>
             <span>{item.lengthLabel}</span>

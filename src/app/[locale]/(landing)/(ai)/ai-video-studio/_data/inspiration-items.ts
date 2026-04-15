@@ -13,6 +13,96 @@ export type InspirationItem = {
   imageUrl?: string;
 };
 
+/**
+ * Featured items — shown first, shuffled on every page load.
+ * Add new showcase videos here to give them priority placement.
+ */
+export const FEATURED_INSPIRATION_ITEMS: InspirationItem[] = [
+  {
+    id: 'feat-01',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl%201.mp4',
+    aspectRatio: '16 / 9',
+    mode: 'image-to-video',
+    prompt: 'dance',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl1.JPG',
+  },
+  {
+    id: 'feat-02',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl%202.mp4',
+    aspectRatio: '16 / 9',
+    mode: 'image-to-video',
+    prompt: 'dance',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl1.JPG',
+  },
+  {
+    id: 'feat-03',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl3.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt: 'Walk on the runway like a model',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl3.jpg',
+  },
+  {
+    id: 'feat-04',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl4.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt: 'Smile and tease at the camera, then stand up and perform a sexy dance',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl4.jpg',
+  },
+  {
+    id: 'feat-05',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl5.mp4',
+    aspectRatio: '16 / 9',
+    mode: 'image-to-video',
+    prompt: 'Lie down slowly on the bed and pose like a sketch model.',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl4.jpg',
+  },
+  {
+    id: 'feat-06',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl6.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt:
+      "Realistic live-action style, vertical screen, first-person perspective. Inside a luxury suite, outside the floor-to-ceiling windows is a dazzling night view, with soft warm ambient lighting indoors. A noble and elegant young Asian woman stands by the floor-to-ceiling windows, with long wavy hair, wearing a champagne-colored silk camisole nightdress, her shoulder straps faintly visible, showcasing a graceful and curvaceous figure. Action description: She stands with her back to the camera gazing at the night view outside the window, then slowly turns around upon hearing a sound, her eyes enchanting with a faint smile as she says: The night view is beautiful, isn't it? But I think what you'd rather look at is me. She walks slowly toward the camera, her fingers gently brushing against the back of the sofa. The camera follows her movement and tilts downward; she is barefoot on the soft carpet, with slender ankles, her toenails painted with nude nail polish, moving with elegant and sensual grace. The lighting is ambiguous, the texture luxurious, with cinematic high-definition quality.",
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl6.jpg',
+  },
+  {
+    id: 'feat-07',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl7.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt:
+      "Realistic live-action style, vertical screen, first-person perspective. Inside a luxury suite, outside the floor-to-ceiling windows is a dazzling night view, with soft warm ambient lighting indoors. A noble and elegant young Asian woman stands by the floor-to-ceiling windows, with long wavy hair, wearing a champagne-colored silk camisole nightdress, her shoulder straps faintly visible, showcasing a graceful and curvaceous figure. Action description: She stands with her back to the camera gazing at the night view outside the window, then slowly turns around upon hearing a sound, her eyes enchanting with a faint smile as she says: The night view is beautiful, isn't it? But I think what you'd rather look at is me. She walks slowly toward the camera, her fingers gently brushing against the back of the sofa. The camera follows her movement and tilts downward; she is barefoot on the soft carpet, with slender ankles, her toenails painted with nude nail polish, moving with elegant and sensual grace. The lighting is ambiguous, the texture luxurious, with cinematic high-definition quality.",
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl6.jpg',
+  },
+  {
+    id: 'feat-08',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man1.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt: 'Running through the streets of New York, weaving between buildings like Spider Boy.',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man1.JPG',
+  },
+  {
+    id: 'feat-09',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man2.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt: 'Walk on the T-stage like a model',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man2.jpg',
+  },
+  {
+    id: 'feat-10',
+    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man3.mp4',
+    aspectRatio: '9 / 16',
+    mode: 'image-to-video',
+    prompt: 'Have this man take off his coat, show off his muscles and start working out.',
+    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man3.jpg',
+  },
+];
+
+/** Secondary items — shown after featured, in fixed order. */
 export const INSPIRATION_ITEMS: InspirationItem[] = [
   {
     id: 'ins-01',

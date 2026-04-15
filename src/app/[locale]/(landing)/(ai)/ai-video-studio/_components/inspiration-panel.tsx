@@ -4,7 +4,20 @@ import { useRef, useState } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 
-import { INSPIRATION_ITEMS, InspirationItem } from '../_data/inspiration-items';
+import {
+  FEATURED_INSPIRATION_ITEMS,
+  INSPIRATION_ITEMS,
+  InspirationItem,
+} from '../_data/inspiration-items';
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
 import { dispatchVideoStudioRecreate } from '../_lib/events';
 import { StudioCopy } from '../_lib/types';
 import { createUploadedAssetFromUrl } from '../_lib/video-task-client';
@@ -14,6 +27,12 @@ type InspirationPanelProps = {
 };
 
 export function InspirationPanel({ copy }: InspirationPanelProps) {
+  // Shuffle featured items once on mount (resets on every page refresh)
+  const [allItems] = useState(() => [
+    ...shuffleArray(FEATURED_INSPIRATION_ITEMS),
+    ...INSPIRATION_ITEMS,
+  ]);
+
   return (
     <section className="flex min-h-[520px] max-h-[760px] flex-col rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.9)] dark:border-zinc-700/70 dark:bg-zinc-900/70">
       <header className="mb-4 border-b border-dashed border-zinc-200 pb-3 dark:border-zinc-700/60">
@@ -22,14 +41,14 @@ export function InspirationPanel({ copy }: InspirationPanelProps) {
         </h3>
       </header>
 
-      {INSPIRATION_ITEMS.length === 0 ? (
+      {allItems.length === 0 ? (
         <div className="grid min-h-80 place-items-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50/70 p-6 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-300">
           {copy.empty}
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto pr-1 [scrollbar-width:thin]">
           <div className="columns-2 gap-2">
-            {INSPIRATION_ITEMS.map((item) => (
+            {allItems.map((item) => (
               <div key={item.id} className="mb-2 break-inside-avoid">
                 <InspirationCard item={item} recreateLabel={copy.applyButton} />
               </div>
