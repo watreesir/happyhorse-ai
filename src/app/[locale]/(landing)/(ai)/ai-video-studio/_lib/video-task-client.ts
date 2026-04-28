@@ -1,5 +1,10 @@
 import { AITaskStatus } from '@/extensions/ai/types';
-import { readApiErrorMessage } from '@/shared/lib/api-client';
+import {
+  ApiResponseError,
+  createApiResponseError,
+  readApiErrorMessage,
+} from '@/shared/lib/api-client';
+import { isPromptModerationErrorCode } from '@/shared/lib/prompt-moderation-messages';
 import {
   VIDEO_STUDIO_DEFAULT_DRAFT,
   VIDEO_STUDIO_MODELS,
@@ -124,6 +129,19 @@ function extractVideoUrls(result: unknown): string[] {
 
 function ensureSuccess<T>(payload: ApiResponse<T>, fallbackMessage: string): T {
   if (payload.code !== 0 || typeof payload.data === 'undefined') {
+    const errorCode =
+      isObject(payload.data) && typeof payload.data.errorCode === 'string'
+        ? payload.data.errorCode
+        : undefined;
+    if (isPromptModerationErrorCode(errorCode)) {
+      throw new ApiResponseError({
+        message: payload.message || fallbackMessage,
+        status: 200,
+        code: payload.code,
+        data: payload.data,
+        errorCode,
+      });
+    }
     throw new Error(payload.message || fallbackMessage);
   }
   return payload.data;
@@ -578,7 +596,7 @@ export async function generateVideoTask(
   });
 
   if (!response.ok) {
-    throw new Error(await readApiErrorMessage(response));
+    throw await createApiResponseError(response);
   }
 
   const responsePayload =

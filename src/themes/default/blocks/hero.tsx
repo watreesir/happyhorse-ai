@@ -15,11 +15,16 @@ import { toast } from 'sonner';
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
 import { useAppContext } from '@/shared/contexts/app';
-import { readApiErrorMessage } from '@/shared/lib/api-client';
+import {
+  ApiResponseError,
+  createApiResponseError,
+} from '@/shared/lib/api-client';
 import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import {
+  isPromptModerationApiError,
   isPromptModerationDeniedMessage,
+  isPromptModerationErrorCode,
   toSubmissionErrorToastMessage,
 } from '@/shared/lib/prompt-moderation-messages';
 import { cn } from '@/shared/lib/utils';
@@ -47,6 +52,7 @@ type GenerateResponsePayload = {
   code: number;
   message?: string;
   data?: {
+    errorCode?: string;
     id: string;
     status: string;
   };
@@ -602,11 +608,20 @@ export function Hero({
       });
 
       if (!response.ok) {
-        throw new Error(await readApiErrorMessage(response));
+        throw await createApiResponseError(response);
       }
 
       const result = (await response.json()) as GenerateResponsePayload;
       if (result.code !== 0 || !result.data?.id) {
+        if (isPromptModerationErrorCode(result.data?.errorCode)) {
+          throw new ApiResponseError({
+            message: result.message || 'generate failed',
+            status: response.status,
+            code: result.code,
+            data: result.data,
+            errorCode: result.data?.errorCode,
+          });
+        }
         throw new Error(result.message || 'generate failed');
       }
 
@@ -653,7 +668,10 @@ export function Hero({
         return;
       }
 
-      if (isPromptModerationDeniedMessage(message)) {
+      if (
+        isPromptModerationApiError(error) ||
+        isPromptModerationDeniedMessage(message)
+      ) {
         toast.error(toSubmissionErrorToastMessage(message));
         setStatusHint(message);
         await fetchUserCredits();

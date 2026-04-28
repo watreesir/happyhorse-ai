@@ -1,4 +1,7 @@
-import { VideoStudioI2VMode, VideoStudioMode } from '@/shared/lib/video-studio-workflow';
+import {
+  VideoStudioI2VMode,
+  VideoStudioMode,
+} from '@/shared/lib/video-studio-workflow';
 
 export type InspirationItem = {
   id: string;
@@ -15,92 +18,9 @@ export type InspirationItem = {
 
 /**
  * Featured items — shown first, shuffled on every page load.
- * Add new showcase videos here to give them priority placement.
+ * Keep empty until new approved showcase videos are ready.
  */
-export const FEATURED_INSPIRATION_ITEMS: InspirationItem[] = [
-  {
-    id: 'feat-01',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl%201.mp4',
-    aspectRatio: '16 / 9',
-    mode: 'image-to-video',
-    prompt: 'dance',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl1.JPG',
-  },
-  {
-    id: 'feat-02',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl%202.mp4',
-    aspectRatio: '16 / 9',
-    mode: 'image-to-video',
-    prompt: 'dance',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl1.JPG',
-  },
-  {
-    id: 'feat-03',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl3.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt: 'Walk on the runway like a model',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl3.jpg',
-  },
-  {
-    id: 'feat-04',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl4.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt: 'Smile and tease at the camera, then stand up and perform a sexy dance',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl4.jpg',
-  },
-  {
-    id: 'feat-05',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl5.mp4',
-    aspectRatio: '16 / 9',
-    mode: 'image-to-video',
-    prompt: 'Lie down slowly on the bed and pose like a sketch model.',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl4.jpg',
-  },
-  {
-    id: 'feat-06',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl6.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt:
-      "Realistic live-action style, vertical screen, first-person perspective. Inside a luxury suite, outside the floor-to-ceiling windows is a dazzling night view, with soft warm ambient lighting indoors. A noble and elegant young Asian woman stands by the floor-to-ceiling windows, with long wavy hair, wearing a champagne-colored silk camisole nightdress, her shoulder straps faintly visible, showcasing a graceful and curvaceous figure. Action description: She stands with her back to the camera gazing at the night view outside the window, then slowly turns around upon hearing a sound, her eyes enchanting with a faint smile as she says: The night view is beautiful, isn't it? But I think what you'd rather look at is me. She walks slowly toward the camera, her fingers gently brushing against the back of the sofa. The camera follows her movement and tilts downward; she is barefoot on the soft carpet, with slender ankles, her toenails painted with nude nail polish, moving with elegant and sensual grace. The lighting is ambiguous, the texture luxurious, with cinematic high-definition quality.",
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl6.jpg',
-  },
-  {
-    id: 'feat-07',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl7.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt:
-      "Realistic live-action style, vertical screen, first-person perspective. Inside a luxury suite, outside the floor-to-ceiling windows is a dazzling night view, with soft warm ambient lighting indoors. A noble and elegant young Asian woman stands by the floor-to-ceiling windows, with long wavy hair, wearing a champagne-colored silk camisole nightdress, her shoulder straps faintly visible, showcasing a graceful and curvaceous figure. Action description: She stands with her back to the camera gazing at the night view outside the window, then slowly turns around upon hearing a sound, her eyes enchanting with a faint smile as she says: The night view is beautiful, isn't it? But I think what you'd rather look at is me. She walks slowly toward the camera, her fingers gently brushing against the back of the sofa. The camera follows her movement and tilts downward; she is barefoot on the soft carpet, with slender ankles, her toenails painted with nude nail polish, moving with elegant and sensual grace. The lighting is ambiguous, the texture luxurious, with cinematic high-definition quality.",
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/girl6.jpg',
-  },
-  {
-    id: 'feat-08',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man1.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt: 'Running through the streets of New York, weaving between buildings like Spider Boy.',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man1.JPG',
-  },
-  {
-    id: 'feat-09',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man2.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt: 'Walk on the T-stage like a model',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man2.jpg',
-  },
-  {
-    id: 'feat-10',
-    videoUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man3.mp4',
-    aspectRatio: '9 / 16',
-    mode: 'image-to-video',
-    prompt: 'Have this man take off his coat, show off his muscles and start working out.',
-    imageUrl: 'https://pub-5704d74fdf0249769e6f6f52546c11c8.r2.dev/inspiration/man3.jpg',
-  },
-];
+export const FEATURED_INSPIRATION_ITEMS: InspirationItem[] = [];
 
 /** Secondary items — shown after featured, in fixed order. */
 export const INSPIRATION_ITEMS: InspirationItem[] = [
@@ -138,7 +58,7 @@ export const INSPIRATION_ITEMS: InspirationItem[] = [
     aspectRatio: '9 / 16',
     mode: 'text-to-video',
     prompt:
-      'SINGLE TAKE. Helmet cam, slightly crooked. Auto-exposure hunting. Raw EVA footage.\n\nAUDIO: Breathing. Boots crunching regolith. Suit servos. Radio with slight delay.\n\n0-4s: POV of an astronaut in a white EVA suit hiking up a long crater ridge. Each step kicks dust that rises knee-high and hangs. The landscape is gray-brown regolith in every direction, lit by harsh flat sunlight. Nothing but rock and shadow and black sky. The astronaut is breathing steadily, rhythmic, like a mountain climber. Houston, routine: "You\'re 20 meters from the rim."\n4-8s: The astronaut crests the ridge. Stops dead. The POV rises slowly. Beyond the rim, the terrain drops away into a vast basin stretching to the curved horizon. And there, hanging alone in the black, is Earth. No frame of reference. No sense of scale. Just a tiny fragile disc of color in an ocean of black. The astronaut doesn\'t move. Breathing stops for a full beat.\n8-12s: Silence. Then a sound nobody expected. The astronaut starts laughing. Not a chuckle. Full, uncontrollable, joyful laughter that fogs the visor edges. Can\'t stop. Houston, confused: "Everything okay up there?" The astronaut, between laughs, barely getting words out: "I\'m fine. I\'m so fine. It\'s just... it\'s so small. Everything we\'ve ever known and it\'s so small."\n12-15s: The laughter fades to a long exhale. The astronaut sits down on the ridge, legs dangling over the slope like a kid on a dock. White boots hanging over gray dust. That tiny blue dot hanging far away in the black. One glove waves at it, small and silly. Astronaut, still smiling, you can hear it: "Hi, everyone." Hold.\n\nEVA helmet footage. Auto-exposure shift. No grade.',
+      "SINGLE TAKE. Helmet cam, slightly crooked. Auto-exposure hunting. Raw EVA footage.\n\nAUDIO: Breathing. Boots crunching regolith. Suit servos. Radio with slight delay.\n\n0-4s: POV of an astronaut in a white EVA suit hiking up a long crater ridge. Each step kicks dust that rises knee-high and hangs. The landscape is gray-brown regolith in every direction, lit by harsh flat sunlight. Nothing but rock and shadow and black sky. The astronaut is breathing steadily, rhythmic, like a mountain climber. Houston, routine: \"You're 20 meters from the rim.\"\n4-8s: The astronaut crests the ridge. Stops dead. The POV rises slowly. Beyond the rim, the terrain drops away into a vast basin stretching to the curved horizon. And there, hanging alone in the black, is Earth. No frame of reference. No sense of scale. Just a tiny fragile disc of color in an ocean of black. The astronaut doesn't move. Breathing stops for a full beat.\n8-12s: Silence. Then a sound nobody expected. The astronaut starts laughing. Not a chuckle. Full, uncontrollable, joyful laughter that fogs the visor edges. Can't stop. Houston, confused: \"Everything okay up there?\" The astronaut, between laughs, barely getting words out: \"I'm fine. I'm so fine. It's just... it's so small. Everything we've ever known and it's so small.\"\n12-15s: The laughter fades to a long exhale. The astronaut sits down on the ridge, legs dangling over the slope like a kid on a dock. White boots hanging over gray dust. That tiny blue dot hanging far away in the black. One glove waves at it, small and silly. Astronaut, still smiling, you can hear it: \"Hi, everyone.\" Hold.\n\nEVA helmet footage. Auto-exposure shift. No grade.",
   },
   {
     id: 'ins-05',
@@ -147,7 +67,7 @@ export const INSPIRATION_ITEMS: InspirationItem[] = [
     aspectRatio: '16 / 9',
     mode: 'text-to-video',
     prompt:
-      "The Storm Shepherd vs the Glass Locust King\nA cinematic weather war. A nomadic shepherd in layered sky-blue robes stands on a high desert ridge during a sandstorm. He fights using a hooked crook, wind channels, and charged storm clouds. His enemy is a king locust made of translucent chitin, lightning veins, and a swarm-crown of crystal insects. The setting transitions from dune ridge → storm trench → lightning plateau → salt crater.\n\n0–3 seconds: the locust king descends out of the storm with a shrieking crown of glass-winged insects. The shepherd drives his crook into the sand and pulls a vortex of wind upward, forcing the first wave of insects into a spiraling wall. Close-ups of cracked lips, cloth snapping, glass wings, and charged dust.\n\n3–7 seconds: the locust king splinters into swarming formations that attack from every direction across a trench carved by wind. The shepherd walks into the storm, redirecting gusts with broad arm sweeps. Each movement creates visible wind corridors that slam the swarm into rock spires. Sand peels off the ground in ribbons. Close-ups of sandals sliding, storm static along the crook, chitin fractures, and lightning flicker under skin.\n\n7–10 seconds: the battle climbs onto a lightning plateau. The locust king towers above him with a giant fan of translucent wings reflecting the whole storm. The shepherd raises both hands and pulls a fork of lightning out of the sky like a rope, then whips it in a massive arc that shears off half the swarm crown. Orbit camera, desert lightning, flying crystal limbs.\n\n10–12 seconds: rapid tracking shot as the shepherd runs across a collapsing salt shelf while the king reforms and dives with all wings screaming. He hooks the crook into its thorax and drags it downward into a charged crater.\n\n12–15 seconds: overhead slow fall into the salt crater as storm winds spiral inward. The shepherd lands first while the locust king breaks apart into rain, glass fragments, and dead static that spiderwebs through the salt. Final frame: one intact locust wing ringing in the wind.\n\nStyle: epic storm fantasy, desert electricity, glass insect textures, sand and lightning choreography, high-contrast sky warfare.",
+      'The Storm Shepherd vs the Glass Locust King\nA cinematic weather war. A nomadic shepherd in layered sky-blue robes stands on a high desert ridge during a sandstorm. He fights using a hooked crook, wind channels, and charged storm clouds. His enemy is a king locust made of translucent chitin, lightning veins, and a swarm-crown of crystal insects. The setting transitions from dune ridge → storm trench → lightning plateau → salt crater.\n\n0–3 seconds: the locust king descends out of the storm with a shrieking crown of glass-winged insects. The shepherd drives his crook into the sand and pulls a vortex of wind upward, forcing the first wave of insects into a spiraling wall. Close-ups of cracked lips, cloth snapping, glass wings, and charged dust.\n\n3–7 seconds: the locust king splinters into swarming formations that attack from every direction across a trench carved by wind. The shepherd walks into the storm, redirecting gusts with broad arm sweeps. Each movement creates visible wind corridors that slam the swarm into rock spires. Sand peels off the ground in ribbons. Close-ups of sandals sliding, storm static along the crook, chitin fractures, and lightning flicker under skin.\n\n7–10 seconds: the battle climbs onto a lightning plateau. The locust king towers above him with a giant fan of translucent wings reflecting the whole storm. The shepherd raises both hands and pulls a fork of lightning out of the sky like a rope, then whips it in a massive arc that shears off half the swarm crown. Orbit camera, desert lightning, flying crystal limbs.\n\n10–12 seconds: rapid tracking shot as the shepherd runs across a collapsing salt shelf while the king reforms and dives with all wings screaming. He hooks the crook into its thorax and drags it downward into a charged crater.\n\n12–15 seconds: overhead slow fall into the salt crater as storm winds spiral inward. The shepherd lands first while the locust king breaks apart into rain, glass fragments, and dead static that spiderwebs through the salt. Final frame: one intact locust wing ringing in the wind.\n\nStyle: epic storm fantasy, desert electricity, glass insect textures, sand and lightning choreography, high-contrast sky warfare.',
   },
   {
     id: 'ins-06',
@@ -165,7 +85,7 @@ export const INSPIRATION_ITEMS: InspirationItem[] = [
     aspectRatio: '16 / 9',
     mode: 'text-to-video',
     prompt:
-      "15-second cinematic romance, slow-burn emotional tone, one man and one woman only, both adults in their mid-20s, western-style leads, casual luxury wardrobe, dark quiet apartment living room at night, refined romantic tension, natural lip sync, no subtitles, no text on screen.\n\nCharacter continuity:\nFemale lead: adult western woman, mid-20s, elegant natural beauty, long brunette hair with soft loose waves, minimal makeup, emotionally guarded but faintly amused, seated on the sofa. Outfit: soft ivory off-shoulder knit sweater, dark straight-leg jeans, barefoot, understated jewelry.\nMale lead: adult western man, mid-20s, handsome refined features, slightly messy dark hair, thin metal-frame glasses, calm warm expression. Outfit: charcoal knit sweater over a white T-shirt, dark trousers, sleeves pushed once, relaxed but polished.\n\nEnvironment:\nUpscale apartment living room, soft sofa, low coffee table, one warm lamp, deep evening shadows, muted neutral palette, intimate silence, shallow depth of field, premium film texture, modern romantic realism.\n\n0-3s:\nWide-to-medium slow push-in. She sits in one corner of the sofa with arms folded, looking away. He crosses the room and sits on the edge of the coffee table facing her, leaving a small respectful distance. Hold the silence and tension.\n\n3-6s:\nMedium close-up on the man. He studies her face, voice low, calm, almost smiling:\n\"I tried very hard to have an ordinary evening.\"\n\n6-9s:\nClose-up on the woman. She turns her eyes to him at last, cool but intrigued, with the faintest teasing edge:\n\"And how did that go?\"\n\n9-12s:\nClose-up on the man. He lets out a quiet breath, gaze steady. He reaches toward a loose strand near her cheek, stopping just before touching:\n\"Poorly. You were in all of it.\"\n\n12-15s:\nSide two-shot. She lightly catches his wrist before he pulls away, not rejecting him, only holding him there. A small unwilling smile appears:\n\"That is not helping me stay angry.\"\nHold on the shared gaze, the restrained smile, and the unresolved tenderness.\n\nMotion and style rules:\nSlow elegant camera movement, meaningful pauses, micro-expressions, lingering eye contact, almost-touch tension, realistic hand motion, restrained acting, no kneeling, no raised voices, no crying, no extra characters, no exaggerated gestures, no waxy skin, no stiff posing, premium romantic realism, emotionally charged final frame.",
+      '15-second cinematic romance, slow-burn emotional tone, one man and one woman only, both adults in their mid-20s, western-style leads, casual luxury wardrobe, dark quiet apartment living room at night, refined romantic tension, natural lip sync, no subtitles, no text on screen.\n\nCharacter continuity:\nFemale lead: adult western woman, mid-20s, elegant natural beauty, long brunette hair with soft loose waves, minimal makeup, emotionally guarded but faintly amused, seated on the sofa. Outfit: soft ivory off-shoulder knit sweater, dark straight-leg jeans, barefoot, understated jewelry.\nMale lead: adult western man, mid-20s, handsome refined features, slightly messy dark hair, thin metal-frame glasses, calm warm expression. Outfit: charcoal knit sweater over a white T-shirt, dark trousers, sleeves pushed once, relaxed but polished.\n\nEnvironment:\nUpscale apartment living room, soft sofa, low coffee table, one warm lamp, deep evening shadows, muted neutral palette, intimate silence, shallow depth of field, premium film texture, modern romantic realism.\n\n0-3s:\nWide-to-medium slow push-in. She sits in one corner of the sofa with arms folded, looking away. He crosses the room and sits on the edge of the coffee table facing her, leaving a small respectful distance. Hold the silence and tension.\n\n3-6s:\nMedium close-up on the man. He studies her face, voice low, calm, almost smiling:\n"I tried very hard to have an ordinary evening."\n\n6-9s:\nClose-up on the woman. She turns her eyes to him at last, cool but intrigued, with the faintest teasing edge:\n"And how did that go?"\n\n9-12s:\nClose-up on the man. He lets out a quiet breath, gaze steady. He reaches toward a loose strand near her cheek, stopping just before touching:\n"Poorly. You were in all of it."\n\n12-15s:\nSide two-shot. She lightly catches his wrist before he pulls away, not rejecting him, only holding him there. A small unwilling smile appears:\n"That is not helping me stay angry."\nHold on the shared gaze, the restrained smile, and the unresolved tenderness.\n\nMotion and style rules:\nSlow elegant camera movement, meaningful pauses, micro-expressions, lingering eye contact, almost-touch tension, realistic hand motion, restrained acting, no kneeling, no raised voices, no crying, no extra characters, no exaggerated gestures, no waxy skin, no stiff posing, premium romantic realism, emotionally charged final frame.',
   },
   {
     id: 'ins-08',

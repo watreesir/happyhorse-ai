@@ -39,6 +39,7 @@ import { markPendingAffonsoSignup } from '@/shared/lib/affiliate-client';
 import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import {
+  isPromptModerationApiError,
   isPromptModerationDeniedMessage,
   toSubmissionErrorToastMessage,
 } from '@/shared/lib/prompt-moderation-messages';
@@ -876,7 +877,10 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       } else {
         const message = toStudioErrorMessage(error, errors, 'submitFailed');
         setSubmitError(message);
-        if (isPromptModerationDeniedMessage(message)) {
+        if (
+          isPromptModerationApiError(error) ||
+          isPromptModerationDeniedMessage(message)
+        ) {
           toast.error(toSubmissionErrorToastMessage(message));
         }
       }
