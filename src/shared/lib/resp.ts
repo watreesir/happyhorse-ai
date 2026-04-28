@@ -6,11 +6,21 @@ export function respOk() {
   return respJson(0, 'ok');
 }
 
-export function respErr(message: string) {
-  return respJson(-1, message);
+export function respErr(
+  message: string,
+  options: { status?: number; code?: number; data?: any } = {}
+) {
+  return respJson(options.code ?? -1, message, options.data, {
+    status: options.status ?? 200,
+  });
 }
 
-export function respJson(code: number, message: string, data?: any) {
+export function respJson(
+  code: number,
+  message: string,
+  data?: any,
+  init?: ResponseInit
+) {
   let json = {
     code: code,
     message: message,
@@ -20,5 +30,5 @@ export function respJson(code: number, message: string, data?: any) {
     json['data'] = data;
   }
 
-  return Response.json(json);
+  return Response.json(json, init);
 }

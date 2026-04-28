@@ -1,4 +1,5 @@
 import { AITaskStatus } from '@/extensions/ai/types';
+import { readApiErrorMessage } from '@/shared/lib/api-client';
 import {
   VIDEO_STUDIO_DEFAULT_DRAFT,
   VIDEO_STUDIO_MODELS,
@@ -129,11 +130,14 @@ function ensureSuccess<T>(payload: ApiResponse<T>, fallbackMessage: string): T {
 }
 
 function resolvePreviewUrl(taskInfo: unknown, taskResult: unknown) {
-  return extractVideoUrls(taskInfo)[0] ?? extractVideoUrls(taskResult)[0] ?? null;
+  return (
+    extractVideoUrls(taskInfo)[0] ?? extractVideoUrls(taskResult)[0] ?? null
+  );
 }
 
 function parseDate(input: string | number | Date) {
-  const value = input instanceof Date ? input.getTime() : new Date(input).getTime();
+  const value =
+    input instanceof Date ? input.getTime() : new Date(input).getTime();
   return Number.isFinite(value) ? value : Date.now();
 }
 
@@ -254,13 +258,18 @@ function resolveMode(task: {
   ) {
     return 'reference-to-video';
   }
-  if (task.scene === 'video-to-video' && pickString(task.options?.reference_image)) {
+  if (
+    task.scene === 'video-to-video' &&
+    pickString(task.options?.reference_image)
+  ) {
     return 'video-edit';
   }
   return 'text-to-video';
 }
 
-function resolveI2VMode(options: Record<string, unknown> | null): VideoStudioI2VMode {
+function resolveI2VMode(
+  options: Record<string, unknown> | null
+): VideoStudioI2VMode {
   if (pickString(options?.first_clip_url)) {
     return 'video-continuation';
   }
@@ -292,7 +301,11 @@ function resolveResolutionOption(options: Record<string, unknown> | null) {
 
 function resolveDurationOption(options: Record<string, unknown> | null) {
   const duration = options?.duration;
-  if (typeof duration === 'number' && Number.isFinite(duration) && duration > 0) {
+  if (
+    typeof duration === 'number' &&
+    Number.isFinite(duration) &&
+    duration > 0
+  ) {
     return duration;
   }
   if (typeof duration === 'string') {
@@ -318,7 +331,14 @@ export function mapTaskStatus(status: string): VideoStatus {
 }
 
 function resolvePalette(seed: number): VideoPalette {
-  const palettes: VideoPalette[] = ['teal', 'copper', 'ink', 'amber', 'slate', 'crimson'];
+  const palettes: VideoPalette[] = [
+    'teal',
+    'copper',
+    'ink',
+    'amber',
+    'slate',
+    'crimson',
+  ];
   return palettes[seed % palettes.length] ?? 'slate';
 }
 
@@ -363,7 +383,10 @@ function formatRelativeTime(input: string | number | Date) {
   return `${absDays}d ago`;
 }
 
-export function mapTaskToDraft(task: VideoTaskRecord, index: number): VideoDraft {
+export function mapTaskToDraft(
+  task: VideoTaskRecord,
+  index: number
+): VideoDraft {
   const prompt = task.prompt ?? '';
   return {
     id: task.id,
@@ -474,7 +497,10 @@ export function buildRecreateDraftFromTask(
     const firstFrame = pickString(options?.first_frame);
     const referenceVoice = pickString(options?.reference_voice);
 
-    nextDraft.referenceMaterials = [...referenceImages, ...referenceVideos].slice(0, 5);
+    nextDraft.referenceMaterials = [
+      ...referenceImages,
+      ...referenceVideos,
+    ].slice(0, 5);
 
     if (firstFrame) {
       nextDraft.referenceFirstFrame = createUploadedAssetFromUrl(
@@ -497,7 +523,9 @@ export function buildRecreateDraftFromTask(
 
   const editVideoUrl = pickString(options?.video_url);
   const referenceImageUrl =
-    pickString(options?.reference_image) ?? pickStringList(options?.reference_image)[0] ?? null;
+    pickString(options?.reference_image) ??
+    pickStringList(options?.reference_image)[0] ??
+    null;
 
   if (editVideoUrl) {
     nextDraft.editVideo = createUploadedAssetFromUrl(
@@ -524,11 +552,14 @@ export async function listVideoTasks({
   page: number;
   limit: number;
 }): Promise<VideoTaskPageData> {
-  const response = await fetch(`/api/ai/video-tasks?page=${page}&limit=${limit}`, {
-    cache: 'no-store',
-  });
+  const response = await fetch(
+    `/api/ai/video-tasks?page=${page}&limit=${limit}`,
+    {
+      cache: 'no-store',
+    }
+  );
   if (!response.ok) {
-    throw new Error(`request failed with status: ${response.status}`);
+    throw new Error(await readApiErrorMessage(response));
   }
 
   const payload = (await response.json()) as ApiResponse<VideoTaskPageData>;
@@ -547,10 +578,11 @@ export async function generateVideoTask(
   });
 
   if (!response.ok) {
-    throw new Error(`request failed with status: ${response.status}`);
+    throw new Error(await readApiErrorMessage(response));
   }
 
-  const responsePayload = (await response.json()) as ApiResponse<GenerateTaskPayload>;
+  const responsePayload =
+    (await response.json()) as ApiResponse<GenerateTaskPayload>;
   const data = ensureSuccess(responsePayload, 'Unable to create video task');
 
   const taskInfo = parseJson(data.taskInfo);
@@ -566,7 +598,9 @@ export async function generateVideoTask(
     options: parseJson(data.options),
     previewUrl: resolvePreviewUrl(taskInfo, taskResult),
     errorMessage:
-      (taskInfo && typeof taskInfo.errorMessage === 'string' && taskInfo.errorMessage) ||
+      (taskInfo &&
+        typeof taskInfo.errorMessage === 'string' &&
+        taskInfo.errorMessage) ||
       null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
@@ -583,7 +617,7 @@ export async function queryVideoTask(taskId: string): Promise<VideoTaskRecord> {
   });
 
   if (!response.ok) {
-    throw new Error(`request failed with status: ${response.status}`);
+    throw new Error(await readApiErrorMessage(response));
   }
 
   const payload = (await response.json()) as ApiResponse<QueryTaskPayload>;
@@ -602,7 +636,9 @@ export async function queryVideoTask(taskId: string): Promise<VideoTaskRecord> {
     options: parseJson(data.options),
     previewUrl: resolvePreviewUrl(taskInfo, taskResult),
     errorMessage:
-      (taskInfo && typeof taskInfo.errorMessage === 'string' && taskInfo.errorMessage) ||
+      (taskInfo &&
+        typeof taskInfo.errorMessage === 'string' &&
+        taskInfo.errorMessage) ||
       null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
@@ -615,7 +651,7 @@ export async function deleteVideoTask(taskId: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`request failed with status: ${response.status}`);
+    throw new Error(await readApiErrorMessage(response));
   }
 
   const payload = (await response.json()) as ApiResponse<{

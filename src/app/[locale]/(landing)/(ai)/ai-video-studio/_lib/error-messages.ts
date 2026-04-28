@@ -30,6 +30,14 @@ export function toStudioErrorMessage(
   const status = getHttpStatus(rawMessage);
 
   if (
+    message.includes('prompt not processed') ||
+    message.includes('safety check is temporarily unavailable') ||
+    message.includes('please add a prompt')
+  ) {
+    return rawMessage;
+  }
+
+  if (
     message.includes('no auth') ||
     message.includes('sign in') ||
     status === 401

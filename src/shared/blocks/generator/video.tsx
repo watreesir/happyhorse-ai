@@ -34,6 +34,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
+import { readApiErrorMessage } from '@/shared/lib/api-client';
 
 interface VideoGeneratorProps {
   maxSizeMB?: number;
@@ -244,7 +245,6 @@ export function VideoGenerator({
   const promptLength = prompt.trim().length;
   const remainingCredits = user?.credits?.remainingCredits ?? 0;
   const isPromptTooLong = promptLength > MAX_PROMPT_LENGTH;
-  const isTextToVideoMode = activeTab === 'text-to-video';
   const isImageToVideoMode = activeTab === 'image-to-video';
   const isVideoToVideoMode = activeTab === 'video-to-video';
 
@@ -354,7 +354,7 @@ export function VideoGenerator({
         });
 
         if (!resp.ok) {
-          throw new Error(`request failed with status: ${resp.status}`);
+          throw new Error(await readApiErrorMessage(resp));
         }
 
         const { code, message, data } = await resp.json();
@@ -487,7 +487,7 @@ export function VideoGenerator({
     }
 
     const trimmedPrompt = prompt.trim();
-    if (!trimmedPrompt && isTextToVideoMode) {
+    if (!trimmedPrompt) {
       toast.error('Please enter a prompt before generating.');
       return;
     }
@@ -540,7 +540,7 @@ export function VideoGenerator({
       });
 
       if (!resp.ok) {
-        throw new Error(`request failed with status: ${resp.status}`);
+        throw new Error(await readApiErrorMessage(resp));
       }
 
       const { code, message, data } = await resp.json();
@@ -581,7 +581,7 @@ export function VideoGenerator({
       await fetchUserCredits();
     } catch (error: any) {
       console.error('Failed to generate video:', error);
-      toast.error(`Failed to generate video: ${error.message}`);
+      toast.error(error.message || 'Failed to generate video');
       resetTaskState();
     }
   };
@@ -759,7 +759,7 @@ export function VideoGenerator({
                     onClick={handleGenerate}
                     disabled={
                       isGenerating ||
-                      (isTextToVideoMode && !prompt.trim()) ||
+                      !prompt.trim() ||
                       isPromptTooLong ||
                       isReferenceUploading ||
                       hasReferenceUploadError ||

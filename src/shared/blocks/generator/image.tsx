@@ -38,6 +38,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
+import { readApiErrorMessage } from '@/shared/lib/api-client';
 import { cn } from '@/shared/lib/utils';
 
 interface ImageGeneratorProps {
@@ -351,7 +352,7 @@ export function ImageGenerator({
         });
 
         if (!resp.ok) {
-          throw new Error(`request failed with status: ${resp.status}`);
+          throw new Error(await readApiErrorMessage(resp));
         }
 
         const { code, message, data } = await resp.json();
@@ -528,7 +529,7 @@ export function ImageGenerator({
       });
 
       if (!resp.ok) {
-        throw new Error(`request failed with status: ${resp.status}`);
+        throw new Error(await readApiErrorMessage(resp));
       }
 
       const { code, message, data } = await resp.json();
@@ -569,7 +570,7 @@ export function ImageGenerator({
       await fetchUserCredits();
     } catch (error: any) {
       console.error('Failed to generate image:', error);
-      toast.error(`Failed to generate image: ${error.message}`);
+      toast.error(error.message || 'Failed to generate image');
       resetTaskState();
     }
   };

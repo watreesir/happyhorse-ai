@@ -11,6 +11,7 @@
     "r2": "Cloudflare R2",
     "s3": "AWS S3",
     "openrouter": "OpenRouter",
+    "creem_moderation": "Creem Moderation",
     "replicate": "Replicate",
     "fal": "Fal",
     "google_analytics": "Google Analytics",

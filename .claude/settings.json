@@ -22,7 +22,9 @@
       "Bash(npx tsc:*)",
       "Bash(xargs ls:*)",
       "Bash(grep -l \"Popover\\\\|Dropdown\" /Users/zhangdeyuan/my-shipany-project/src/shared/components/ui/*.tsx)",
-      "Bash(find /Users/zhangdeyuan/my-shipany-project/src/shared/components/ui -type f \\\\\\( -name \"*popover*\" -o -name \"*hover*\" \\\\\\) -exec basename {} \\\\;)"
+      "Bash(find /Users/zhangdeyuan/my-shipany-project/src/shared/components/ui -type f \\\\\\( -name \"*popover*\" -o -name \"*hover*\" \\\\\\) -exec basename {} \\\\;)",
+      "Bash(git -C /Users/zhangdeyuan/my-shipany-project log --oneline -20)",
+      "Bash(git -C /Users/zhangdeyuan/my-shipany-project log --oneline -30)"
     ],
     "additionalDirectories": [
       "/Users/zhangdeyuan/.claude/projects/-Users-zhangdeyuan-my-shipany-project"

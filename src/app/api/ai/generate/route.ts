@@ -13,9 +13,8 @@ import {
   NewAITask,
   updateAITaskById,
 } from '@/shared/models/ai_task';
-import {
-  claimDailyCreditsForUser,
-} from '@/shared/models/credit';
+import { getAllConfigs } from '@/shared/models/config';
+import { claimDailyCreditsForUser } from '@/shared/models/credit';
 import {
   ensureGuestTrialSystemUser,
   GUEST_DEVICE_ID_COOKIE,
@@ -28,6 +27,15 @@ import {
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
 import { sendAITaskCompletionEmailIfNeeded } from '@/shared/services/ai-task-notify';
+import {
+  buildModerationPrompt,
+  collectAIGenerationModerationTexts,
+  isPromptModerationError,
+  moderatePrompt,
+  PROMPT_REQUIRED_MESSAGE,
+  PromptModerationError,
+  sanitizeExternalIdSegment,
+} from '@/shared/services/creem-moderation';
 import {
   calculateVideoCreditsCost,
   getPricingSnapshot,
@@ -112,11 +120,20 @@ export async function POST(request: Request) {
       throw new Error('invalid params');
     }
 
-    if (!prompt && !options) {
-      throw new Error('prompt or options is required');
+    const moderationTexts = collectAIGenerationModerationTexts({
+      prompt,
+      options,
+    });
+    if (moderationTexts.length === 0) {
+      throw new PromptModerationError({
+        code: 'PROMPT_MODERATION_REQUIRED',
+        message: PROMPT_REQUIRED_MESSAGE,
+        status: 400,
+      });
     }
 
-    const aiService = await getAIService();
+    const configs = await getAllConfigs();
+    const aiService = await getAIService(configs);
 
     // check generate type
     if (!aiService.getMediaTypes().includes(mediaType)) {
@@ -155,13 +172,27 @@ export async function POST(request: Request) {
     }
 
     const user = await getUserInfo();
+    if (!user && (!GUEST_TRIAL_ENABLED || mediaType !== AIMediaType.VIDEO)) {
+      throw new Error('no auth, please sign in');
+    }
+
+    await moderatePrompt({
+      configs,
+      prompt: buildModerationPrompt(moderationTexts),
+      externalId: [
+        'happyhorse-ai',
+        `media_${sanitizeExternalIdSegment(mediaType)}`,
+        `scene_${sanitizeExternalIdSegment(scene)}`,
+        `provider_${sanitizeExternalIdSegment(provider)}`,
+        `model_${sanitizeExternalIdSegment(model)}`,
+        user?.id ? `user_${sanitizeExternalIdSegment(user.id)}` : 'guest',
+        `req_${sanitizeExternalIdSegment(getUuid())}`,
+      ].join(':'),
+    });
+
     let taskUserId = user?.id || '';
 
     if (!user) {
-      if (!GUEST_TRIAL_ENABLED || mediaType !== AIMediaType.VIDEO) {
-        throw new Error('no auth, please sign in');
-      }
-
       const guestIdentity = await getGuestIdentity();
       const ip = await getClientIp();
 
@@ -252,6 +283,15 @@ export async function POST(request: Request) {
     return respData(updatedTask);
   } catch (e: any) {
     const errorMessage = e?.message || 'generate failed';
+
+    if (isPromptModerationError(e)) {
+      return respErr(errorMessage, {
+        status: e.status,
+        data: {
+          errorCode: e.code,
+        },
+      });
+    }
 
     if (reservedTaskId) {
       try {

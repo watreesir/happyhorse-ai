@@ -8,25 +8,26 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Coins } from 'lucide-react';
 import Image from 'next/image';
+import { Coins } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
 import { useAppContext } from '@/shared/contexts/app';
+import { readApiErrorMessage } from '@/shared/lib/api-client';
 import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
 import { cn } from '@/shared/lib/utils';
 import {
+  buildStudioQueryFromDraft,
+  buildVideoTaskPayloadFromDraft,
   VIDEO_STUDIO_DEFAULT_DRAFT,
   VIDEO_STUDIO_DRAFT_SESSION_KEY,
   VideoStudioDraft,
   VideoStudioDraftError,
   VideoStudioMode,
   VideoStudioUploadedAsset,
-  buildStudioQueryFromDraft,
-  buildVideoTaskPayloadFromDraft,
 } from '@/shared/lib/video-studio-workflow';
 import { Section } from '@/shared/types/blocks/landing';
 
@@ -226,7 +227,7 @@ function SettingsPanel({
     'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/15 dark:hover:text-white/90';
 
   return (
-    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 absolute right-0 top-full left-0 z-[9999] mt-[5px] overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
+    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 absolute top-full right-0 left-0 z-[9999] mt-[5px] overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
       <div className="space-y-4 p-4">
         {/* Video Length */}
         <div>
@@ -393,7 +394,9 @@ export function Hero({
   const [i2vLastFrame, setI2vLastFrame] =
     useState<VideoStudioUploadedAsset | null>(null);
   const [i2vClip, setI2vClip] = useState<VideoStudioUploadedAsset | null>(null);
-  const [i2vAudio, setI2vAudio] = useState<VideoStudioUploadedAsset | null>(null);
+  const [i2vAudio, setI2vAudio] = useState<VideoStudioUploadedAsset | null>(
+    null
+  );
 
   // Reference to Video
   const [refMaterials, setRefMaterials] = useState<VideoStudioUploadedAsset[]>(
@@ -445,7 +448,9 @@ export function Hero({
     setActiveTab(key as MainTab);
     setSettingsOpen(false);
     if (key === 'video-edit') {
-      setDuration((prev) => (prev === 0 || prev === 5 || prev === 10 ? prev : 0));
+      setDuration((prev) =>
+        prev === 0 || prev === 5 || prev === 10 ? prev : 0
+      );
     } else {
       setDuration((prev) => (prev === 0 ? 5 : prev));
     }
@@ -538,7 +543,10 @@ export function Hero({
   };
 
   const redirectToStudio = (draft: VideoStudioDraft) => {
-    sessionStorage.setItem(VIDEO_STUDIO_DRAFT_SESSION_KEY, JSON.stringify(draft));
+    sessionStorage.setItem(
+      VIDEO_STUDIO_DRAFT_SESSION_KEY,
+      JSON.stringify(draft)
+    );
     const params = buildStudioQueryFromDraft(draft);
     if (draft.submission?.taskId) {
       params.set('taskId', draft.submission.taskId);
@@ -590,7 +598,7 @@ export function Hero({
       });
 
       if (!response.ok) {
-        throw new Error(`request failed with status: ${response.status}`);
+        throw new Error(await readApiErrorMessage(response));
       }
 
       const result = (await response.json()) as GenerateResponsePayload;
@@ -679,7 +687,7 @@ export function Hero({
     <section
       id={section.id}
       className={cn(
-        'relative isolate flex min-h-screen flex-col items-center justify-center overflow-visible z-[40]',
+        'relative isolate z-[40] flex min-h-screen flex-col items-center justify-center overflow-visible',
         className
       )}
     >
@@ -733,7 +741,9 @@ export function Hero({
         {titleParts && titleParts.length > 0 ? (
           <h1 className="text-foreground mb-5 text-4xl leading-tight font-bold tracking-tight text-balance sm:text-6xl dark:text-white">
             {titleParts[0]}
-            <span className="text-primary whitespace-nowrap">{highlightText}</span>
+            <span className="text-primary whitespace-nowrap">
+              {highlightText}
+            </span>
             {titleParts[1]}
           </h1>
         ) : (
@@ -769,7 +779,7 @@ export function Hero({
         </div>
 
         {/* ── Input card ────────────────────────────────────────────────────── */}
-        <div className="relative border-foreground/10 bg-background/72 mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
+        <div className="border-foreground/10 bg-background/72 relative mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
           {activeTab === 'text-to-video' && (
             <div className="mb-3">
               <UploadZone
@@ -778,7 +788,9 @@ export function Hero({
                 file={textAudio}
                 uploading={Boolean(uploading.textAudio)}
                 accept="audio/*"
-                onUpload={(event) => void uploadSingle('textAudio', event, setTextAudio)}
+                onUpload={(event) =>
+                  void uploadSingle('textAudio', event, setTextAudio)
+                }
                 onClear={() => setTextAudio(null)}
               />
             </div>
@@ -809,7 +821,8 @@ export function Hero({
                 ))}
               </div>
               <p className="text-foreground/50 px-1 text-left text-[11px] dark:text-white/45">
-                Image-to-video follows source framing; manual aspect ratio is not supported.
+                Image-to-video follows source framing; manual aspect ratio is
+                not supported.
               </p>
               {i2vMode === 'first-frame' && (
                 <UploadZone
@@ -831,7 +844,11 @@ export function Hero({
                     uploading={Boolean(uploading.i2vFirstFrame)}
                     accept="image/*"
                     onUpload={(event) =>
-                      void uploadSingle('i2vFirstFrame', event, setI2vFirstFrame)
+                      void uploadSingle(
+                        'i2vFirstFrame',
+                        event,
+                        setI2vFirstFrame
+                      )
                     }
                     onClear={() => setI2vFirstFrame(null)}
                   />
@@ -853,7 +870,9 @@ export function Hero({
                   file={i2vClip}
                   uploading={Boolean(uploading.i2vClip)}
                   accept="video/*"
-                  onUpload={(event) => void uploadSingle('i2vClip', event, setI2vClip)}
+                  onUpload={(event) =>
+                    void uploadSingle('i2vClip', event, setI2vClip)
+                  }
                   onClear={() => setI2vClip(null)}
                 />
               )}
@@ -863,7 +882,9 @@ export function Hero({
                 file={i2vAudio}
                 uploading={Boolean(uploading.i2vAudio)}
                 accept="audio/*"
-                onUpload={(event) => void uploadSingle('i2vAudio', event, setI2vAudio)}
+                onUpload={(event) =>
+                  void uploadSingle('i2vAudio', event, setI2vAudio)
+                }
                 onClear={() => setI2vAudio(null)}
               />
             </div>
@@ -903,7 +924,9 @@ export function Hero({
                   file={refVoice}
                   uploading={Boolean(uploading.refVoice)}
                   accept="audio/*"
-                  onUpload={(event) => void uploadSingle('refVoice', event, setRefVoice)}
+                  onUpload={(event) =>
+                    void uploadSingle('refVoice', event, setRefVoice)
+                  }
                   onClear={() => setRefVoice(null)}
                 />
               </div>
@@ -918,7 +941,9 @@ export function Hero({
                 file={editVideo}
                 uploading={Boolean(uploading.editVideo)}
                 accept="video/*"
-                onUpload={(event) => void uploadSingle('editVideo', event, setEditVideo)}
+                onUpload={(event) =>
+                  void uploadSingle('editVideo', event, setEditVideo)
+                }
                 onClear={() => setEditVideo(null)}
               />
               <UploadZone
@@ -1050,20 +1075,20 @@ export function Hero({
               </p>
             )}
 
-          {/* Settings panel — inside bottomBarRef so click-outside works correctly */}
-          {settingsOpen && (
-            <SettingsPanel
-              tab={activeTab}
-              duration={duration}
-              setDuration={setDuration}
-              resolution={resolution}
-              setResolution={setResolution}
-              ratio={ratio}
-              setRatio={setRatio}
-              audioSetting={audioSetting}
-              setAudioSetting={setAudioSetting}
-            />
-          )}
+            {/* Settings panel — inside bottomBarRef so click-outside works correctly */}
+            {settingsOpen && (
+              <SettingsPanel
+                tab={activeTab}
+                duration={duration}
+                setDuration={setDuration}
+                resolution={resolution}
+                setResolution={setResolution}
+                ratio={ratio}
+                setRatio={setRatio}
+                audioSetting={audioSetting}
+                setAudioSetting={setAudioSetting}
+              />
+            )}
           </div>
         </div>
       </div>

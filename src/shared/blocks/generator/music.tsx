@@ -39,6 +39,7 @@ import {
 import { Switch } from '@/shared/components/ui/switch';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useAppContext } from '@/shared/contexts/app';
+import { readApiErrorMessage } from '@/shared/lib/api-client';
 import { cn } from '@/shared/lib/utils';
 
 interface SongData {
@@ -140,7 +141,7 @@ export function MusicGenerator({ className, srOnlyTitle }: SongGeneratorProps) {
       });
 
       if (!resp.ok) {
-        throw new Error(`request failed with status: ${resp.status}`);
+        throw new Error(await readApiErrorMessage(resp));
       }
 
       const { code, message, data } = await resp.json();
@@ -328,7 +329,7 @@ export function MusicGenerator({ className, srOnlyTitle }: SongGeneratorProps) {
       });
 
       if (!resp.ok) {
-        throw new Error(`request failed with status: ${resp.status}`);
+        throw new Error(await readApiErrorMessage(resp));
       }
 
       const { code, message, data } = await resp.json();
@@ -347,7 +348,7 @@ export function MusicGenerator({ className, srOnlyTitle }: SongGeneratorProps) {
       setTaskId(taskId);
       setProgress(20);
     } catch (err: any) {
-      toast.error('Failed to generate music: ' + err.message);
+      toast.error(err.message || 'Failed to generate music');
       setIsGenerating(false);
       setProgress(0);
       setGenerationStartTime(null);
