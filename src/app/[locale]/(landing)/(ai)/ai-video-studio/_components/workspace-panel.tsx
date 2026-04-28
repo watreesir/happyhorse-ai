@@ -38,6 +38,10 @@ import { useAppContext } from '@/shared/contexts/app';
 import { markPendingAffonsoSignup } from '@/shared/lib/affiliate-client';
 import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
+import {
+  isPromptModerationDeniedMessage,
+  toSubmissionErrorToastMessage,
+} from '@/shared/lib/prompt-moderation-messages';
 import { cn } from '@/shared/lib/utils';
 import {
   buildVideoTaskPayloadFromDraft,
@@ -870,7 +874,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       if (error instanceof VideoStudioDraftError) {
         setSubmitError(mapDraftErrorToMessage(error, copy));
       } else {
-        setSubmitError(toStudioErrorMessage(error, errors, 'submitFailed'));
+        const message = toStudioErrorMessage(error, errors, 'submitFailed');
+        setSubmitError(message);
+        if (isPromptModerationDeniedMessage(message)) {
+          toast.error(toSubmissionErrorToastMessage(message));
+        }
       }
       updateLifecycle('failed');
       setActiveTaskId(null);

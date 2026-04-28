@@ -18,6 +18,10 @@ import { useAppContext } from '@/shared/contexts/app';
 import { readApiErrorMessage } from '@/shared/lib/api-client';
 import { getClientVideoCreditsCost } from '@/shared/lib/client-video-credits';
 import { uploadStudioMediaFiles } from '@/shared/lib/media-upload';
+import {
+  isPromptModerationDeniedMessage,
+  toSubmissionErrorToastMessage,
+} from '@/shared/lib/prompt-moderation-messages';
 import { cn } from '@/shared/lib/utils';
 import {
   buildStudioQueryFromDraft,
@@ -646,6 +650,13 @@ export function Hero({
 
       if (normalizedMessage.includes('no auth')) {
         setIsShowSignModal(true);
+        return;
+      }
+
+      if (isPromptModerationDeniedMessage(message)) {
+        toast.error(toSubmissionErrorToastMessage(message));
+        setStatusHint(message);
+        await fetchUserCredits();
         return;
       }
 
