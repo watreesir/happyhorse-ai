@@ -10,7 +10,6 @@ import {
 } from 'react';
 import Image from 'next/image';
 import { Coins } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
@@ -25,7 +24,6 @@ import {
   isPromptModerationApiError,
   isPromptModerationDeniedMessage,
   isPromptModerationErrorCode,
-  toSubmissionErrorToastMessage,
 } from '@/shared/lib/prompt-moderation-messages';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -672,7 +670,6 @@ export function Hero({
         isPromptModerationApiError(error) ||
         isPromptModerationDeniedMessage(message)
       ) {
-        toast.error(toSubmissionErrorToastMessage(message));
         setStatusHint(message);
         await fetchUserCredits();
         return;
