@@ -12,6 +12,7 @@ import {
 import { useSearchParams } from 'next/navigation';
 import {
   BellRing,
+  ChevronDown,
   Coins,
   Film,
   ImagePlus,
@@ -44,6 +45,13 @@ import {
   toSubmissionErrorToastMessage,
 } from '@/shared/lib/prompt-moderation-messages';
 import { cn } from '@/shared/lib/utils';
+import {
+  getVideoStudioModelOption,
+  isHappyHorseModelKey,
+  resolveVideoStudioModelKey,
+  VIDEO_STUDIO_MODEL_OPTIONS,
+  VideoStudioModelKey,
+} from '@/shared/lib/video-models';
 import {
   buildVideoTaskPayloadFromDraft,
   mergeStudioDraft,
@@ -96,7 +104,8 @@ type SingleUploadKey =
   | 'editVideo'
   | 'editReferenceImage';
 
-const MAX_REFERENCE_MATERIALS = 5;
+const MAX_WAN_REFERENCE_MATERIALS = 5;
+const MAX_HAPPYHORSE_REFERENCE_IMAGES = 9;
 const MAX_POLL_FAILURES = 3;
 const GUEST_LOGIN_MODAL_SHOWN_KEY = 'studio:guest-login-modal:shown-task-ids';
 const GUEST_LOGIN_MODAL_DELAY_MS = 3_000;
@@ -130,6 +139,12 @@ function mapDraftErrorToMessage(
   if (error.code === 'REFERENCE_MATERIAL_REQUIRED') {
     return copy.validationErrors.referenceMaterialRequired;
   }
+  if (error.code === 'REFERENCE_IMAGE_REQUIRED') {
+    return error.message || copy.validationErrors.referenceMaterialRequired;
+  }
+  if (error.code === 'SEED_INVALID') {
+    return error.message || 'Seed must be an integer from 0 to 2147483647.';
+  }
   return copy.validationErrors.editVideoRequired;
 }
 
@@ -152,6 +167,13 @@ function i2vModeFromSearch(value: string | null): VideoStudioI2VMode | null {
     value === 'video-continuation'
   ) {
     return value;
+  }
+  return null;
+}
+
+function modelKeyFromSearch(value: string | null): VideoStudioModelKey | null {
+  if (value === 'happyhorse-1.0' || value === 'wan-2.7') {
+    return resolveVideoStudioModelKey(value);
   }
   return null;
 }
@@ -309,6 +331,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
   const [uploadingMap, setUploadingMap] = useState<Record<string, boolean>>({});
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const lifecycleRef = useRef<StudioTaskLifecycle>('idle');
   const pollFailureCountRef = useRef(0);
   const hydratedFromEntryRef = useRef(false);
@@ -406,6 +429,74 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     setDraft((prev) => mergeStudioDraft(prev, next));
   };
 
+  const normalizeDurationForModel = (
+    nextModelKey: VideoStudioModelKey,
+    mode: VideoStudioMode,
+    currentDuration: number
+  ) => {
+    if (isHappyHorseModelKey(nextModelKey)) {
+      if (mode === 'video-edit') return 0;
+      return currentDuration >= 3 && currentDuration <= 15
+        ? currentDuration
+        : 5;
+    }
+    if (mode === 'video-edit') {
+      return currentDuration === 0 ||
+        currentDuration === 5 ||
+        currentDuration === 10
+        ? currentDuration
+        : 0;
+    }
+    return currentDuration === 0 ? 5 : currentDuration;
+  };
+
+  const applyModelChange = (nextModelKey: VideoStudioModelKey) => {
+    setIsModelMenuOpen(false);
+    setDraft((prev) =>
+      mergeStudioDraft(prev, {
+        modelKey: nextModelKey,
+        duration: normalizeDurationForModel(
+          nextModelKey,
+          prev.mode,
+          prev.duration
+        ),
+        i2vMode: isHappyHorseModelKey(nextModelKey)
+          ? 'first-frame'
+          : prev.i2vMode,
+        textAudio: isHappyHorseModelKey(nextModelKey) ? null : prev.textAudio,
+        imageAudio: isHappyHorseModelKey(nextModelKey) ? null : prev.imageAudio,
+        imageLastFrame: isHappyHorseModelKey(nextModelKey)
+          ? null
+          : prev.imageLastFrame,
+        imageFirstClip: isHappyHorseModelKey(nextModelKey)
+          ? null
+          : prev.imageFirstClip,
+        referenceMaterials: isHappyHorseModelKey(nextModelKey)
+          ? prev.referenceMaterials
+              .filter((item) => item.mediaType === 'image')
+              .slice(0, MAX_HAPPYHORSE_REFERENCE_IMAGES)
+          : prev.referenceMaterials.slice(0, MAX_WAN_REFERENCE_MATERIALS),
+        referenceFirstFrame: isHappyHorseModelKey(nextModelKey)
+          ? null
+          : prev.referenceFirstFrame,
+        referenceVoice: isHappyHorseModelKey(nextModelKey)
+          ? null
+          : prev.referenceVoice,
+      })
+    );
+  };
+
+  const applyModeChange = (mode: VideoStudioMode) => {
+    updateDraft({
+      mode,
+      duration: normalizeDurationForModel(draft.modelKey, mode, draft.duration),
+      i2vMode:
+        isHappyHorseModelKey(draft.modelKey) && mode === 'image-to-video'
+          ? 'first-frame'
+          : draft.i2vMode,
+    });
+  };
+
   const applyHeroHandoff = (incomingDraft: VideoStudioDraft) => {
     setDraft(incomingDraft);
 
@@ -488,6 +579,9 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
     const from = searchParams?.get('from');
     const draftId = searchParams?.get('draftId');
+    const queryModelKey = modelKeyFromSearch(
+      searchParams?.get('modelKey') ?? null
+    );
     const queryMode = modeFromSearch(searchParams?.get('mode') ?? null);
     const queryI2VMode = i2vModeFromSearch(
       searchParams?.get('i2vMode') ?? null
@@ -500,6 +594,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       | VideoStudioDraft['resolution']
       | null;
     const queryDuration = searchParams?.get('duration');
+    const querySeed = searchParams?.get('seed') ?? '';
     const queryAudio = (searchParams?.get('audioSetting') ?? null) as
       | VideoStudioDraft['audioSetting']
       | null;
@@ -510,6 +605,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
     let nextDraft = mergeStudioDraft(draft, {
       mode: queryMode ?? draft.mode,
+      modelKey: queryModelKey ?? draft.modelKey,
       i2vMode: queryI2VMode ?? draft.i2vMode,
       ratio: queryRatio ?? draft.ratio,
       prompt: queryPrompt || draft.prompt,
@@ -517,6 +613,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       duration: queryDuration
         ? Number.parseInt(queryDuration, 10)
         : draft.duration,
+      seed: querySeed || draft.seed,
       audioSetting: queryAudio ?? draft.audioSetting,
     });
 
@@ -604,12 +701,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       setGuestPendingTaskId((prev) => prev ?? activeTaskId);
       notifyGuestGenerateHint();
     }
-  }, [
-    activeTaskId,
-    isGuestUser,
-    notifyGuestGenerateHint,
-    taskLifecycle,
-  ]);
+  }, [activeTaskId, isGuestUser, notifyGuestGenerateHint, taskLifecycle]);
 
   useEffect(() => {
     if (!activeTaskId) {
@@ -723,7 +815,13 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     const handleRecreateEvent = (
       e: CustomEvent<VideoStudioRecreateEventDetail>
     ) => {
-      const { draft: incomingDraft, mode, prompt, i2vMode, imageUrl } = e.detail;
+      const {
+        draft: incomingDraft,
+        mode,
+        prompt,
+        i2vMode,
+        imageUrl,
+      } = e.detail;
 
       if (incomingDraft) {
         applyRecreateDraft(incomingDraft);
@@ -790,22 +888,25 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     setUploading('referenceMaterials', true);
     try {
       const existingCount = draft.referenceMaterials.length;
-      const capacity = Math.max(0, MAX_REFERENCE_MATERIALS - existingCount);
+      const capacity = Math.max(0, maxReferenceMaterials - existingCount);
       if (capacity <= 0) return;
       const targetFiles = files.slice(0, capacity);
       const uploaded = await uploadStudioMediaFiles(targetFiles);
-      if (!uploaded.length) {
+      const supportedAssets = isHappyHorse
+        ? uploaded.filter((item) => item.mediaType === 'image')
+        : uploaded;
+      if (!supportedAssets.length) {
         throw new Error('upload failed');
       }
       setDraft((prev) =>
         mergeStudioDraft(prev, {
           referenceMaterials: [
             ...prev.referenceMaterials,
-            ...uploaded.slice(
+            ...supportedAssets.slice(
               0,
               Math.max(
                 0,
-                MAX_REFERENCE_MATERIALS - prev.referenceMaterials.length
+                maxReferenceMaterials - prev.referenceMaterials.length
               )
             ),
           ],
@@ -836,7 +937,10 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
       const task = await generateVideoTask(payload);
       const lifecycle = toLifecycle(task.status);
 
-      if (lifecycle === 'failed' && shouldRedirectToPricing(task.errorMessage)) {
+      if (
+        lifecycle === 'failed' &&
+        shouldRedirectToPricing(task.errorMessage)
+      ) {
         updateLifecycle('failed');
         setActiveTaskId(null);
         setGuestPendingTaskId(null);
@@ -896,20 +1000,41 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
     () => Object.values(uploadingMap).some(Boolean),
     [uploadingMap]
   );
+  const isHappyHorse = isHappyHorseModelKey(draft.modelKey);
+  const modelOption = getVideoStudioModelOption(draft.modelKey);
+  const maxReferenceMaterials = isHappyHorse
+    ? MAX_HAPPYHORSE_REFERENCE_IMAGES
+    : MAX_WAN_REFERENCE_MATERIALS;
+  const referenceAccept: UploadMediaAccept = isHappyHorse
+    ? 'image'
+    : 'image-video';
+  const estimatedDurationSeconds =
+    isHappyHorse && draft.mode === 'video-edit'
+      ? Math.min(15, Math.max(3, draft.editVideo?.durationSeconds || 15))
+      : draft.duration || 5;
   const estimatedTaskCostCredits = useMemo(
     () =>
       getClientVideoCreditsCost({
         resolution: draft.resolution,
-        durationSeconds: draft.duration || 5,
+        durationSeconds: estimatedDurationSeconds,
+        modelKey: draft.modelKey,
       }),
-    [draft.duration, draft.resolution]
+    [draft.modelKey, draft.resolution, estimatedDurationSeconds]
   );
 
-  const durationOptions =
-    draft.mode === 'video-edit' ? copy.editDurationValues : copy.durationValues;
+  const durationOptions = isHappyHorse
+    ? draft.mode === 'video-edit'
+      ? [0]
+      : [3, 5, 8, 10, 15]
+    : draft.mode === 'video-edit'
+      ? copy.editDurationValues
+      : copy.durationValues;
 
-  const ratioEnabled = draft.mode !== 'image-to-video';
+  const ratioEnabled =
+    draft.mode !== 'image-to-video' &&
+    !(isHappyHorse && draft.mode === 'video-edit');
   const showAudioSetting = draft.mode === 'video-edit';
+  const showUploadSection = !(isHappyHorse && draft.mode === 'text-to-video');
   const showGuestTaskBanner = isGuestUser && Boolean(guestPendingTaskId);
 
   return (
@@ -970,6 +1095,46 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
 
       <div className="space-y-5">
         <div className="space-y-2">
+          <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
+            Model
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsModelMenuOpen((value) => !value)}
+              className="flex w-full items-center justify-between rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-left text-sm font-semibold text-zinc-800 transition hover:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950/80 dark:text-zinc-100 dark:hover:border-zinc-500"
+            >
+              <span>{modelOption.label}</span>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 text-zinc-500 transition-transform',
+                  isModelMenuOpen && 'rotate-180'
+                )}
+              />
+            </button>
+            {isModelMenuOpen ? (
+              <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-950">
+                {VIDEO_STUDIO_MODEL_OPTIONS.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => applyModelChange(option.key)}
+                    className={cn(
+                      'flex w-full items-center justify-between px-3 py-2 text-left text-sm transition',
+                      draft.modelKey === option.key
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-200 dark:text-zinc-900'
+                        : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.modeLabel}
@@ -980,7 +1145,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
               <button
                 key={mode}
                 type="button"
-                onClick={() => updateDraft({ mode })}
+                onClick={() => applyModeChange(mode)}
                 className={cn(
                   'rounded-lg border px-2 py-2 text-xs font-semibold whitespace-nowrap transition',
                   draft.mode === mode
@@ -994,7 +1159,7 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           </div>
         </div>
 
-        {draft.mode === 'image-to-video' ? (
+        {draft.mode === 'image-to-video' && !isHappyHorse ? (
           <div className="space-y-2">
             <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
               {copy.i2vModeLabel}
@@ -1036,91 +1201,23 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold tracking-[0.14em] whitespace-nowrap text-zinc-500 uppercase dark:text-zinc-400">
-              {copy.uploadLabel}
-            </label>
-          </div>
+        {showUploadSection ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold tracking-[0.14em] whitespace-nowrap text-zinc-500 uppercase dark:text-zinc-400">
+                {copy.uploadLabel}
+              </label>
+            </div>
 
-          {draft.mode === 'text-to-video' ? (
-            <FileBadge
-              label={copy.uploads.textAudio}
-              file={draft.textAudio}
-              uploading={Boolean(uploadingMap.textAudio)}
-              onUpload={(event) => void handleUploadSingle('textAudio', event)}
-              onClear={() => updateDraft({ textAudio: null })}
-              icon={<Music2 className="h-3.5 w-3.5" />}
-              accept="audio"
-              uploadAction={copy.uploads.addFile}
-              replaceAction={copy.uploads.replaceFile}
-              removeAction={copy.uploads.removeFile}
-              uploadingText={copy.uploads.uploading}
-            />
-          ) : null}
-
-          {draft.mode === 'image-to-video' ? (
-            <div className="grid gap-2">
-              {draft.i2vMode === 'first-frame' ||
-              draft.i2vMode === 'first-last-frame' ? (
-                <FileBadge
-                  label={copy.uploads.i2vFirstFrame}
-                  file={draft.imageFirstFrame}
-                  uploading={Boolean(uploadingMap.imageFirstFrame)}
-                  onUpload={(event) =>
-                    void handleUploadSingle('imageFirstFrame', event)
-                  }
-                  onClear={() => updateDraft({ imageFirstFrame: null })}
-                  icon={<ImagePlus className="h-3.5 w-3.5" />}
-                  accept="image"
-                  uploadAction={copy.uploads.addFile}
-                  replaceAction={copy.uploads.replaceFile}
-                  removeAction={copy.uploads.removeFile}
-                  uploadingText={copy.uploads.uploading}
-                />
-              ) : null}
-              {draft.i2vMode === 'first-last-frame' ? (
-                <FileBadge
-                  label={copy.uploads.i2vLastFrame}
-                  file={draft.imageLastFrame}
-                  uploading={Boolean(uploadingMap.imageLastFrame)}
-                  onUpload={(event) =>
-                    void handleUploadSingle('imageLastFrame', event)
-                  }
-                  onClear={() => updateDraft({ imageLastFrame: null })}
-                  icon={<ImagePlus className="h-3.5 w-3.5" />}
-                  accept="image"
-                  uploadAction={copy.uploads.addFile}
-                  replaceAction={copy.uploads.replaceFile}
-                  removeAction={copy.uploads.removeFile}
-                  uploadingText={copy.uploads.uploading}
-                />
-              ) : null}
-              {draft.i2vMode === 'video-continuation' ? (
-                <FileBadge
-                  label={copy.uploads.i2vFirstClip}
-                  file={draft.imageFirstClip}
-                  uploading={Boolean(uploadingMap.imageFirstClip)}
-                  onUpload={(event) =>
-                    void handleUploadSingle('imageFirstClip', event)
-                  }
-                  onClear={() => updateDraft({ imageFirstClip: null })}
-                  icon={<Film className="h-3.5 w-3.5" />}
-                  accept="video"
-                  uploadAction={copy.uploads.addFile}
-                  replaceAction={copy.uploads.replaceFile}
-                  removeAction={copy.uploads.removeFile}
-                  uploadingText={copy.uploads.uploading}
-                />
-              ) : null}
+            {draft.mode === 'text-to-video' && !isHappyHorse ? (
               <FileBadge
-                label={copy.uploads.i2vAudio}
-                file={draft.imageAudio}
-                uploading={Boolean(uploadingMap.imageAudio)}
+                label={copy.uploads.textAudio}
+                file={draft.textAudio}
+                uploading={Boolean(uploadingMap.textAudio)}
                 onUpload={(event) =>
-                  void handleUploadSingle('imageAudio', event)
+                  void handleUploadSingle('textAudio', event)
                 }
-                onClear={() => updateDraft({ imageAudio: null })}
+                onClear={() => updateDraft({ textAudio: null })}
                 icon={<Music2 className="h-3.5 w-3.5" />}
                 accept="audio"
                 uploadAction={copy.uploads.addFile}
@@ -1128,80 +1225,210 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 removeAction={copy.uploads.removeFile}
                 uploadingText={copy.uploads.uploading}
               />
-            </div>
-          ) : null}
+            ) : null}
 
-          {draft.mode === 'reference-to-video' ? (
-            <div className="space-y-2">
-              <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3 dark:border-zinc-700/70 dark:bg-zinc-950/40">
-                <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
-                  {copy.uploads.referenceMaterials}
-                </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  {copy.uploads.materialLimitHint}
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 transition hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500">
-                    <UploadCloud className="h-3.5 w-3.5" />
-                    {copy.uploads.addFile}
-                    <input
-                      type="file"
-                      accept={acceptByType('image-video')}
-                      multiple
-                      className="hidden"
-                      onChange={(event) =>
-                        void handleUploadReferenceMaterials(event)
-                      }
-                    />
-                  </label>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {copy.uploads.materialsCount}:{' '}
-                    {draft.referenceMaterials.length}/{MAX_REFERENCE_MATERIALS}
-                  </span>
-                </div>
-                {uploadingMap.referenceMaterials ? (
-                  <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    {copy.uploads.uploading}
-                  </p>
+            {draft.mode === 'image-to-video' ? (
+              <div className="grid gap-2">
+                {draft.i2vMode === 'first-frame' ||
+                draft.i2vMode === 'first-last-frame' ? (
+                  <FileBadge
+                    label={copy.uploads.i2vFirstFrame}
+                    file={draft.imageFirstFrame}
+                    uploading={Boolean(uploadingMap.imageFirstFrame)}
+                    onUpload={(event) =>
+                      void handleUploadSingle('imageFirstFrame', event)
+                    }
+                    onClear={() => updateDraft({ imageFirstFrame: null })}
+                    icon={<ImagePlus className="h-3.5 w-3.5" />}
+                    accept="image"
+                    uploadAction={copy.uploads.addFile}
+                    replaceAction={copy.uploads.replaceFile}
+                    removeAction={copy.uploads.removeFile}
+                    uploadingText={copy.uploads.uploading}
+                  />
                 ) : null}
-                {draft.referenceMaterials.length > 0 ? (
-                  <div className="mt-3 space-y-1">
-                    {draft.referenceMaterials.map((item, index) => (
-                      <div
-                        key={`${item.url}-${index}`}
-                        className="flex items-center justify-between rounded-md border border-zinc-200 bg-white/80 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900/60"
-                      >
-                        <span className="truncate text-zinc-700 dark:text-zinc-300">
-                          [{item.mediaType}] {item.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateDraft({
-                              referenceMaterials:
-                                draft.referenceMaterials.filter(
-                                  (_, itemIndex) => itemIndex !== index
-                                ),
-                            })
-                          }
-                          className="text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-300"
+                {!isHappyHorse && draft.i2vMode === 'first-last-frame' ? (
+                  <FileBadge
+                    label={copy.uploads.i2vLastFrame}
+                    file={draft.imageLastFrame}
+                    uploading={Boolean(uploadingMap.imageLastFrame)}
+                    onUpload={(event) =>
+                      void handleUploadSingle('imageLastFrame', event)
+                    }
+                    onClear={() => updateDraft({ imageLastFrame: null })}
+                    icon={<ImagePlus className="h-3.5 w-3.5" />}
+                    accept="image"
+                    uploadAction={copy.uploads.addFile}
+                    replaceAction={copy.uploads.replaceFile}
+                    removeAction={copy.uploads.removeFile}
+                    uploadingText={copy.uploads.uploading}
+                  />
+                ) : null}
+                {!isHappyHorse && draft.i2vMode === 'video-continuation' ? (
+                  <FileBadge
+                    label={copy.uploads.i2vFirstClip}
+                    file={draft.imageFirstClip}
+                    uploading={Boolean(uploadingMap.imageFirstClip)}
+                    onUpload={(event) =>
+                      void handleUploadSingle('imageFirstClip', event)
+                    }
+                    onClear={() => updateDraft({ imageFirstClip: null })}
+                    icon={<Film className="h-3.5 w-3.5" />}
+                    accept="video"
+                    uploadAction={copy.uploads.addFile}
+                    replaceAction={copy.uploads.replaceFile}
+                    removeAction={copy.uploads.removeFile}
+                    uploadingText={copy.uploads.uploading}
+                  />
+                ) : null}
+                {!isHappyHorse ? (
+                  <FileBadge
+                    label={copy.uploads.i2vAudio}
+                    file={draft.imageAudio}
+                    uploading={Boolean(uploadingMap.imageAudio)}
+                    onUpload={(event) =>
+                      void handleUploadSingle('imageAudio', event)
+                    }
+                    onClear={() => updateDraft({ imageAudio: null })}
+                    icon={<Music2 className="h-3.5 w-3.5" />}
+                    accept="audio"
+                    uploadAction={copy.uploads.addFile}
+                    replaceAction={copy.uploads.replaceFile}
+                    removeAction={copy.uploads.removeFile}
+                    uploadingText={copy.uploads.uploading}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
+            {draft.mode === 'reference-to-video' ? (
+              <div className="space-y-2">
+                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3 dark:border-zinc-700/70 dark:bg-zinc-950/40">
+                  <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                    {isHappyHorse
+                      ? 'Reference images (1-9)'
+                      : copy.uploads.referenceMaterials}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    {isHappyHorse
+                      ? 'Upload image references only for HappyHorse 1.0.'
+                      : copy.uploads.materialLimitHint}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 transition hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500">
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      {copy.uploads.addFile}
+                      <input
+                        type="file"
+                        accept={acceptByType(referenceAccept)}
+                        multiple
+                        className="hidden"
+                        onChange={(event) =>
+                          void handleUploadReferenceMaterials(event)
+                        }
+                      />
+                    </label>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {copy.uploads.materialsCount}:{' '}
+                      {draft.referenceMaterials.length}/{maxReferenceMaterials}
+                    </span>
+                  </div>
+                  {uploadingMap.referenceMaterials ? (
+                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      {copy.uploads.uploading}
+                    </p>
+                  ) : null}
+                  {draft.referenceMaterials.length > 0 ? (
+                    <div className="mt-3 space-y-1">
+                      {draft.referenceMaterials.map((item, index) => (
+                        <div
+                          key={`${item.url}-${index}`}
+                          className="flex items-center justify-between rounded-md border border-zinc-200 bg-white/80 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900/60"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                          <span className="truncate text-zinc-700 dark:text-zinc-300">
+                            [{item.mediaType}] {item.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraft({
+                                referenceMaterials:
+                                  draft.referenceMaterials.filter(
+                                    (_, itemIndex) => itemIndex !== index
+                                  ),
+                              })
+                            }
+                            className="text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-300"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                {!isHappyHorse ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <FileBadge
+                      label={copy.uploads.referenceFirstFrame}
+                      file={draft.referenceFirstFrame}
+                      uploading={Boolean(uploadingMap.referenceFirstFrame)}
+                      onUpload={(event) =>
+                        void handleUploadSingle('referenceFirstFrame', event)
+                      }
+                      onClear={() => updateDraft({ referenceFirstFrame: null })}
+                      icon={<ImagePlus className="h-3.5 w-3.5" />}
+                      accept="image"
+                      uploadAction={copy.uploads.addFile}
+                      replaceAction={copy.uploads.replaceFile}
+                      removeAction={copy.uploads.removeFile}
+                      uploadingText={copy.uploads.uploading}
+                    />
+                    <FileBadge
+                      label={copy.uploads.referenceVoice}
+                      file={draft.referenceVoice}
+                      uploading={Boolean(uploadingMap.referenceVoice)}
+                      onUpload={(event) =>
+                        void handleUploadSingle('referenceVoice', event)
+                      }
+                      onClear={() => updateDraft({ referenceVoice: null })}
+                      icon={<Music2 className="h-3.5 w-3.5" />}
+                      accept="audio"
+                      uploadAction={copy.uploads.addFile}
+                      replaceAction={copy.uploads.replaceFile}
+                      removeAction={copy.uploads.removeFile}
+                      uploadingText={copy.uploads.uploading}
+                    />
                   </div>
                 ) : null}
               </div>
-              <div className="grid gap-2 sm:grid-cols-2">
+            ) : null}
+
+            {draft.mode === 'video-edit' ? (
+              <div className="grid gap-2">
                 <FileBadge
-                  label={copy.uploads.referenceFirstFrame}
-                  file={draft.referenceFirstFrame}
-                  uploading={Boolean(uploadingMap.referenceFirstFrame)}
+                  label={copy.uploads.editVideo}
+                  file={draft.editVideo}
+                  uploading={Boolean(uploadingMap.editVideo)}
                   onUpload={(event) =>
-                    void handleUploadSingle('referenceFirstFrame', event)
+                    void handleUploadSingle('editVideo', event)
                   }
-                  onClear={() => updateDraft({ referenceFirstFrame: null })}
+                  onClear={() => updateDraft({ editVideo: null })}
+                  icon={<Film className="h-3.5 w-3.5" />}
+                  accept="video"
+                  uploadAction={copy.uploads.addFile}
+                  replaceAction={copy.uploads.replaceFile}
+                  removeAction={copy.uploads.removeFile}
+                  uploadingText={copy.uploads.uploading}
+                />
+                <FileBadge
+                  label={copy.uploads.editReferenceImage}
+                  file={draft.editReferenceImage}
+                  uploading={Boolean(uploadingMap.editReferenceImage)}
+                  onUpload={(event) =>
+                    void handleUploadSingle('editReferenceImage', event)
+                  }
+                  onClear={() => updateDraft({ editReferenceImage: null })}
                   icon={<ImagePlus className="h-3.5 w-3.5" />}
                   accept="image"
                   uploadAction={copy.uploads.addFile}
@@ -1209,60 +1436,10 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                   removeAction={copy.uploads.removeFile}
                   uploadingText={copy.uploads.uploading}
                 />
-                <FileBadge
-                  label={copy.uploads.referenceVoice}
-                  file={draft.referenceVoice}
-                  uploading={Boolean(uploadingMap.referenceVoice)}
-                  onUpload={(event) =>
-                    void handleUploadSingle('referenceVoice', event)
-                  }
-                  onClear={() => updateDraft({ referenceVoice: null })}
-                  icon={<Music2 className="h-3.5 w-3.5" />}
-                  accept="audio"
-                  uploadAction={copy.uploads.addFile}
-                  replaceAction={copy.uploads.replaceFile}
-                  removeAction={copy.uploads.removeFile}
-                  uploadingText={copy.uploads.uploading}
-                />
               </div>
-            </div>
-          ) : null}
-
-          {draft.mode === 'video-edit' ? (
-            <div className="grid gap-2">
-              <FileBadge
-                label={copy.uploads.editVideo}
-                file={draft.editVideo}
-                uploading={Boolean(uploadingMap.editVideo)}
-                onUpload={(event) =>
-                  void handleUploadSingle('editVideo', event)
-                }
-                onClear={() => updateDraft({ editVideo: null })}
-                icon={<Film className="h-3.5 w-3.5" />}
-                accept="video"
-                uploadAction={copy.uploads.addFile}
-                replaceAction={copy.uploads.replaceFile}
-                removeAction={copy.uploads.removeFile}
-                uploadingText={copy.uploads.uploading}
-              />
-              <FileBadge
-                label={copy.uploads.editReferenceImage}
-                file={draft.editReferenceImage}
-                uploading={Boolean(uploadingMap.editReferenceImage)}
-                onUpload={(event) =>
-                  void handleUploadSingle('editReferenceImage', event)
-                }
-                onClear={() => updateDraft({ editReferenceImage: null })}
-                icon={<ImagePlus className="h-3.5 w-3.5" />}
-                accept="image"
-                uploadAction={copy.uploads.addFile}
-                replaceAction={copy.uploads.replaceFile}
-                removeAction={copy.uploads.removeFile}
-                uploadingText={copy.uploads.uploading}
-              />
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
@@ -1282,7 +1459,11 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                       : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
                   )}
                 >
-                  {value === 0 ? 'Full' : `${value}s`}
+                  {value === 0
+                    ? isHappyHorse && draft.mode === 'video-edit'
+                      ? 'Source'
+                      : 'Full'
+                    : `${value}s`}
                 </button>
               ))}
             </div>
@@ -1360,6 +1541,32 @@ export function WorkspacePanel({ copy, errors }: WorkspacePanelProps) {
                 )
               )}
             </div>
+          </div>
+        ) : null}
+
+        {isHappyHorse ? (
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400">
+              Seed
+            </label>
+            <input
+              value={draft.seed}
+              onChange={(event) => {
+                const value = event.target.value.trim();
+                if (value === '' || /^\d+$/.test(value)) {
+                  updateDraft({ seed: value.slice(0, 10) });
+                }
+              }}
+              inputMode="numeric"
+              placeholder="0"
+              className="h-10 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-800 transition outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/80 dark:text-zinc-100 dark:focus:border-zinc-300"
+            />
+            <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+              Random initialization value, ranging from 0 to 2147483647. Leave
+              it blank for automatic system assignment. Locking this value helps
+              stabilize generation results, though minor differences may still
+              occur due to the model&apos;s inherent randomness.
+            </p>
           </div>
         ) : null}
 

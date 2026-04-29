@@ -27,6 +27,12 @@ import {
 } from '@/shared/lib/prompt-moderation-messages';
 import { cn } from '@/shared/lib/utils';
 import {
+  getVideoStudioModelOption,
+  isHappyHorseModelKey,
+  VIDEO_STUDIO_MODEL_OPTIONS,
+  VideoStudioModelKey,
+} from '@/shared/lib/video-models';
+import {
   buildStudioQueryFromDraft,
   buildVideoTaskPayloadFromDraft,
   VIDEO_STUDIO_DEFAULT_DRAFT,
@@ -45,7 +51,15 @@ type I2VMode = 'first-frame' | 'first-last-frame' | 'video-continuation';
 type Resolution = '720p' | '1080p';
 type Ratio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
 type AudioSetting = 'auto' | 'origin';
-type OpenParam = 'mode' | 'duration' | 'resolution' | 'ratio' | 'audio' | null;
+type OpenParam =
+  | 'model'
+  | 'mode'
+  | 'duration'
+  | 'resolution'
+  | 'ratio'
+  | 'audio'
+  | 'seed'
+  | null;
 
 type GenerateResponsePayload = {
   code: number;
@@ -143,13 +157,13 @@ function CompactUploadZone({
         'relative flex min-h-[52px] min-w-[88px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed px-2.5 py-2 transition-all duration-200',
         hasFile
           ? 'border-primary/40 bg-primary/8'
-          : 'border-foreground/12 bg-background/30 hover:border-primary/35 hover:bg-primary/5 dark:border-white/12 dark:bg-white/[0.025] dark:hover:border-primary/40 dark:hover:bg-white/5',
+          : 'border-foreground/12 bg-background/30 hover:border-primary/35 hover:bg-primary/5 dark:hover:border-primary/40 dark:border-white/12 dark:bg-white/[0.025] dark:hover:bg-white/5',
         className
       )}
     >
       {hasFile ? (
         <div className="flex items-center gap-1">
-          <span className="text-primary max-w-[90px] truncate text-[10px] font-medium leading-tight">
+          <span className="text-primary max-w-[90px] truncate text-[10px] leading-tight font-medium">
             ✓ {fileLabel || displayLabel}
           </span>
           {onClear && (
@@ -160,7 +174,7 @@ function CompactUploadZone({
                 onClear();
               }}
               type="button"
-              className="text-foreground/35 hover:text-foreground/70 dark:text-white/35 dark:hover:text-white/70 shrink-0 leading-none"
+              className="text-foreground/35 hover:text-foreground/70 shrink-0 leading-none dark:text-white/35 dark:hover:text-white/70"
             >
               ×
             </button>
@@ -174,7 +188,10 @@ function CompactUploadZone({
           <p className="text-foreground/45 text-center text-[10px] leading-tight dark:text-white/38">
             {uploading ? 'Uploading' : displayLabel}
             {!uploading && optional && (
-              <span className="text-foreground/28 dark:text-white/22"> opt</span>
+              <span className="text-foreground/28 dark:text-white/22">
+                {' '}
+                opt
+              </span>
             )}
           </p>
         </>
@@ -206,9 +223,9 @@ function ParamChip({
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+        'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
         isActive
-          ? 'bg-primary/12 text-primary ring-1 ring-primary/20 dark:bg-primary/18 dark:text-primary dark:ring-primary/25'
+          ? 'bg-primary/12 text-primary ring-primary/20 dark:bg-primary/18 dark:text-primary dark:ring-primary/25 ring-1'
           : 'bg-foreground/[0.06] text-foreground/72 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/14 dark:hover:text-white/85'
       )}
     >
@@ -221,7 +238,7 @@ function ParamChip({
 
 function ParamDropdown({ children }: { children: ReactNode }) {
   return (
-    <div className="absolute bottom-full left-0 z-50 mb-1.5 flex items-center gap-1.5 rounded-xl border border-foreground/10 bg-background/96 px-3 py-2 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
+    <div className="border-foreground/10 bg-background/96 absolute bottom-full left-0 z-50 mb-1.5 flex items-center gap-1.5 rounded-xl border px-3 py-2 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
       {children}
     </div>
   );
@@ -255,6 +272,9 @@ export function Hero({
   } = useAppContext();
 
   // Tab state
+  const [modelKey, setModelKey] = useState<VideoStudioModelKey>(
+    VIDEO_STUDIO_DEFAULT_DRAFT.modelKey
+  );
   const [activeTab, setActiveTab] = useState<MainTab>(defaultTab);
   const [prompt, setPrompt] = useState('');
   const [openParam, setOpenParam] = useState<OpenParam>(null);
@@ -300,6 +320,7 @@ export function Hero({
   const [resolution, setResolution] = useState<Resolution>('1080p');
   const [ratio, setRatio] = useState<Ratio>('16:9');
   const [audioSetting, setAudioSetting] = useState<AudioSetting>('auto');
+  const [seed, setSeed] = useState('');
 
   const bottomBarRef = useRef<HTMLDivElement>(null);
 
@@ -323,19 +344,57 @@ export function Hero({
     setActiveTab(defaultTab);
     setPrompt((prev) => prev || '');
     setOpenParam(null);
-    setDuration(defaultTab === 'video-edit' ? 0 : 5);
-  }, [defaultTab]);
+    setDuration((prev) =>
+      normalizeDurationForModel(modelKey, defaultTab, prev)
+    );
+  }, [defaultTab, modelKey]);
+
+  function normalizeDurationForModel(
+    nextModelKey: VideoStudioModelKey,
+    mode: MainTab,
+    currentDuration: number
+  ) {
+    if (isHappyHorseModelKey(nextModelKey)) {
+      if (mode === 'video-edit') return 0;
+      return currentDuration >= 3 && currentDuration <= 15
+        ? currentDuration
+        : 5;
+    }
+    if (mode === 'video-edit') {
+      return currentDuration === 0 ||
+        currentDuration === 5 ||
+        currentDuration === 10
+        ? currentDuration
+        : 0;
+    }
+    return currentDuration === 0 ? 5 : currentDuration;
+  }
+
+  function switchModel(nextModelKey: VideoStudioModelKey) {
+    setModelKey(nextModelKey);
+    setOpenParam(null);
+    setDuration((prev) =>
+      normalizeDurationForModel(nextModelKey, activeTab, prev)
+    );
+    if (isHappyHorseModelKey(nextModelKey)) {
+      setI2vMode('first-frame');
+      setTextAudio(null);
+      setI2vLastFrame(null);
+      setI2vClip(null);
+      setI2vAudio(null);
+      setRefFirstFrame(null);
+      setRefVoice(null);
+      setRefMaterials((prev) =>
+        prev.filter((item) => item.mediaType === 'image').slice(0, 9)
+      );
+    }
+  }
 
   function switchTab(key: string) {
-    setActiveTab(key as MainTab);
+    const nextMode = key as MainTab;
+    setActiveTab(nextMode);
     setOpenParam(null);
-    if (key === 'video-edit') {
-      setDuration((prev) =>
-        prev === 0 || prev === 5 || prev === 10 ? prev : 0
-      );
-    } else {
-      setDuration((prev) => (prev === 0 ? 5 : prev));
-    }
+    setDuration((prev) => normalizeDurationForModel(modelKey, nextMode, prev));
   }
 
   const setUploadingState = (key: string, value: boolean) => {
@@ -403,11 +462,13 @@ export function Hero({
       ...VIDEO_STUDIO_DEFAULT_DRAFT,
       id: `hero-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       source: 'hero',
+      modelKey,
       mode: activeTab,
       prompt,
       ratio,
       resolution,
       duration,
+      seed,
       i2vMode,
       audioSetting,
       textAudio,
@@ -456,6 +517,12 @@ export function Hero({
     }
     if (error.code === 'REFERENCE_MATERIAL_REQUIRED') {
       return 'Upload at least one reference image or video.';
+    }
+    if (error.code === 'REFERENCE_IMAGE_REQUIRED') {
+      return error.message || 'Upload at least one reference image.';
+    }
+    if (error.code === 'SEED_INVALID') {
+      return error.message || 'Seed must be an integer from 0 to 2147483647.';
     }
     return 'Upload a source video before editing.';
   };
@@ -568,16 +635,32 @@ export function Hero({
     titleParts = section.title.split(highlightText, 2);
   }
 
-  const durationLabel = duration === 0 ? 'Full' : `${duration}s`;
-  const showRatio = activeTab !== 'image-to-video';
+  const isHappyHorse = isHappyHorseModelKey(modelKey);
+  const modelOption = getVideoStudioModelOption(modelKey);
+  const durationLabel =
+    isHappyHorse && activeTab === 'video-edit'
+      ? 'Source'
+      : duration === 0
+        ? 'Full'
+        : `${duration}s`;
+  const showRatio =
+    activeTab !== 'image-to-video' &&
+    !(isHappyHorse && activeTab === 'video-edit');
+  const maxReferenceMaterials = isHappyHorse ? 9 : 5;
+  const referenceAccept = isHappyHorse ? 'image/*' : 'image/*,video/*';
   const hasUploading = Object.values(uploading).some(Boolean);
+  const estimatedDurationSeconds =
+    isHappyHorse && activeTab === 'video-edit'
+      ? Math.min(15, Math.max(3, editVideo?.durationSeconds || 15))
+      : duration || 5;
   const estimatedTaskCostCredits = useMemo(
     () =>
       getClientVideoCreditsCost({
         resolution,
-        durationSeconds: duration || 5,
+        durationSeconds: estimatedDurationSeconds,
+        modelKey,
       }),
-    [duration, resolution]
+    [estimatedDurationSeconds, modelKey, resolution]
   );
   const placeholder =
     tabs.find((t) => t.key === activeTab)?.placeholder ??
@@ -585,8 +668,11 @@ export function Hero({
   const activeTabLabel =
     tabs.find((t) => t.key === activeTab)?.label ?? 'Text to Video';
 
-  const durationOptions =
-    activeTab === 'video-edit'
+  const durationOptions = isHappyHorse
+    ? activeTab === 'video-edit'
+      ? [{ label: 'Source', value: 0 }]
+      : [3, 5, 8, 10, 15].map((d) => ({ label: `${d}s`, value: d }))
+    : activeTab === 'video-edit'
       ? [
           { label: 'Full', value: 0 },
           { label: '5s', value: 5 },
@@ -644,7 +730,7 @@ export function Hero({
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <div className="relative z-10 w-full max-w-3xl px-4 pt-24 pb-16 text-center">
+      <div className="relative z-10 w-full max-w-[58rem] px-4 pt-24 pb-16 text-center">
         {/* Badge */}
         {badgeText && (
           <div className="border-primary/18 bg-background/70 dark:bg-primary/10 mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 shadow-sm backdrop-blur-sm">
@@ -679,10 +765,9 @@ export function Hero({
         )}
 
         {/* ── Input card ────────────────────────────────────────────────────── */}
-        <div className="border-foreground/10 bg-background/72 relative mx-auto max-w-3xl rounded-2xl border p-5 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
-
+        <div className="border-foreground/10 bg-background/72 relative mx-auto w-full max-w-[58rem] rounded-2xl border p-5 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
           {/* ── Text to Video uploads ──────────────────────────────────────── */}
-          {activeTab === 'text-to-video' && (
+          {activeTab === 'text-to-video' && !isHappyHorse && (
             <div className="mb-3 flex flex-wrap gap-2">
               <CompactUploadZone
                 label="Optional audio track (mp3 / wav)"
@@ -703,27 +788,29 @@ export function Hero({
           {activeTab === 'image-to-video' && (
             <div className="mb-3 space-y-2">
               {/* Sub-tabs */}
-              <div className="flex flex-wrap gap-1.5">
-                {I2V_MODES.map((m) => (
-                  <button
-                    key={m.key}
-                    onClick={() => {
-                      setI2vMode(m.key);
-                      setI2vFirstFrame(null);
-                      setI2vLastFrame(null);
-                      setI2vClip(null);
-                    }}
-                    className={cn(
-                      'rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
-                      i2vMode === m.key
-                        ? 'bg-primary text-primary-foreground font-semibold'
-                        : 'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/15 dark:hover:text-white/85'
-                    )}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
+              {!isHappyHorse && (
+                <div className="flex flex-wrap gap-1.5">
+                  {I2V_MODES.map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() => {
+                        setI2vMode(m.key);
+                        setI2vFirstFrame(null);
+                        setI2vLastFrame(null);
+                        setI2vClip(null);
+                      }}
+                      className={cn(
+                        'rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
+                        i2vMode === m.key
+                          ? 'bg-primary text-primary-foreground font-semibold'
+                          : 'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/15 dark:hover:text-white/85'
+                      )}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <p className="text-foreground/50 px-0.5 text-left text-[11px] dark:text-white/45">
                 Image-to-video follows source framing; manual aspect ratio is
                 not supported.
@@ -794,18 +881,20 @@ export function Hero({
                     onClear={() => setI2vClip(null)}
                   />
                 )}
-                <CompactUploadZone
-                  label="Optional driving audio (mp3 / wav)"
-                  shortLabel="Driving audio"
-                  optional
-                  file={i2vAudio}
-                  uploading={Boolean(uploading.i2vAudio)}
-                  accept="audio/*"
-                  onUpload={(event) =>
-                    void uploadSingle('i2vAudio', event, setI2vAudio)
-                  }
-                  onClear={() => setI2vAudio(null)}
-                />
+                {!isHappyHorse && (
+                  <CompactUploadZone
+                    label="Optional driving audio (mp3 / wav)"
+                    shortLabel="Driving audio"
+                    optional
+                    file={i2vAudio}
+                    uploading={Boolean(uploading.i2vAudio)}
+                    accept="audio/*"
+                    onUpload={(event) =>
+                      void uploadSingle('i2vAudio', event, setI2vAudio)
+                    }
+                    onClear={() => setI2vAudio(null)}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -814,11 +903,15 @@ export function Hero({
           {activeTab === 'reference-to-video' && (
             <div className="mb-3 flex flex-wrap gap-2">
               <CompactUploadZone
-                label="Add reference images or videos (up to 5)"
-                shortLabel="Ref images / videos"
+                label={
+                  isHappyHorse
+                    ? 'Add reference images (up to 9)'
+                    : 'Add reference images or videos (up to 5)'
+                }
+                shortLabel={isHappyHorse ? 'Ref images' : 'Ref images / videos'}
                 file={refMaterials}
                 uploading={Boolean(uploading.refMaterials)}
-                accept="image/*,video/*"
+                accept={referenceAccept}
                 multiple
                 onUpload={(event) =>
                   void uploadMultiple(
@@ -826,42 +919,54 @@ export function Hero({
                     event,
                     (assets) => {
                       setRefMaterials((prev) =>
-                        [...prev, ...assets].slice(0, 5)
+                        [
+                          ...prev,
+                          ...(isHappyHorse
+                            ? assets.filter(
+                                (item) => item.mediaType === 'image'
+                              )
+                            : assets),
+                        ].slice(0, maxReferenceMaterials)
                       );
-                    }
+                    },
+                    Math.max(0, maxReferenceMaterials - refMaterials.length)
                   )
                 }
                 onClear={() => setRefMaterials([])}
                 className="min-w-[120px]"
               />
-              <CompactUploadZone
-                label="First frame image"
-                shortLabel="First frame"
-                optional
-                file={refFirstFrame}
-                uploading={Boolean(uploading.refFirstFrame)}
-                accept="image/*"
-                onUpload={(event) =>
-                  void uploadSingle(
-                    'refFirstFrame',
-                    event,
-                    setRefFirstFrame
-                  )
-                }
-                onClear={() => setRefFirstFrame(null)}
-              />
-              <CompactUploadZone
-                label="Reference voice (wav / mp3)"
-                shortLabel="Ref voice"
-                optional
-                file={refVoice}
-                uploading={Boolean(uploading.refVoice)}
-                accept="audio/*"
-                onUpload={(event) =>
-                  void uploadSingle('refVoice', event, setRefVoice)
-                }
-                onClear={() => setRefVoice(null)}
-              />
+              {!isHappyHorse && (
+                <>
+                  <CompactUploadZone
+                    label="First frame image"
+                    shortLabel="First frame"
+                    optional
+                    file={refFirstFrame}
+                    uploading={Boolean(uploading.refFirstFrame)}
+                    accept="image/*"
+                    onUpload={(event) =>
+                      void uploadSingle(
+                        'refFirstFrame',
+                        event,
+                        setRefFirstFrame
+                      )
+                    }
+                    onClear={() => setRefFirstFrame(null)}
+                  />
+                  <CompactUploadZone
+                    label="Reference voice (wav / mp3)"
+                    shortLabel="Ref voice"
+                    optional
+                    file={refVoice}
+                    uploading={Boolean(uploading.refVoice)}
+                    accept="audio/*"
+                    onUpload={(event) =>
+                      void uploadSingle('refVoice', event, setRefVoice)
+                    }
+                    onClear={() => setRefVoice(null)}
+                  />
+                </>
+              )}
             </div>
           )}
 
@@ -869,7 +974,11 @@ export function Hero({
           {activeTab === 'video-edit' && (
             <div className="mb-3 flex flex-wrap gap-2">
               <CompactUploadZone
-                label="Upload video to edit (mp4 / mov, 2–10s)"
+                label={
+                  isHappyHorse
+                    ? 'Upload video to edit (mp4 / mov, 3–60s)'
+                    : 'Upload video to edit (mp4 / mov, 2–10s)'
+                }
                 shortLabel="Video to edit"
                 file={editVideo}
                 uploading={Boolean(uploading.editVideo)}
@@ -911,11 +1020,48 @@ export function Hero({
           <div ref={bottomBarRef} className="relative">
             <div className="flex items-center gap-2">
               {/* Param chips */}
-              <div className="flex flex-1 flex-wrap gap-1.5">
-
-                {/* Model label — static */}
-                <div className="flex items-center rounded-lg bg-foreground/[0.06] px-3 py-1.5 text-xs font-medium text-foreground/52 dark:bg-white/8 dark:text-white/40">
-                  WAN 2.7
+              <div
+                className={cn(
+                  'flex min-w-0 flex-1 flex-nowrap gap-1.5 pb-1',
+                  openParam === null
+                    ? 'overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+                    : 'overflow-visible'
+                )}
+              >
+                {/* Model selector */}
+                <div className="relative">
+                  <ParamChip
+                    onClick={() =>
+                      setOpenParam(openParam === 'model' ? null : 'model')
+                    }
+                    isActive={openParam === 'model'}
+                  >
+                    <span>{modelOption.label}</span>
+                    <ChevronDown
+                      className={cn(
+                        'h-3 w-3 opacity-55 transition-transform duration-150',
+                        openParam === 'model' && 'rotate-180'
+                      )}
+                    />
+                  </ParamChip>
+                  {openParam === 'model' && (
+                    <div className="border-foreground/10 bg-background/96 absolute bottom-full left-0 z-50 mb-1.5 min-w-[170px] overflow-hidden rounded-xl border shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
+                      {VIDEO_STUDIO_MODEL_OPTIONS.map((option) => (
+                        <button
+                          key={option.key}
+                          onClick={() => switchModel(option.key)}
+                          className={cn(
+                            'w-full px-4 py-2.5 text-left text-xs font-medium transition-colors',
+                            modelKey === option.key
+                              ? 'text-primary bg-primary/8'
+                              : 'text-foreground/72 hover:bg-foreground/[0.05] hover:text-foreground dark:text-white/58 dark:hover:bg-white/6 dark:hover:text-white/90'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Mode selector */}
@@ -935,7 +1081,7 @@ export function Hero({
                     />
                   </ParamChip>
                   {openParam === 'mode' && (
-                    <div className="absolute bottom-full left-0 z-50 mb-1.5 min-w-[160px] overflow-hidden rounded-xl border border-foreground/10 bg-background/96 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
+                    <div className="border-foreground/10 bg-background/96 absolute bottom-full left-0 z-50 mb-1.5 min-w-[160px] overflow-hidden rounded-xl border shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
                       {tabs.map((tab) => (
                         <button
                           key={tab.key}
@@ -960,9 +1106,7 @@ export function Hero({
                 <div className="relative">
                   <ParamChip
                     onClick={() =>
-                      setOpenParam(
-                        openParam === 'duration' ? null : 'duration'
-                      )
+                      setOpenParam(openParam === 'duration' ? null : 'duration')
                     }
                     isActive={openParam === 'duration'}
                   >
@@ -974,6 +1118,12 @@ export function Hero({
                       <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4a.75.75 0 0 0-1.5 0v3.25l-1.97 1.97a.75.75 0 1 0 1.06 1.06l2.25-2.25A.75.75 0 0 0 8.75 9V5z" />
                     </svg>
                     <span>{durationLabel}</span>
+                    <ChevronDown
+                      className={cn(
+                        'h-3 w-3 opacity-55 transition-transform duration-150',
+                        openParam === 'duration' && 'rotate-180'
+                      )}
+                    />
                   </ParamChip>
                   {openParam === 'duration' && (
                     <ParamDropdown>
@@ -1014,6 +1164,12 @@ export function Hero({
                       <path d="M2 2h12v12H2V2zm1.5 1.5v9h9v-9h-9z" />
                     </svg>
                     <span>{resolution}</span>
+                    <ChevronDown
+                      className={cn(
+                        'h-3 w-3 opacity-55 transition-transform duration-150',
+                        openParam === 'resolution' && 'rotate-180'
+                      )}
+                    />
                   </ParamChip>
                   {openParam === 'resolution' && (
                     <ParamDropdown>
@@ -1062,6 +1218,12 @@ export function Hero({
                         />
                       </svg>
                       <span>{ratio}</span>
+                      <ChevronDown
+                        className={cn(
+                          'h-3 w-3 opacity-55 transition-transform duration-150',
+                          openParam === 'ratio' && 'rotate-180'
+                        )}
+                      />
                     </ParamChip>
                     {openParam === 'ratio' && (
                       <ParamDropdown>
@@ -1104,6 +1266,12 @@ export function Hero({
                       <span>
                         {audioSetting === 'auto' ? 'AI Audio' : 'Original'}
                       </span>
+                      <ChevronDown
+                        className={cn(
+                          'h-3 w-3 opacity-55 transition-transform duration-150',
+                          openParam === 'audio' && 'rotate-180'
+                        )}
+                      />
                     </ParamChip>
                     {openParam === 'audio' && (
                       <ParamDropdown>
@@ -1128,6 +1296,49 @@ export function Hero({
                           </button>
                         ))}
                       </ParamDropdown>
+                    )}
+                  </div>
+                )}
+
+                {/* Seed — HappyHorse only */}
+                {isHappyHorse && (
+                  <div className="relative">
+                    <ParamChip
+                      onClick={() =>
+                        setOpenParam(openParam === 'seed' ? null : 'seed')
+                      }
+                      isActive={openParam === 'seed'}
+                    >
+                      <span>{seed ? `Seed ${seed}` : 'Seed'}</span>
+                      <ChevronDown
+                        className={cn(
+                          'h-3 w-3 opacity-55 transition-transform duration-150',
+                          openParam === 'seed' && 'rotate-180'
+                        )}
+                      />
+                    </ParamChip>
+                    {openParam === 'seed' && (
+                      <div className="border-foreground/10 bg-background/96 absolute bottom-full left-0 z-50 mb-1.5 w-[280px] rounded-xl border p-3 text-left shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
+                        <input
+                          value={seed}
+                          onChange={(event) => {
+                            const value = event.target.value.trim();
+                            if (value === '' || /^\d+$/.test(value)) {
+                              setSeed(value.slice(0, 10));
+                            }
+                          }}
+                          inputMode="numeric"
+                          placeholder="0"
+                          className="border-foreground/10 bg-background focus:border-primary/60 w-full rounded-lg border px-3 py-2 text-xs outline-none dark:border-white/10 dark:bg-zinc-900"
+                        />
+                        <p className="text-foreground/55 mt-2 text-[11px] leading-4 dark:text-white/45">
+                          Random initialization value, ranging from 0 to
+                          2147483647. Leave it blank for automatic system
+                          assignment. Locking this value helps stabilize
+                          generation results, though minor differences may still
+                          occur due to the model&apos;s inherent randomness.
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}

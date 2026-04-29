@@ -62,13 +62,13 @@ const PALETTE_CLASS: Record<VideoPalette, string> = {
     'from-yellow-900/70 via-orange-700/45 to-stone-900/80 border-yellow-200/30',
   slate:
     'from-stone-900/70 via-slate-700/50 to-zinc-900/80 border-stone-200/25',
-  crimson:
-    'from-red-950/70 via-rose-800/50 to-zinc-900/80 border-rose-200/30',
+  crimson: 'from-red-950/70 via-rose-800/50 to-zinc-900/80 border-rose-200/30',
 };
 
 function StatusIcon({ status }: { status: VideoStatus }) {
   if (status === 'ready') return <PlayCircle className="h-3.5 w-3.5" />;
-  if (status === 'rendering') return <LoaderCircle className="h-3.5 w-3.5 animate-spin" />;
+  if (status === 'rendering')
+    return <LoaderCircle className="h-3.5 w-3.5 animate-spin" />;
   if (status === 'queued') return <Clock3 className="h-3.5 w-3.5" />;
   return <AlertCircle className="h-3.5 w-3.5" />;
 }
@@ -104,14 +104,25 @@ export function VideoCard({
   const inspiration = mode === 'inspiration';
   const hasPreview = Boolean(item.previewUrl);
   const mediaActions = actionsCopy ?? null;
-  const isGeneratingTask = item.status === 'queued' || item.status === 'rendering';
-  const showDefaultRecreate = !compact && !inspiration && Boolean(onRecreate && mediaActions?.recreate);
+  const isGeneratingTask =
+    item.status === 'queued' || item.status === 'rendering';
+  const showDefaultRecreate =
+    !compact && !inspiration && Boolean(onRecreate && mediaActions?.recreate);
   const showMediaActions = !compact && !inspiration && Boolean(mediaActions);
-  const showCompactDownload = compact && !inspiration && Boolean(mediaActions?.download);
-  const showCompactRecreate = compact && !inspiration && Boolean(onRecreate && mediaActions?.recreate);
-  const showCompactPreview = compact && !inspiration && hasPreview && Boolean(mediaActions?.previewButton);
-  const showDeleteAction = !compact && !inspiration && Boolean(onDelete && mediaActions?.delete);
-  const compactDownloadDisabled = item.status !== 'ready' || !hasPreview || isDownloading;
+  const showCompactDownload =
+    compact && !inspiration && Boolean(mediaActions?.download);
+  const showCompactRecreate =
+    compact && !inspiration && Boolean(onRecreate && mediaActions?.recreate);
+  const showCompactPreview =
+    compact &&
+    !inspiration &&
+    hasPreview &&
+    Boolean(mediaActions?.previewButton);
+  const showDeleteAction =
+    !compact && !inspiration && Boolean(onDelete && mediaActions?.delete);
+  const compactDownloadDisabled =
+    item.status !== 'ready' || !hasPreview || isDownloading;
+  const modelLabel = !inspiration ? item.modelLabel || item.model : null;
 
   const openPreview = () => {
     if (!item.previewUrl) return;
@@ -175,8 +186,19 @@ export function VideoCard({
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.26),transparent_50%),radial-gradient(circle_at_85%_88%,rgba(255,255,255,0.12),transparent_40%)]" />
           {hasPreview ? <div className="absolute inset-0 bg-black/10" /> : null}
+          {modelLabel ? (
+            <div className="absolute top-2 left-2 z-10 max-w-[70%] truncate rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm backdrop-blur">
+              {modelLabel}
+            </div>
+          ) : null}
+
           {isGeneratingTask ? (
-            <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm dark:border-emerald-300/30 dark:bg-emerald-500/15 dark:text-emerald-200">
+            <div
+              className={cn(
+                'absolute left-2 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm dark:border-emerald-300/30 dark:bg-emerald-500/15 dark:text-emerald-200',
+                modelLabel ? 'top-8' : 'top-2'
+              )}
+            >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               {generatingLabel}
             </div>
@@ -385,7 +407,9 @@ export function VideoCard({
               {mediaActions?.previewTitle || mediaActions?.view || item.title}
             </DialogTitle>
             <DialogDescription>
-              {mediaActions?.previewHint || mediaActions?.unavailable || item.prompt}
+              {mediaActions?.previewHint ||
+                mediaActions?.unavailable ||
+                item.prompt}
             </DialogDescription>
           </DialogHeader>
 
@@ -405,13 +429,17 @@ export function VideoCard({
           <div className="border-t border-white/10 px-4 py-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">
-                <p className="truncate text-sm font-semibold text-zinc-100">{item.title}</p>
+                <p className="truncate text-sm font-semibold text-zinc-100">
+                  {item.title}
+                </p>
                 <p className="text-xs text-zinc-400">
                   {item.lengthLabel} · {item.aspectRatio.replace(/\s+/g, '')}
                 </p>
               </div>
               {mediaActions?.previewHint ? (
-                <p className="max-w-xl text-xs text-zinc-400">{mediaActions.previewHint}</p>
+                <p className="max-w-xl text-xs text-zinc-400">
+                  {mediaActions.previewHint}
+                </p>
               ) : null}
             </div>
           </div>

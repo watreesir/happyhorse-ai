@@ -8,6 +8,7 @@ import { getUuid } from '@/shared/lib/hash';
 import { getClientIp } from '@/shared/lib/ip';
 import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
 import { respData, respErr } from '@/shared/lib/resp';
+import { isHappyHorseProviderModel } from '@/shared/lib/video-models';
 import {
   createAITask,
   NewAITask,
@@ -43,20 +44,40 @@ import {
 
 const GUEST_TRIAL_ENABLED = process.env.GUEST_TRIAL_ENABLED !== 'false';
 
-function resolveVideoCreditsCost(options: Record<string, any> | undefined) {
+function resolveVideoCreditsCost({
+  provider,
+  model,
+  options,
+}: {
+  provider: string;
+  model: string;
+  options: Record<string, any> | undefined;
+}) {
   const resolution = options?.resolution === '720p' ? '720p' : '1080p';
+  const isHappyHorse = isHappyHorseProviderModel(provider, model);
+  const isHappyHorseEdit = isHappyHorse && typeof options?.video_url === 'string';
+  const billingDurationSource = isHappyHorseEdit
+    ? options?.source_duration
+    : options?.duration;
   const rawDuration =
-    typeof options?.duration === 'number'
-      ? options.duration
-      : typeof options?.duration === 'string'
-        ? Number.parseInt(options.duration, 10)
+    typeof billingDurationSource === 'number'
+      ? billingDurationSource
+      : typeof billingDurationSource === 'string'
+        ? Number.parseFloat(billingDurationSource)
         : Number.NaN;
-  const durationSeconds =
-    Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : 5;
+  const defaultDurationSeconds = isHappyHorseEdit ? 15 : 5;
+  const normalizedDuration =
+    Number.isFinite(rawDuration) && rawDuration > 0
+      ? rawDuration
+      : defaultDurationSeconds;
+  const durationSeconds = isHappyHorseEdit
+    ? Math.min(15, Math.max(3, normalizedDuration))
+    : normalizedDuration;
 
   return calculateVideoCreditsCost({
     resolution,
     durationSeconds,
+    model,
   });
 }
 
@@ -163,7 +184,7 @@ export async function POST(request: Request) {
         throw new Error('invalid scene');
       }
 
-      costCredits = resolveVideoCreditsCost(options);
+      costCredits = resolveVideoCreditsCost({ provider, model, options });
     } else if (mediaType === AIMediaType.MUSIC) {
       // generate music
       scene = 'text-to-music';

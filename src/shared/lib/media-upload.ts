@@ -40,6 +40,33 @@ function resolveMediaType(mimeType: string): VideoStudioMediaType | null {
   return null;
 }
 
+function readVideoDurationSeconds(file: File) {
+  if (typeof document === 'undefined' || !file.type.startsWith('video/')) {
+    return Promise.resolve<number | undefined>(undefined);
+  }
+
+  return new Promise<number | undefined>((resolve) => {
+    const video = document.createElement('video');
+    const objectUrl = URL.createObjectURL(file);
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl);
+      video.removeAttribute('src');
+      video.load();
+    };
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      cleanup();
+      resolve(Number.isFinite(duration) && duration > 0 ? duration : undefined);
+    };
+    video.onerror = () => {
+      cleanup();
+      resolve(undefined);
+    };
+    video.src = objectUrl;
+  });
+}
+
 export async function uploadStudioMediaFiles(files: File[]) {
   if (!files.length) {
     return [] as VideoStudioUploadedAsset[];
@@ -52,6 +79,10 @@ export async function uploadStudioMediaFiles(files: File[]) {
       `upload too large: keep each file under ${formatBytesToMb(maxFileBytes)}MB`
     );
   }
+
+  const durationSecondsByIndex = await Promise.all(
+    files.map((file) => readVideoDurationSeconds(file))
+  );
 
   const formData = new FormData();
   files.forEach((file) => {
@@ -77,7 +108,7 @@ export async function uploadStudioMediaFiles(files: File[]) {
   }
 
   return payload.data.results
-    .map((item) => {
+    .map((item, index) => {
       const mediaType = resolveMediaType(item.mimeType) || item.mediaType;
       if (!mediaType) return null;
       return {
@@ -85,6 +116,7 @@ export async function uploadStudioMediaFiles(files: File[]) {
         name: item.filename,
         mimeType: item.mimeType,
         mediaType,
+        durationSeconds: durationSecondsByIndex[index],
       } as VideoStudioUploadedAsset;
     })
     .filter((item): item is VideoStudioUploadedAsset => Boolean(item));

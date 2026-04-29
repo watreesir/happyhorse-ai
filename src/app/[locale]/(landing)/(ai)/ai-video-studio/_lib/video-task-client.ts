@@ -6,6 +6,13 @@ import {
 } from '@/shared/lib/api-client';
 import { isPromptModerationErrorCode } from '@/shared/lib/prompt-moderation-messages';
 import {
+  getVideoStudioModelDisplayName,
+  HAPPYHORSE_MODEL,
+  HAPPYHORSE_MODEL_KEY,
+  isHappyHorseProviderModel,
+  WAN_27_MODEL_KEY,
+} from '@/shared/lib/video-models';
+import {
   VIDEO_STUDIO_DEFAULT_DRAFT,
   VIDEO_STUDIO_MODELS,
   VideoStudioDraft,
@@ -181,6 +188,19 @@ function pickStringList(value: unknown): string[] {
     .filter((item): item is string => Boolean(item));
 }
 
+function pickNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
 function inferMimeType(url: string, mediaType: VideoStudioMediaType) {
   const cleanUrl = url.split('?')[0]?.split('#')[0] ?? url;
   const extension = cleanUrl.split('.').pop()?.toLowerCase();
@@ -230,13 +250,15 @@ function inferFileName(
 export function createUploadedAssetFromUrl(
   url: string,
   mediaType: VideoStudioMediaType,
-  fallbackBase: string
+  fallbackBase: string,
+  durationSeconds?: number
 ): VideoStudioUploadedAsset {
   return {
     url,
     name: inferFileName(url, mediaType, fallbackBase),
     mimeType: inferMimeType(url, mediaType),
     mediaType,
+    durationSeconds,
   };
 }
 
@@ -245,6 +267,22 @@ function resolveMode(task: {
   scene?: string;
   options?: Record<string, unknown> | null;
 }): VideoStudioMode {
+  if (task.model === HAPPYHORSE_MODEL) {
+    if (pickString(task.options?.video_url)) {
+      return 'video-edit';
+    }
+    if (
+      pickString(task.options?.first_frame_url) ||
+      pickString(task.options?.first_frame_image)
+    ) {
+      return 'image-to-video';
+    }
+    if (pickStringList(task.options?.image_urls).length > 0) {
+      return 'reference-to-video';
+    }
+    return 'text-to-video';
+  }
+
   if (task.model === VIDEO_STUDIO_MODELS['text-to-video']) {
     return 'text-to-video';
   }
@@ -263,6 +301,7 @@ function resolveMode(task: {
   }
   if (
     pickString(task.options?.first_frame_url) ||
+    pickString(task.options?.first_frame_image) ||
     pickString(task.options?.last_frame_url) ||
     pickString(task.options?.first_clip_url)
   ) {
@@ -270,6 +309,7 @@ function resolveMode(task: {
   }
   if (
     pickStringList(task.options?.reference_image).length > 0 ||
+    pickStringList(task.options?.image_urls).length > 0 ||
     pickStringList(task.options?.reference_video).length > 0 ||
     pickString(task.options?.first_frame) ||
     pickString(task.options?.reference_voice)
@@ -312,9 +352,10 @@ function resolveRatioOption(options: Record<string, unknown> | null) {
 }
 
 function resolveResolutionOption(options: Record<string, unknown> | null) {
-  return options?.resolution === '720p' || options?.resolution === '1080p'
-    ? options.resolution
-    : VIDEO_STUDIO_DEFAULT_DRAFT.resolution;
+  const resolution = options?.resolution;
+  if (resolution === '720p' || resolution === '720P') return '720p';
+  if (resolution === '1080p' || resolution === '1080P') return '1080p';
+  return VIDEO_STUDIO_DEFAULT_DRAFT.resolution;
 }
 
 function resolveDurationOption(options: Record<string, unknown> | null) {
@@ -339,6 +380,14 @@ function resolveAudioSettingOption(options: Record<string, unknown> | null) {
   return options?.audio_setting === 'origin'
     ? 'origin'
     : VIDEO_STUDIO_DEFAULT_DRAFT.audioSetting;
+}
+
+function resolveSeedOption(options: Record<string, unknown> | null) {
+  const seed = options?.seed;
+  if (typeof seed === 'number' && Number.isInteger(seed)) {
+    return String(seed);
+  }
+  return typeof seed === 'string' ? seed.trim() : '';
 }
 
 export function mapTaskStatus(status: string): VideoStatus {
@@ -376,7 +425,7 @@ function resolveAspectRatio(task: VideoTaskRecord) {
 }
 
 function resolveLengthLabel(task: VideoTaskRecord) {
-  const duration = task.options?.duration;
+  const duration = task.options?.duration ?? task.options?.source_duration;
   if (typeof duration === 'string' && duration) {
     return `${duration}s`;
   }
@@ -417,6 +466,10 @@ export function mapTaskToDraft(
     aspectRatio: resolveAspectRatio(task),
     palette: resolvePalette(index),
     model: task.model,
+    modelLabel: getVideoStudioModelDisplayName({
+      provider: task.provider,
+      model: task.model,
+    }),
     scene: task.scene,
     options: task.options,
   };
@@ -431,12 +484,17 @@ export function buildRecreateDraftFromTask(
 ): Partial<VideoStudioDraft> {
   const mode = resolveMode(task);
   const options = task.options ?? null;
+  const modelKey = isHappyHorseProviderModel(undefined, task.model)
+    ? HAPPYHORSE_MODEL_KEY
+    : WAN_27_MODEL_KEY;
   const nextDraft: Partial<VideoStudioDraft> = {
+    modelKey,
     mode,
     prompt: task.prompt ?? '',
     ratio: resolveRatioOption(options),
     resolution: resolveResolutionOption(options),
     duration: resolveDurationOption(options),
+    seed: resolveSeedOption(options),
     i2vMode: resolveI2VMode(options),
     audioSetting: resolveAudioSettingOption(options),
     textAudio: null,
@@ -452,6 +510,10 @@ export function buildRecreateDraftFromTask(
     submission: null,
   };
 
+  if (modelKey === HAPPYHORSE_MODEL_KEY && mode === 'video-edit') {
+    nextDraft.duration = 0;
+  }
+
   if (mode === 'text-to-video') {
     const audioUrl = pickString(options?.audio_url);
     if (audioUrl) {
@@ -465,7 +527,9 @@ export function buildRecreateDraftFromTask(
   }
 
   if (mode === 'image-to-video') {
-    const firstFrameUrl = pickString(options?.first_frame_url);
+    const firstFrameUrl =
+      pickString(options?.first_frame_url) ||
+      pickString(options?.first_frame_image);
     const lastFrameUrl = pickString(options?.last_frame_url);
     const firstClipUrl = pickString(options?.first_clip_url);
     const audioUrl = pickString(options?.driving_audio_url);
@@ -504,9 +568,11 @@ export function buildRecreateDraftFromTask(
   }
 
   if (mode === 'reference-to-video') {
-    const referenceImages = pickStringList(options?.reference_image).map(
-      (url, index) =>
-        createUploadedAssetFromUrl(url, 'image', `reference-image-${index + 1}`)
+    const referenceImages = [
+      ...pickStringList(options?.reference_image),
+      ...pickStringList(options?.image_urls),
+    ].map((url, index) =>
+      createUploadedAssetFromUrl(url, 'image', `reference-image-${index + 1}`)
     );
     const referenceVideos = pickStringList(options?.reference_video).map(
       (url, index) =>
@@ -542,14 +608,17 @@ export function buildRecreateDraftFromTask(
   const editVideoUrl = pickString(options?.video_url);
   const referenceImageUrl =
     pickString(options?.reference_image) ??
+    pickStringList(options?.image_urls)[0] ??
     pickStringList(options?.reference_image)[0] ??
     null;
+  const sourceDuration = pickNumber(options?.source_duration);
 
   if (editVideoUrl) {
     nextDraft.editVideo = createUploadedAssetFromUrl(
       editVideoUrl,
       'video',
-      'edit-video'
+      'edit-video',
+      sourceDuration
     );
   }
   if (referenceImageUrl) {

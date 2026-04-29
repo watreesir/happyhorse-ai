@@ -1,4 +1,14 @@
 import { AIMediaType } from '@/extensions/ai/types';
+import {
+  getVideoStudioProvider,
+  getVideoStudioProviderModel,
+  HAPPYHORSE_MODEL_KEY,
+  isHappyHorseModelKey,
+  resolveVideoStudioModelKey,
+  WAN_27_MODELS,
+  WAN_27_PROVIDER,
+  type VideoStudioModelKey,
+} from '@/shared/lib/video-models';
 
 export type VideoStudioMode =
   | 'text-to-video'
@@ -24,6 +34,7 @@ export type VideoStudioUploadedAsset = {
   name: string;
   mimeType: string;
   mediaType: VideoStudioMediaType;
+  durationSeconds?: number;
 };
 
 export type VideoStudioSubmissionLifecycle =
@@ -44,11 +55,13 @@ export type VideoStudioDraft = {
   version: 1;
   id: string;
   source: 'hero' | 'studio';
+  modelKey: VideoStudioModelKey;
   mode: VideoStudioMode;
   prompt: string;
   ratio: VideoStudioRatio;
   resolution: VideoStudioResolution;
   duration: number;
+  seed: string;
   i2vMode: VideoStudioI2VMode;
   audioSetting: VideoStudioAudioSetting;
   textAudio: VideoStudioUploadedAsset | null;
@@ -70,7 +83,9 @@ export type VideoStudioDraftErrorCode =
   | 'IMAGE_FIRST_LAST_FRAME_REQUIRED'
   | 'IMAGE_FIRST_CLIP_REQUIRED'
   | 'REFERENCE_MATERIAL_REQUIRED'
-  | 'EDIT_VIDEO_REQUIRED';
+  | 'REFERENCE_IMAGE_REQUIRED'
+  | 'EDIT_VIDEO_REQUIRED'
+  | 'SEED_INVALID';
 
 export class VideoStudioDraftError extends Error {
   code: VideoStudioDraftErrorCode;
@@ -91,13 +106,10 @@ export type VideoStudioGeneratePayload = {
   options: Record<string, unknown>;
 };
 
-export const VIDEO_STUDIO_PROVIDER = 'kie';
+export const VIDEO_STUDIO_PROVIDER = WAN_27_PROVIDER;
 
 export const VIDEO_STUDIO_MODELS: Record<VideoStudioMode, string> = {
-  'text-to-video': 'wan/2-7-text-to-video',
-  'image-to-video': 'wan/2-7-image-to-video',
-  'reference-to-video': 'wan/2-7-r2v',
-  'video-edit': 'wan/2-7-videoedit',
+  ...WAN_27_MODELS,
 };
 
 export const VIDEO_STUDIO_DRAFT_SESSION_KEY = 'video-studio:entry-draft';
@@ -106,11 +118,13 @@ export const VIDEO_STUDIO_DEFAULT_DRAFT: VideoStudioDraft = {
   version: 1,
   id: '',
   source: 'studio',
+  modelKey: HAPPYHORSE_MODEL_KEY,
   mode: 'text-to-video',
   prompt: '',
   ratio: '16:9',
   resolution: '1080p',
   duration: 5,
+  seed: '',
   i2vMode: 'first-frame',
   audioSetting: 'auto',
   textAudio: null,
@@ -145,9 +159,20 @@ function toPositiveDuration(input: unknown, fallback: number) {
   return Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
-function pickRatio(input: unknown, fallback: VideoStudioRatio): VideoStudioRatio {
+function toSeedString(input: unknown) {
+  if (typeof input === 'number' && Number.isInteger(input)) {
+    return String(input);
+  }
+  return typeof input === 'string' ? input.trim() : '';
+}
+
+function pickRatio(
+  input: unknown,
+  fallback: VideoStudioRatio
+): VideoStudioRatio {
   const candidates: VideoStudioRatio[] = ['16:9', '9:16', '1:1', '4:3', '3:4'];
-  return typeof input === 'string' && candidates.includes(input as VideoStudioRatio)
+  return typeof input === 'string' &&
+    candidates.includes(input as VideoStudioRatio)
     ? (input as VideoStudioRatio)
     : fallback;
 }
@@ -181,7 +206,8 @@ function pickMode(input: unknown, fallback: VideoStudioMode): VideoStudioMode {
     'reference-to-video',
     'video-edit',
   ];
-  return typeof input === 'string' && candidates.includes(input as VideoStudioMode)
+  return typeof input === 'string' &&
+    candidates.includes(input as VideoStudioMode)
     ? (input as VideoStudioMode)
     : fallback;
 }
@@ -209,6 +235,12 @@ function parseUploadedAsset(value: unknown): VideoStudioUploadedAsset | null {
     name: item.name,
     mimeType: item.mimeType,
     mediaType: item.mediaType as VideoStudioMediaType,
+    durationSeconds:
+      typeof item.durationSeconds === 'number' &&
+      Number.isFinite(item.durationSeconds) &&
+      item.durationSeconds > 0
+        ? item.durationSeconds
+        : undefined,
   };
 }
 
@@ -231,12 +263,14 @@ export function mergeStudioDraft(
   return {
     ...current,
     ...next,
+    modelKey: resolveVideoStudioModelKey(next.modelKey ?? current.modelKey),
     mode: pickMode(next.mode, current.mode),
     ratio: pickRatio(next.ratio, current.ratio),
     resolution: pickResolution(next.resolution, current.resolution),
     i2vMode: pickI2VMode(next.i2vMode, current.i2vMode),
     audioSetting: pickAudioSetting(next.audioSetting, current.audioSetting),
     duration: toPositiveDuration(next.duration, current.duration),
+    seed: hasKey('seed') ? toSeedString(next.seed) : current.seed,
     textAudio: hasKey('textAudio')
       ? parseUploadedAsset(next.textAudio)
       : current.textAudio,
@@ -271,19 +305,24 @@ export function mergeStudioDraft(
       ? next.submission && typeof next.submission === 'object'
         ? {
             taskId:
-              typeof (next.submission as VideoStudioSubmissionDraft).taskId === 'string'
+              typeof (next.submission as VideoStudioSubmissionDraft).taskId ===
+              'string'
                 ? (next.submission as VideoStudioSubmissionDraft).taskId
                 : null,
-            lifecycle: (next.submission as VideoStudioSubmissionDraft).lifecycle,
+            lifecycle: (next.submission as VideoStudioSubmissionDraft)
+              .lifecycle,
             errorMessage:
-              (next.submission as VideoStudioSubmissionDraft).errorMessage ?? null,
+              (next.submission as VideoStudioSubmissionDraft).errorMessage ??
+              null,
           }
         : null
       : current.submission,
   };
 }
 
-export function parseStudioDraftPayload(payload: unknown): VideoStudioDraft | null {
+export function parseStudioDraftPayload(
+  payload: unknown
+): VideoStudioDraft | null {
   if (!payload || typeof payload !== 'object') return null;
   const data = payload as Record<string, unknown>;
   if (data.version !== 1 || typeof data.id !== 'string') {
@@ -294,6 +333,7 @@ export function parseStudioDraftPayload(payload: unknown): VideoStudioDraft | nu
     ...VIDEO_STUDIO_DEFAULT_DRAFT,
     id: data.id,
     source: data.source === 'hero' ? 'hero' : 'studio',
+    modelKey: resolveVideoStudioModelKey(data.modelKey),
     mode: pickMode(data.mode, VIDEO_STUDIO_DEFAULT_DRAFT.mode),
     prompt: typeof data.prompt === 'string' ? data.prompt : '',
     ratio: pickRatio(data.ratio, VIDEO_STUDIO_DEFAULT_DRAFT.ratio),
@@ -301,7 +341,11 @@ export function parseStudioDraftPayload(payload: unknown): VideoStudioDraft | nu
       data.resolution,
       VIDEO_STUDIO_DEFAULT_DRAFT.resolution
     ),
-    duration: toPositiveDuration(data.duration, VIDEO_STUDIO_DEFAULT_DRAFT.duration),
+    duration: toPositiveDuration(
+      data.duration,
+      VIDEO_STUDIO_DEFAULT_DRAFT.duration
+    ),
+    seed: toSeedString(data.seed),
     i2vMode: pickI2VMode(data.i2vMode, VIDEO_STUDIO_DEFAULT_DRAFT.i2vMode),
     audioSetting: pickAudioSetting(
       data.audioSetting,
@@ -321,22 +365,30 @@ export function parseStudioDraftPayload(payload: unknown): VideoStudioDraft | nu
       data.submission && typeof data.submission === 'object'
         ? {
             taskId:
-              typeof (data.submission as Record<string, unknown>).taskId === 'string'
-                ? ((data.submission as Record<string, unknown>).taskId as string)
+              typeof (data.submission as Record<string, unknown>).taskId ===
+              'string'
+                ? ((data.submission as Record<string, unknown>)
+                    .taskId as string)
                 : null,
             lifecycle:
-              (data.submission as Record<string, unknown>).lifecycle === 'queued' ||
-              (data.submission as Record<string, unknown>).lifecycle === 'processing' ||
-              (data.submission as Record<string, unknown>).lifecycle === 'completed' ||
-              (data.submission as Record<string, unknown>).lifecycle === 'failed' ||
-              (data.submission as Record<string, unknown>).lifecycle === 'submitting'
+              (data.submission as Record<string, unknown>).lifecycle ===
+                'queued' ||
+              (data.submission as Record<string, unknown>).lifecycle ===
+                'processing' ||
+              (data.submission as Record<string, unknown>).lifecycle ===
+                'completed' ||
+              (data.submission as Record<string, unknown>).lifecycle ===
+                'failed' ||
+              (data.submission as Record<string, unknown>).lifecycle ===
+                'submitting'
                 ? ((data.submission as Record<string, unknown>)
                     .lifecycle as VideoStudioSubmissionLifecycle)
                 : 'idle',
             errorMessage:
-              typeof (data.submission as Record<string, unknown>).errorMessage ===
-              'string'
-                ? ((data.submission as Record<string, unknown>).errorMessage as string)
+              typeof (data.submission as Record<string, unknown>)
+                .errorMessage === 'string'
+                ? ((data.submission as Record<string, unknown>)
+                    .errorMessage as string)
                 : null,
           }
         : null,
@@ -351,6 +403,7 @@ export function buildStudioQueryFromDraft(
   params.set('studioTab', 'create');
   params.set('from', 'hero');
   params.set('draftId', draft.id);
+  params.set('modelKey', draft.modelKey);
   params.set('mode', draft.mode);
   if (draft.mode !== 'image-to-video') {
     params.set('ratio', draft.ratio);
@@ -362,6 +415,9 @@ export function buildStudioQueryFromDraft(
   if (options?.includePrompt !== false && draft.prompt.trim()) {
     params.set('prompt', draft.prompt.trim());
   }
+  if (draft.seed.trim()) {
+    params.set('seed', draft.seed.trim());
+  }
   return params;
 }
 
@@ -369,7 +425,9 @@ function pickReferenceMaterialByType(
   items: VideoStudioUploadedAsset[],
   mediaType: VideoStudioMediaType
 ) {
-  return items.filter((item) => item.mediaType === mediaType).map((item) => item.url);
+  return items
+    .filter((item) => item.mediaType === mediaType)
+    .map((item) => item.url);
 }
 
 export function buildVideoTaskPayloadFromDraft(
@@ -379,6 +437,26 @@ export function buildVideoTaskPayloadFromDraft(
   if (!prompt) {
     throw new VideoStudioDraftError('PROMPT_REQUIRED');
   }
+  const isHappyHorse = isHappyHorseModelKey(draft.modelKey);
+  const provider = getVideoStudioProvider(draft.modelKey);
+  const model = getVideoStudioProviderModel(draft.modelKey, draft.mode);
+  const seed = draft.seed.trim();
+  const appendHappyHorseSeed = (options: Record<string, unknown>) => {
+    if (!isHappyHorse || !seed) return;
+    const parsed = Number.parseInt(seed, 10);
+    if (
+      !Number.isInteger(parsed) ||
+      parsed < 0 ||
+      parsed > 2147483647 ||
+      String(parsed) !== seed
+    ) {
+      throw new VideoStudioDraftError(
+        'SEED_INVALID',
+        'Seed must be an integer from 0 to 2147483647.'
+      );
+    }
+    options.seed = parsed;
+  };
 
   if (draft.mode === 'text-to-video') {
     const options: Record<string, unknown> = {
@@ -386,14 +464,15 @@ export function buildVideoTaskPayloadFromDraft(
       resolution: draft.resolution,
       duration: draft.duration,
     };
-    if (draft.textAudio?.url) {
+    appendHappyHorseSeed(options);
+    if (!isHappyHorse && draft.textAudio?.url) {
       options.audio_url = draft.textAudio.url;
     }
     return {
       mediaType: AIMediaType.VIDEO,
       scene: 'text-to-video',
-      provider: VIDEO_STUDIO_PROVIDER,
-      model: VIDEO_STUDIO_MODELS['text-to-video'],
+      provider,
+      model,
       prompt,
       options,
     };
@@ -410,28 +489,37 @@ export function buildVideoTaskPayloadFromDraft(
         throw new VideoStudioDraftError('IMAGE_FIRST_FRAME_REQUIRED');
       }
       baseOptions.first_frame_url = draft.imageFirstFrame.url;
-    } else if (draft.i2vMode === 'first-last-frame') {
+    } else if (!isHappyHorse && draft.i2vMode === 'first-last-frame') {
       if (!draft.imageFirstFrame?.url || !draft.imageLastFrame?.url) {
         throw new VideoStudioDraftError('IMAGE_FIRST_LAST_FRAME_REQUIRED');
       }
       baseOptions.first_frame_url = draft.imageFirstFrame.url;
       baseOptions.last_frame_url = draft.imageLastFrame.url;
-    } else {
+    } else if (!isHappyHorse) {
       if (!draft.imageFirstClip?.url) {
         throw new VideoStudioDraftError('IMAGE_FIRST_CLIP_REQUIRED');
       }
       baseOptions.first_clip_url = draft.imageFirstClip.url;
+    } else {
+      if (!draft.imageFirstFrame?.url) {
+        throw new VideoStudioDraftError('IMAGE_FIRST_FRAME_REQUIRED');
+      }
+      baseOptions.first_frame_url = draft.imageFirstFrame.url;
     }
 
-    if (draft.imageAudio?.url) {
+    appendHappyHorseSeed(baseOptions);
+    if (!isHappyHorse && draft.imageAudio?.url) {
       baseOptions.driving_audio_url = draft.imageAudio.url;
     }
 
     return {
       mediaType: AIMediaType.VIDEO,
-      scene: draft.i2vMode === 'video-continuation' ? 'video-to-video' : 'image-to-video',
-      provider: VIDEO_STUDIO_PROVIDER,
-      model: VIDEO_STUDIO_MODELS['image-to-video'],
+      scene:
+        !isHappyHorse && draft.i2vMode === 'video-continuation'
+          ? 'video-to-video'
+          : 'image-to-video',
+      provider,
+      model,
       prompt,
       options: baseOptions,
     };
@@ -447,7 +535,18 @@ export function buildVideoTaskPayloadFromDraft(
       'video'
     );
 
-    if (referenceImages.length === 0 && referenceVideos.length === 0) {
+    if (isHappyHorse && referenceImages.length === 0) {
+      throw new VideoStudioDraftError(
+        'REFERENCE_IMAGE_REQUIRED',
+        'Upload at least one reference image for HappyHorse 1.0.'
+      );
+    }
+
+    if (
+      !isHappyHorse &&
+      referenceImages.length === 0 &&
+      referenceVideos.length === 0
+    ) {
       throw new VideoStudioDraftError('REFERENCE_MATERIAL_REQUIRED');
     }
 
@@ -456,24 +555,32 @@ export function buildVideoTaskPayloadFromDraft(
       resolution: draft.resolution,
       duration: draft.duration,
     };
+    appendHappyHorseSeed(options);
     if (referenceImages.length > 0) {
-      options.reference_image = referenceImages.slice(0, 5);
+      if (isHappyHorse) {
+        options.image_urls = referenceImages.slice(0, 9);
+      } else {
+        options.reference_image = referenceImages.slice(0, 5);
+      }
     }
-    if (referenceVideos.length > 0) {
+    if (!isHappyHorse && referenceVideos.length > 0) {
       options.reference_video = referenceVideos.slice(0, 5);
     }
-    if (draft.referenceFirstFrame?.url) {
+    if (!isHappyHorse && draft.referenceFirstFrame?.url) {
       options.first_frame = draft.referenceFirstFrame.url;
     }
-    if (draft.referenceVoice?.url) {
+    if (!isHappyHorse && draft.referenceVoice?.url) {
       options.reference_voice = draft.referenceVoice.url;
     }
 
     return {
       mediaType: AIMediaType.VIDEO,
-      scene: referenceVideos.length > 0 ? 'video-to-video' : 'image-to-video',
-      provider: VIDEO_STUDIO_PROVIDER,
-      model: VIDEO_STUDIO_MODELS['reference-to-video'],
+      scene:
+        !isHappyHorse && referenceVideos.length > 0
+          ? 'video-to-video'
+          : 'image-to-video',
+      provider,
+      model,
       prompt,
       options,
     };
@@ -485,20 +592,31 @@ export function buildVideoTaskPayloadFromDraft(
 
   const options: Record<string, unknown> = {
     video_url: draft.editVideo.url,
-    aspect_ratio: draft.ratio,
     resolution: draft.resolution,
-    duration: draft.duration,
     audio_setting: draft.audioSetting,
   };
+  if (isHappyHorse) {
+    if (draft.editVideo.durationSeconds) {
+      options.source_duration = draft.editVideo.durationSeconds;
+    }
+    appendHappyHorseSeed(options);
+  } else {
+    options.aspect_ratio = draft.ratio;
+    options.duration = draft.duration;
+  }
   if (draft.editReferenceImage?.url) {
-    options.reference_image = draft.editReferenceImage.url;
+    if (isHappyHorse) {
+      options.image_urls = [draft.editReferenceImage.url];
+    } else {
+      options.reference_image = draft.editReferenceImage.url;
+    }
   }
 
   return {
     mediaType: AIMediaType.VIDEO,
     scene: 'video-to-video',
-    provider: VIDEO_STUDIO_PROVIDER,
-    model: VIDEO_STUDIO_MODELS['video-edit'],
+    provider,
+    model,
     prompt,
     options,
   };

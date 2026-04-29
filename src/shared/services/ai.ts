@@ -1,5 +1,6 @@
 import {
   AIManager,
+  APIMartProvider,
   FalProvider,
   GeminiProvider,
   KieProvider,
@@ -18,6 +19,16 @@ export function getAIManagerWithConfigs(configs: Configs) {
       new KieProvider({
         apiKey: configs.kie_api_key,
         customStorage: configs.kie_custom_storage === 'true',
+      })
+    );
+  }
+
+  if (configs.apimart_api_key) {
+    aiManager.addProvider(
+      new APIMartProvider({
+        apiKey: configs.apimart_api_key,
+        baseUrl: configs.apimart_base_url || 'https://api.apimart.ai/v1',
+        customStorage: configs.apimart_custom_storage !== 'false',
       })
     );
   }

@@ -1,8 +1,12 @@
 import { and, desc, eq, gt, inArray, isNull, like, or } from 'drizzle-orm';
 
 import { db } from '@/core/db';
-import { subscription as subscriptionTable, credit as creditTable } from '@/config/db/schema';
+import {
+  credit as creditTable,
+  subscription as subscriptionTable,
+} from '@/config/db/schema';
 import { PaymentInterval } from '@/extensions/payment/types';
+import { isHappyHorseProviderModel } from '@/shared/lib/video-models';
 
 export type PricingPlanTier = 'free' | 'standard' | 'premium' | 'unlimited';
 export type PricingBillingCycle = 'monthly' | 'yearly';
@@ -115,7 +119,20 @@ export function getFreeDailyVideoLimit() {
   return parsePositiveInt(process.env.FREE_DAILY_VIDEO_LIMIT, 1);
 }
 
-export function getVideoCreditRatePerSecond(resolution: '720p' | '1080p') {
+export function getVideoCreditRatePerSecond(
+  resolution: '720p' | '1080p',
+  model?: string
+) {
+  if (isHappyHorseProviderModel(undefined, model)) {
+    if (resolution === '1080p') {
+      return parsePositiveInt(
+        process.env.HAPPYHORSE_1080P_CREDITS_PER_SECOND,
+        25
+      );
+    }
+    return parsePositiveInt(process.env.HAPPYHORSE_720P_CREDITS_PER_SECOND, 20);
+  }
+
   if (resolution === '1080p') {
     return parsePositiveInt(process.env.AI_VIDEO_1080P_CREDITS_PER_SECOND, 2);
   }
@@ -125,12 +142,14 @@ export function getVideoCreditRatePerSecond(resolution: '720p' | '1080p') {
 export function calculateVideoCreditsCost({
   resolution,
   durationSeconds,
+  model,
 }: {
   resolution: '720p' | '1080p';
   durationSeconds: number;
+  model?: string;
 }) {
   const safeDuration = Math.max(1, Math.ceil(durationSeconds || 0));
-  return getVideoCreditRatePerSecond(resolution) * safeDuration;
+  return getVideoCreditRatePerSecond(resolution, model) * safeDuration;
 }
 
 export function getSubscriptionPlanConfigs(): SubscriptionPlanConfig[] {
@@ -284,8 +303,12 @@ export function getCreditPackConfigs(): CreditPackConfig[] {
   ];
 }
 
-export function getSubscriptionPlanByProductId(productId: string | null | undefined) {
-  return getSubscriptionPlanConfigs().find((item) => item.productId === productId);
+export function getSubscriptionPlanByProductId(
+  productId: string | null | undefined
+) {
+  return getSubscriptionPlanConfigs().find(
+    (item) => item.productId === productId
+  );
 }
 
 export function getCreditPackByProductId(productId: string | null | undefined) {

@@ -36,6 +36,7 @@ export type VideoDraft = {
   aspectRatio: string;
   palette: VideoPalette;
   model?: string;
+  modelLabel?: string;
   scene?: string;
   options?: Record<string, unknown> | null;
 };
