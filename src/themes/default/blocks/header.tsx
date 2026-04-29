@@ -151,7 +151,7 @@ export function Header({ header }: { header: HeaderType }) {
                   <div className="relative">
                     {badge && (
                       <div className="pointer-events-none absolute -top-[11px] inset-x-0 z-10 flex justify-center">
-                        <span className="flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1.5 py-[3px] text-[9px] font-bold leading-none text-emerald-400 ring-1 ring-emerald-500/25 whitespace-nowrap dark:text-emerald-400">
+                        <span className="flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1.5 py-[3px] text-[9px] font-bold leading-none text-emerald-700 ring-1 ring-emerald-600/30 whitespace-nowrap dark:text-emerald-400 dark:ring-emerald-500/25">
                           <DollarSign className="size-2" />
                           <span>{badge}</span>
                         </span>

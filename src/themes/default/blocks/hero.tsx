@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import Image from 'next/image';
-import { Coins } from 'lucide-react';
+import { ChevronDown, Coins } from 'lucide-react';
 
 import { useRouter } from '@/core/i18n/navigation';
 import { AITaskStatus } from '@/extensions/ai/types';
@@ -45,6 +45,7 @@ type I2VMode = 'first-frame' | 'first-last-frame' | 'video-continuation';
 type Resolution = '720p' | '1080p';
 type Ratio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
 type AudioSetting = 'auto' | 'origin';
+type OpenParam = 'mode' | 'duration' | 'resolution' | 'ratio' | 'audio' | null;
 
 type GenerateResponsePayload = {
   code: number;
@@ -93,18 +94,19 @@ const I2V_MODES: { key: I2VMode; label: string }[] = [
   { key: 'video-continuation', label: 'Video Continuation' },
 ];
 
-const RATIOS: { key: Ratio; label: string; icon: string }[] = [
-  { key: '16:9', label: '16:9', icon: '▬' },
-  { key: '9:16', label: '9:16', icon: '▮' },
-  { key: '4:3', label: '4:3', icon: '▭' },
-  { key: '3:4', label: '3:4', icon: '▯' },
-  { key: '1:1', label: '1:1', icon: '■' },
+const RATIOS: { key: Ratio; label: string }[] = [
+  { key: '16:9', label: '16:9' },
+  { key: '9:16', label: '9:16' },
+  { key: '4:3', label: '4:3' },
+  { key: '3:4', label: '3:4' },
+  { key: '1:1', label: '1:1' },
 ];
 
-// ─── UploadZone ────────────────────────────────────────────────────────────────
+// ─── CompactUploadZone ────────────────────────────────────────────────────────
 
-function UploadZone({
+function CompactUploadZone({
   label,
+  shortLabel,
   optional = false,
   file,
   uploading = false,
@@ -115,6 +117,7 @@ function UploadZone({
   className,
 }: {
   label: string;
+  shortLabel?: string;
   optional?: boolean;
   file: VideoStudioUploadedAsset | VideoStudioUploadedAsset[] | null;
   uploading?: boolean;
@@ -130,24 +133,24 @@ function UploadZone({
       ? `${file.length} files`
       : file[0]?.name
     : file?.name;
-
-  const inputId = `hero-upload-${label.replace(/\s+/g, '-').toLowerCase()}`;
+  const displayLabel = shortLabel || label;
+  const inputId = `hero-compact-${label.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
     <label
       htmlFor={inputId}
       className={cn(
-        'flex min-h-[60px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed px-3 py-3 transition-all duration-200',
+        'relative flex min-h-[52px] min-w-[88px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed px-2.5 py-2 transition-all duration-200',
         hasFile
-          ? 'border-primary/35 bg-primary/10'
-          : 'border-foreground/12 bg-background/45 hover:border-primary/35 hover:bg-primary/6 dark:hover:border-primary/45 dark:border-white/15 dark:bg-white/[0.03] dark:hover:bg-white/5',
+          ? 'border-primary/40 bg-primary/8'
+          : 'border-foreground/12 bg-background/30 hover:border-primary/35 hover:bg-primary/5 dark:border-white/12 dark:bg-white/[0.025] dark:hover:border-primary/40 dark:hover:bg-white/5',
         className
       )}
     >
       {hasFile ? (
-        <div className="flex items-center gap-2">
-          <span className="text-primary max-w-[150px] truncate text-xs font-medium">
-            ✓ {fileLabel || label}
+        <div className="flex items-center gap-1">
+          <span className="text-primary max-w-[90px] truncate text-[10px] font-medium leading-tight">
+            ✓ {fileLabel || displayLabel}
           </span>
           {onClear && (
             <button
@@ -157,26 +160,24 @@ function UploadZone({
                 onClear();
               }}
               type="button"
-              className="text-foreground/38 hover:text-foreground/72 dark:text-white/40 dark:hover:text-white/80"
+              className="text-foreground/35 hover:text-foreground/70 dark:text-white/35 dark:hover:text-white/70 shrink-0 leading-none"
             >
               ×
             </button>
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-foreground/28 text-lg leading-none dark:text-white/20">
+        <>
+          <span className="text-foreground/30 text-base leading-none dark:text-white/20">
             {uploading ? '…' : '+'}
           </span>
-          <p className="text-foreground/52 text-center text-xs dark:text-white/40">
-            {uploading ? 'Uploading...' : label}
-            {optional && (
-              <span className="text-foreground/34 ml-1 dark:text-white/25">
-                (optional)
-              </span>
+          <p className="text-foreground/45 text-center text-[10px] leading-tight dark:text-white/38">
+            {uploading ? 'Uploading' : displayLabel}
+            {!uploading && optional && (
+              <span className="text-foreground/28 dark:text-white/22"> opt</span>
             )}
           </p>
-        </div>
+        </>
       )}
       <input
         id={inputId}
@@ -190,168 +191,39 @@ function UploadZone({
   );
 }
 
-// ─── Settings Panel ────────────────────────────────────────────────────────────
-
-function SettingsPanel({
-  tab,
-  duration,
-  setDuration,
-  resolution,
-  setResolution,
-  ratio,
-  setRatio,
-  audioSetting,
-  setAudioSetting,
-}: {
-  tab: MainTab;
-  duration: number;
-  setDuration: (v: number) => void;
-  resolution: Resolution;
-  setResolution: (v: Resolution) => void;
-  ratio: Ratio;
-  setRatio: (v: Ratio) => void;
-  audioSetting: AudioSetting;
-  setAudioSetting: (v: AudioSetting) => void;
-}) {
-  const maxDuration = 10;
-  const showRatio = tab !== 'image-to-video';
-  const showAudio = tab === 'video-edit';
-
-  const durationOptions =
-    tab === 'video-edit'
-      ? [
-          { label: 'Full', value: 0 },
-          { label: '5s', value: 5 },
-          { label: '10s', value: 10 },
-        ]
-      : [2, 5, 8, 10, 15]
-          .filter((d) => d <= maxDuration)
-          .map((d) => ({ label: `${d}s`, value: d }));
-
-  const chipBase =
-    'rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer';
-  const chipActive = 'bg-primary text-primary-foreground font-semibold';
-  const chipInactive =
-    'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/15 dark:hover:text-white/90';
-
-  return (
-    <div className="border-foreground/10 bg-background/96 text-foreground ring-foreground/6 absolute top-full right-0 left-0 z-[9999] mt-[5px] overflow-hidden rounded-2xl border shadow-[0_20px_56px_rgba(15,23,42,0.14)] ring-1 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:text-white dark:shadow-2xl dark:ring-white/8">
-      <div className="space-y-4 p-4">
-        {/* Video Length */}
-        <div>
-          <p className="text-foreground/45 mb-2 text-[10px] font-semibold tracking-widest uppercase dark:text-white/35">
-            Video Length
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {durationOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setDuration(opt.value)}
-                className={cn(
-                  chipBase,
-                  duration === opt.value ? chipActive : chipInactive
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Resolution */}
-        <div>
-          <p className="text-foreground/45 mb-2 text-[10px] font-semibold tracking-widest uppercase dark:text-white/35">
-            Resolution
-          </p>
-          <div className="flex gap-1.5">
-            {(['720p', '1080p'] as Resolution[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => setResolution(r)}
-                className={cn(
-                  chipBase,
-                  resolution === r ? chipActive : chipInactive
-                )}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Aspect Ratio */}
-        {showRatio && (
-          <div>
-            <p className="text-foreground/45 mb-2 text-[10px] font-semibold tracking-widest uppercase dark:text-white/35">
-              Aspect Ratio
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {RATIOS.map((r) => (
-                <button
-                  key={r.key}
-                  onClick={() => setRatio(r.key)}
-                  className={cn(
-                    chipBase,
-                    'flex flex-col items-center gap-0.5',
-                    ratio === r.key ? chipActive : chipInactive
-                  )}
-                >
-                  <span className="text-sm leading-none">{r.icon}</span>
-                  <span>{r.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Audio — Video Edit only */}
-        {showAudio && (
-          <div>
-            <p className="text-foreground/45 mb-2 text-[10px] font-semibold tracking-widest uppercase dark:text-white/35">
-              Audio
-            </p>
-            <div className="flex gap-1.5">
-              {(
-                [
-                  ['auto', 'AI Audio'],
-                  ['origin', 'Keep Original'],
-                ] as [AudioSetting, string][]
-              ).map(([val, label]) => (
-                <button
-                  key={val}
-                  onClick={() => setAudioSetting(val)}
-                  className={cn(
-                    chipBase,
-                    audioSetting === val ? chipActive : chipInactive
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Param Chip ────────────────────────────────────────────────────────────────
+// ─── ParamChip ────────────────────────────────────────────────────────────────
 
 function ParamChip({
   onClick,
+  isActive = false,
   children,
 }: {
   onClick: () => void;
+  isActive?: boolean;
   children: ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className="bg-foreground/[0.06] text-foreground/72 hover:bg-foreground/[0.09] hover:text-foreground flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/14 dark:hover:text-white/85"
+      className={cn(
+        'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+        isActive
+          ? 'bg-primary/12 text-primary ring-1 ring-primary/20 dark:bg-primary/18 dark:text-primary dark:ring-primary/25'
+          : 'bg-foreground/[0.06] text-foreground/72 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/14 dark:hover:text-white/85'
+      )}
     >
       {children}
     </button>
+  );
+}
+
+// ─── ParamDropdown ─────────────────────────────────────────────────────────────
+
+function ParamDropdown({ children }: { children: ReactNode }) {
+  return (
+    <div className="absolute bottom-full left-0 z-50 mb-1.5 flex items-center gap-1.5 rounded-xl border border-foreground/10 bg-background/96 px-3 py-2 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
+      {children}
+    </div>
   );
 }
 
@@ -385,7 +257,7 @@ export function Hero({
   // Tab state
   const [activeTab, setActiveTab] = useState<MainTab>(defaultTab);
   const [prompt, setPrompt] = useState('');
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [openParam, setOpenParam] = useState<OpenParam>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusHint, setStatusHint] = useState<string | null>(null);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
@@ -429,32 +301,34 @@ export function Hero({
   const [ratio, setRatio] = useState<Ratio>('16:9');
   const [audioSetting, setAudioSetting] = useState<AudioSetting>('auto');
 
-  // Click-outside to close settings
   const bottomBarRef = useRef<HTMLDivElement>(null);
 
+  // Close open param when clicking outside the bottom bar
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (
         bottomBarRef.current &&
         !bottomBarRef.current.contains(e.target as Node)
       ) {
-        setSettingsOpen(false);
+        setOpenParam(null);
       }
     }
-    if (settingsOpen) document.addEventListener('mousedown', onClickOutside);
+    if (openParam !== null) {
+      document.addEventListener('mousedown', onClickOutside);
+    }
     return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [settingsOpen]);
+  }, [openParam]);
 
   useEffect(() => {
     setActiveTab(defaultTab);
     setPrompt((prev) => prev || '');
-    setSettingsOpen(false);
+    setOpenParam(null);
     setDuration(defaultTab === 'video-edit' ? 0 : 5);
   }, [defaultTab]);
 
   function switchTab(key: string) {
     setActiveTab(key as MainTab);
-    setSettingsOpen(false);
+    setOpenParam(null);
     if (key === 'video-edit') {
       setDuration((prev) =>
         prev === 0 || prev === 5 || prev === 10 ? prev : 0
@@ -708,6 +582,24 @@ export function Hero({
   const placeholder =
     tabs.find((t) => t.key === activeTab)?.placeholder ??
     'Describe your video...';
+  const activeTabLabel =
+    tabs.find((t) => t.key === activeTab)?.label ?? 'Text to Video';
+
+  const durationOptions =
+    activeTab === 'video-edit'
+      ? [
+          { label: 'Full', value: 0 },
+          { label: '5s', value: 5 },
+          { label: '10s', value: 10 },
+        ]
+      : [2, 5, 8, 10].map((d) => ({ label: `${d}s`, value: d }));
+
+  // Shared option chip styles
+  const optBase =
+    'rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap';
+  const optActive = 'bg-primary text-primary-foreground font-semibold';
+  const optInactive =
+    'bg-foreground/[0.06] text-foreground/68 hover:bg-foreground/[0.09] hover:text-foreground dark:bg-white/8 dark:text-white/55 dark:hover:bg-white/14 dark:hover:text-white/85';
 
   return (
     <section
@@ -786,30 +678,15 @@ export function Hero({
           />
         )}
 
-        {/* ── Mode tabs ─────────────────────────────────────────────────────── */}
-        <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => switchTab(tab.key)}
-              className={cn(
-                'rounded-full border px-5 py-2 text-sm font-medium transition-all duration-200',
-                activeTab === tab.key
-                  ? 'bg-primary border-primary text-primary-foreground shadow-[0_10px_24px_color-mix(in_oklab,var(--color-primary)_30%,transparent)]'
-                  : 'border-foreground/10 bg-background/68 text-foreground/68 hover:bg-background/82 hover:text-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/8 dark:text-white/65 dark:hover:bg-white/15 dark:hover:text-white/90'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* ── Input card ────────────────────────────────────────────────────── */}
-        <div className="border-foreground/10 bg-background/72 relative mx-auto max-w-2xl rounded-2xl border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
+        <div className="border-foreground/10 bg-background/72 relative mx-auto max-w-3xl rounded-2xl border p-5 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-shadow duration-300 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_0_1px_rgba(16,185,129,0.08),0_8px_32px_rgba(0,0,0,0.25)]">
+
+          {/* ── Text to Video uploads ──────────────────────────────────────── */}
           {activeTab === 'text-to-video' && (
-            <div className="mb-3">
-              <UploadZone
+            <div className="mb-3 flex flex-wrap gap-2">
+              <CompactUploadZone
                 label="Optional audio track (mp3 / wav)"
+                shortLabel="Audio track"
                 optional
                 file={textAudio}
                 uploading={Boolean(uploading.textAudio)}
@@ -822,9 +699,10 @@ export function Hero({
             </div>
           )}
 
-          {/* Image to Video — sub-modes */}
+          {/* ── Image to Video uploads ─────────────────────────────────────── */}
           {activeTab === 'image-to-video' && (
-            <div className="mb-3 space-y-3">
+            <div className="mb-3 space-y-2">
+              {/* Sub-tabs */}
               <div className="flex flex-wrap gap-1.5">
                 {I2V_MODES.map((m) => (
                   <button
@@ -846,26 +724,16 @@ export function Hero({
                   </button>
                 ))}
               </div>
-              <p className="text-foreground/50 px-1 text-left text-[11px] dark:text-white/45">
+              <p className="text-foreground/50 px-0.5 text-left text-[11px] dark:text-white/45">
                 Image-to-video follows source framing; manual aspect ratio is
                 not supported.
               </p>
-              {i2vMode === 'first-frame' && (
-                <UploadZone
-                  label="Upload first frame image"
-                  file={i2vFirstFrame}
-                  uploading={Boolean(uploading.i2vFirstFrame)}
-                  accept="image/*"
-                  onUpload={(event) =>
-                    void uploadSingle('i2vFirstFrame', event, setI2vFirstFrame)
-                  }
-                  onClear={() => setI2vFirstFrame(null)}
-                />
-              )}
-              {i2vMode === 'first-last-frame' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <UploadZone
-                    label="First frame image"
+              {/* Compact upload slots */}
+              <div className="flex flex-wrap gap-2">
+                {i2vMode === 'first-frame' && (
+                  <CompactUploadZone
+                    label="Upload first frame image"
+                    shortLabel="First frame"
                     file={i2vFirstFrame}
                     uploading={Boolean(uploading.i2vFirstFrame)}
                     accept="image/*"
@@ -878,92 +746,131 @@ export function Hero({
                     }
                     onClear={() => setI2vFirstFrame(null)}
                   />
-                  <UploadZone
-                    label="Last frame image"
-                    file={i2vLastFrame}
-                    uploading={Boolean(uploading.i2vLastFrame)}
-                    accept="image/*"
+                )}
+                {i2vMode === 'first-last-frame' && (
+                  <>
+                    <CompactUploadZone
+                      label="First frame image"
+                      shortLabel="First frame"
+                      file={i2vFirstFrame}
+                      uploading={Boolean(uploading.i2vFirstFrame)}
+                      accept="image/*"
+                      onUpload={(event) =>
+                        void uploadSingle(
+                          'i2vFirstFrame',
+                          event,
+                          setI2vFirstFrame
+                        )
+                      }
+                      onClear={() => setI2vFirstFrame(null)}
+                    />
+                    <CompactUploadZone
+                      label="Last frame image"
+                      shortLabel="Last frame"
+                      file={i2vLastFrame}
+                      uploading={Boolean(uploading.i2vLastFrame)}
+                      accept="image/*"
+                      onUpload={(event) =>
+                        void uploadSingle(
+                          'i2vLastFrame',
+                          event,
+                          setI2vLastFrame
+                        )
+                      }
+                      onClear={() => setI2vLastFrame(null)}
+                    />
+                  </>
+                )}
+                {i2vMode === 'video-continuation' && (
+                  <CompactUploadZone
+                    label="Upload video clip (mp4 / mov)"
+                    shortLabel="Video clip"
+                    file={i2vClip}
+                    uploading={Boolean(uploading.i2vClip)}
+                    accept="video/*"
                     onUpload={(event) =>
-                      void uploadSingle('i2vLastFrame', event, setI2vLastFrame)
+                      void uploadSingle('i2vClip', event, setI2vClip)
                     }
-                    onClear={() => setI2vLastFrame(null)}
+                    onClear={() => setI2vClip(null)}
                   />
-                </div>
-              )}
-              {i2vMode === 'video-continuation' && (
-                <UploadZone
-                  label="Upload video clip (mp4 / mov)"
-                  file={i2vClip}
-                  uploading={Boolean(uploading.i2vClip)}
-                  accept="video/*"
-                  onUpload={(event) =>
-                    void uploadSingle('i2vClip', event, setI2vClip)
-                  }
-                  onClear={() => setI2vClip(null)}
-                />
-              )}
-              <UploadZone
-                label="Optional driving audio (mp3 / wav)"
-                optional
-                file={i2vAudio}
-                uploading={Boolean(uploading.i2vAudio)}
-                accept="audio/*"
-                onUpload={(event) =>
-                  void uploadSingle('i2vAudio', event, setI2vAudio)
-                }
-                onClear={() => setI2vAudio(null)}
-              />
-            </div>
-          )}
-
-          {/* Reference to Video */}
-          {activeTab === 'reference-to-video' && (
-            <div className="mb-3 space-y-2">
-              <UploadZone
-                label="Add reference images or videos (up to 5)"
-                file={refMaterials}
-                uploading={Boolean(uploading.refMaterials)}
-                accept="image/*,video/*"
-                multiple
-                onUpload={(event) =>
-                  void uploadMultiple('refMaterials', event, (assets) => {
-                    setRefMaterials((prev) => [...prev, ...assets].slice(0, 5));
-                  })
-                }
-                onClear={() => setRefMaterials([])}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <UploadZone
-                  label="First frame image"
+                )}
+                <CompactUploadZone
+                  label="Optional driving audio (mp3 / wav)"
+                  shortLabel="Driving audio"
                   optional
-                  file={refFirstFrame}
-                  uploading={Boolean(uploading.refFirstFrame)}
-                  accept="image/*"
-                  onUpload={(event) =>
-                    void uploadSingle('refFirstFrame', event, setRefFirstFrame)
-                  }
-                  onClear={() => setRefFirstFrame(null)}
-                />
-                <UploadZone
-                  label="Reference voice (wav / mp3)"
-                  optional
-                  file={refVoice}
-                  uploading={Boolean(uploading.refVoice)}
+                  file={i2vAudio}
+                  uploading={Boolean(uploading.i2vAudio)}
                   accept="audio/*"
                   onUpload={(event) =>
-                    void uploadSingle('refVoice', event, setRefVoice)
+                    void uploadSingle('i2vAudio', event, setI2vAudio)
                   }
-                  onClear={() => setRefVoice(null)}
+                  onClear={() => setI2vAudio(null)}
                 />
               </div>
             </div>
           )}
 
-          {/* Video Edit */}
+          {/* ── Reference to Video uploads ─────────────────────────────────── */}
+          {activeTab === 'reference-to-video' && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              <CompactUploadZone
+                label="Add reference images or videos (up to 5)"
+                shortLabel="Ref images / videos"
+                file={refMaterials}
+                uploading={Boolean(uploading.refMaterials)}
+                accept="image/*,video/*"
+                multiple
+                onUpload={(event) =>
+                  void uploadMultiple(
+                    'refMaterials',
+                    event,
+                    (assets) => {
+                      setRefMaterials((prev) =>
+                        [...prev, ...assets].slice(0, 5)
+                      );
+                    }
+                  )
+                }
+                onClear={() => setRefMaterials([])}
+                className="min-w-[120px]"
+              />
+              <CompactUploadZone
+                label="First frame image"
+                shortLabel="First frame"
+                optional
+                file={refFirstFrame}
+                uploading={Boolean(uploading.refFirstFrame)}
+                accept="image/*"
+                onUpload={(event) =>
+                  void uploadSingle(
+                    'refFirstFrame',
+                    event,
+                    setRefFirstFrame
+                  )
+                }
+                onClear={() => setRefFirstFrame(null)}
+              />
+              <CompactUploadZone
+                label="Reference voice (wav / mp3)"
+                shortLabel="Ref voice"
+                optional
+                file={refVoice}
+                uploading={Boolean(uploading.refVoice)}
+                accept="audio/*"
+                onUpload={(event) =>
+                  void uploadSingle('refVoice', event, setRefVoice)
+                }
+                onClear={() => setRefVoice(null)}
+              />
+            </div>
+          )}
+
+          {/* ── Video Edit uploads ─────────────────────────────────────────── */}
           {activeTab === 'video-edit' && (
-            <div className="mb-3 space-y-2">
-              <UploadZone
+            <div className="mb-3 flex flex-wrap gap-2">
+              <CompactUploadZone
                 label="Upload video to edit (mp4 / mov, 2–10s)"
+                shortLabel="Video to edit"
                 file={editVideo}
                 uploading={Boolean(uploading.editVideo)}
                 accept="video/*"
@@ -971,9 +878,11 @@ export function Hero({
                   void uploadSingle('editVideo', event, setEditVideo)
                 }
                 onClear={() => setEditVideo(null)}
+                className="min-w-[110px]"
               />
-              <UploadZone
+              <CompactUploadZone
                 label="Reference image — style or character"
+                shortLabel="Reference image"
                 optional
                 file={editRefImage}
                 uploading={Boolean(uploading.editRefImage)}
@@ -991,88 +900,237 @@ export function Hero({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={placeholder}
-            className="text-foreground/90 placeholder:text-foreground/35 mb-3 max-h-[120px] min-h-[52px] w-full resize-none !bg-transparent text-sm outline-none dark:text-white/90 dark:placeholder:text-white/28"
-            rows={2}
+            className="text-foreground/90 placeholder:text-foreground/35 mb-3 max-h-[280px] min-h-[120px] w-full resize-none !bg-transparent text-sm leading-relaxed outline-none dark:text-white/90 dark:placeholder:text-white/28"
+            rows={5}
           />
 
           {/* Divider */}
           <div className="bg-foreground/10 mb-3 h-px dark:bg-white/6" />
 
-          {/* Bottom toolbar */}
+          {/* ── Bottom toolbar ─────────────────────────────────────────────── */}
           <div ref={bottomBarRef} className="relative">
             <div className="flex items-center gap-2">
               {/* Param chips */}
               <div className="flex flex-1 flex-wrap gap-1.5">
-                <ParamChip onClick={() => setSettingsOpen((v) => !v)}>
-                  <svg
-                    className="h-3 w-3 opacity-60"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                  >
-                    <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4a.75.75 0 0 0-1.5 0v3.25l-1.97 1.97a.75.75 0 1 0 1.06 1.06l2.25-2.25A.75.75 0 0 0 8.75 9V5z" />
-                  </svg>
-                  <span>{durationLabel}</span>
-                </ParamChip>
 
-                <ParamChip onClick={() => setSettingsOpen((v) => !v)}>
-                  <svg
-                    className="h-3 w-3 opacity-60"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                  >
-                    <path d="M2 2h12v12H2V2zm1.5 1.5v9h9v-9h-9z" />
-                  </svg>
-                  <span>{resolution}</span>
-                </ParamChip>
+                {/* Model label — static */}
+                <div className="flex items-center rounded-lg bg-foreground/[0.06] px-3 py-1.5 text-xs font-medium text-foreground/52 dark:bg-white/8 dark:text-white/40">
+                  WAN 2.7
+                </div>
 
+                {/* Mode selector */}
+                <div className="relative">
+                  <ParamChip
+                    onClick={() =>
+                      setOpenParam(openParam === 'mode' ? null : 'mode')
+                    }
+                    isActive={openParam === 'mode'}
+                  >
+                    <span>{activeTabLabel}</span>
+                    <ChevronDown
+                      className={cn(
+                        'h-3 w-3 opacity-55 transition-transform duration-150',
+                        openParam === 'mode' && 'rotate-180'
+                      )}
+                    />
+                  </ParamChip>
+                  {openParam === 'mode' && (
+                    <div className="absolute bottom-full left-0 z-50 mb-1.5 min-w-[160px] overflow-hidden rounded-xl border border-foreground/10 bg-background/96 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/95">
+                      {tabs.map((tab) => (
+                        <button
+                          key={tab.key}
+                          onClick={() => {
+                            switchTab(tab.key);
+                          }}
+                          className={cn(
+                            'w-full px-4 py-2.5 text-left text-xs font-medium transition-colors',
+                            activeTab === tab.key
+                              ? 'text-primary bg-primary/8'
+                              : 'text-foreground/72 hover:bg-foreground/[0.05] hover:text-foreground dark:text-white/58 dark:hover:bg-white/6 dark:hover:text-white/90'
+                          )}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Duration */}
+                <div className="relative">
+                  <ParamChip
+                    onClick={() =>
+                      setOpenParam(
+                        openParam === 'duration' ? null : 'duration'
+                      )
+                    }
+                    isActive={openParam === 'duration'}
+                  >
+                    <svg
+                      className="h-3 w-3 opacity-55"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4a.75.75 0 0 0-1.5 0v3.25l-1.97 1.97a.75.75 0 1 0 1.06 1.06l2.25-2.25A.75.75 0 0 0 8.75 9V5z" />
+                    </svg>
+                    <span>{durationLabel}</span>
+                  </ParamChip>
+                  {openParam === 'duration' && (
+                    <ParamDropdown>
+                      {durationOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setDuration(opt.value);
+                            setOpenParam(null);
+                          }}
+                          className={cn(
+                            optBase,
+                            duration === opt.value ? optActive : optInactive
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </ParamDropdown>
+                  )}
+                </div>
+
+                {/* Resolution */}
+                <div className="relative">
+                  <ParamChip
+                    onClick={() =>
+                      setOpenParam(
+                        openParam === 'resolution' ? null : 'resolution'
+                      )
+                    }
+                    isActive={openParam === 'resolution'}
+                  >
+                    <svg
+                      className="h-3 w-3 opacity-55"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path d="M2 2h12v12H2V2zm1.5 1.5v9h9v-9h-9z" />
+                    </svg>
+                    <span>{resolution}</span>
+                  </ParamChip>
+                  {openParam === 'resolution' && (
+                    <ParamDropdown>
+                      {(['720p', '1080p'] as Resolution[]).map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => {
+                            setResolution(r);
+                            setOpenParam(null);
+                          }}
+                          className={cn(
+                            optBase,
+                            resolution === r ? optActive : optInactive
+                          )}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </ParamDropdown>
+                  )}
+                </div>
+
+                {/* Aspect Ratio — hidden for Image to Video */}
                 {showRatio && (
-                  <ParamChip onClick={() => setSettingsOpen((v) => !v)}>
-                    <svg
-                      className="h-3 w-3 opacity-60"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
+                  <div className="relative">
+                    <ParamChip
+                      onClick={() =>
+                        setOpenParam(openParam === 'ratio' ? null : 'ratio')
+                      }
+                      isActive={openParam === 'ratio'}
                     >
-                      <rect
-                        x="1"
-                        y="4"
-                        width="14"
-                        height="8"
-                        rx="1.5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                    <span>{ratio}</span>
-                  </ParamChip>
+                      <svg
+                        className="h-3 w-3 opacity-55"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                      >
+                        <rect
+                          x="1"
+                          y="4"
+                          width="14"
+                          height="8"
+                          rx="1.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                      <span>{ratio}</span>
+                    </ParamChip>
+                    {openParam === 'ratio' && (
+                      <ParamDropdown>
+                        {RATIOS.map((r) => (
+                          <button
+                            key={r.key}
+                            onClick={() => {
+                              setRatio(r.key);
+                              setOpenParam(null);
+                            }}
+                            className={cn(
+                              optBase,
+                              ratio === r.key ? optActive : optInactive
+                            )}
+                          >
+                            {r.label}
+                          </button>
+                        ))}
+                      </ParamDropdown>
+                    )}
+                  </div>
                 )}
 
+                {/* Audio — Video Edit only */}
                 {activeTab === 'video-edit' && (
-                  <ParamChip onClick={() => setSettingsOpen((v) => !v)}>
-                    <svg
-                      className="h-3 w-3 opacity-60"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
+                  <div className="relative">
+                    <ParamChip
+                      onClick={() =>
+                        setOpenParam(openParam === 'audio' ? null : 'audio')
+                      }
+                      isActive={openParam === 'audio'}
                     >
-                      <path d="M8 1a3 3 0 0 0-3 3v4a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM4 10a4 4 0 0 0 8 0H11a3 3 0 0 1-6 0H4zm3 5h2v-1.07A5.01 5.01 0 0 0 13 9.5h-1a4 4 0 0 1-8 0H3a5.01 5.01 0 0 0 4 4.43V15z" />
-                    </svg>
-                    <span>
-                      {audioSetting === 'auto' ? 'AI Audio' : 'Original'}
-                    </span>
-                  </ParamChip>
+                      <svg
+                        className="h-3 w-3 opacity-55"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                      >
+                        <path d="M8 1a3 3 0 0 0-3 3v4a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM4 10a4 4 0 0 0 8 0H11a3 3 0 0 1-6 0H4zm3 5h2v-1.07A5.01 5.01 0 0 0 13 9.5h-1a4 4 0 0 1-8 0H3a5.01 5.01 0 0 0 4 4.43V15z" />
+                      </svg>
+                      <span>
+                        {audioSetting === 'auto' ? 'AI Audio' : 'Original'}
+                      </span>
+                    </ParamChip>
+                    {openParam === 'audio' && (
+                      <ParamDropdown>
+                        {(
+                          [
+                            ['auto', 'AI Audio'],
+                            ['origin', 'Keep Original'],
+                          ] as [AudioSetting, string][]
+                        ).map(([val, label]) => (
+                          <button
+                            key={val}
+                            onClick={() => {
+                              setAudioSetting(val);
+                              setOpenParam(null);
+                            }}
+                            className={cn(
+                              optBase,
+                              audioSetting === val ? optActive : optInactive
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </ParamDropdown>
+                    )}
+                  </div>
                 )}
-
-                <ParamChip onClick={() => setSettingsOpen((v) => !v)}>
-                  <svg
-                    className="h-3 w-3 opacity-60"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                  >
-                    <circle cx="3" cy="8" r="1.25" />
-                    <circle cx="8" cy="8" r="1.25" />
-                    <circle cx="13" cy="8" r="1.25" />
-                  </svg>
-                </ParamChip>
               </div>
 
               {/* Generate button */}
@@ -1099,21 +1157,6 @@ export function Hero({
               <p className="mt-2 text-left text-xs text-rose-500 dark:text-rose-300">
                 {statusHint}
               </p>
-            )}
-
-            {/* Settings panel — inside bottomBarRef so click-outside works correctly */}
-            {settingsOpen && (
-              <SettingsPanel
-                tab={activeTab}
-                duration={duration}
-                setDuration={setDuration}
-                resolution={resolution}
-                setResolution={setResolution}
-                ratio={ratio}
-                setRatio={setRatio}
-                audioSetting={audioSetting}
-                setAudioSetting={setAudioSetting}
-              />
             )}
           </div>
         </div>
