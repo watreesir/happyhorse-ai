@@ -18,12 +18,12 @@
 
 ### 1. 登录 CTA 文案更新
 
-已将未登录 CTA 文案改为：
+已将未登录 CTA 文案改为、
 
-- 英文：`Sign in to claim 60 daily credits`
-- 英文短文案：`Claim 60 daily credits`
-- 中文：`登录领取每日 60 积分`
-- 中文短文案：`领取每日 60 积分`
+- 英文：`Sign in to claim 150 daily credits`
+- 英文短文案：`Claim 150 daily credits`
+- 中文：`登录领取每日 150 积分`
+- 中文短文案：`领取每日 150 积分`
 
 说明：
 
