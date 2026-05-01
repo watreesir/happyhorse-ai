@@ -26,7 +26,27 @@
       "Bash(git -C /Users/zhangdeyuan/my-shipany-project log --oneline -20)",
       "Bash(git -C /Users/zhangdeyuan/my-shipany-project log --oneline -30)",
       "Bash(pnpm dev *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "WebFetch(domain:www.jxp.com)",
+      "WebFetch(domain:pollo.ai)",
+      "WebFetch(domain:wavespeed.ai)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebSearch",
+      "WebFetch(domain:www.buildfastwithai.com)",
+      "WebFetch(domain:online.hitpaw.com)",
+      "WebFetch(domain:help.apiyi.com)",
+      "WebFetch(domain:www.prnewswire.com)",
+      "WebFetch(domain:fal.ai)",
+      "WebFetch(domain:pandaily.com)",
+      "WebFetch(domain:www.cnbc.com)",
+      "WebFetch(domain:www.dzine.ai)",
+      "WebFetch(domain:www.yottalabs.ai)",
+      "WebFetch(domain:www.happy-horse.net)",
+      "WebFetch(domain:finance.yahoo.com)",
+      "WebFetch(domain:seed.bytedance.com)",
+      "WebFetch(domain:artificialanalysis.ai)",
+      "WebFetch(domain:gdc.einnews.com)",
+      "WebFetch(domain:evolink.ai)"
     ],
     "additionalDirectories": [
       "/Users/zhangdeyuan/.claude/projects/-Users-zhangdeyuan-my-shipany-project"

@@ -110,6 +110,8 @@ export function SignUser({
     'border-emerald-200/80 bg-emerald-50/90 text-emerald-700',
     'dark:border-emerald-400/30 dark:bg-emerald-500/12 dark:text-emerald-200'
   );
+  const freeDailyCreditsLabel =
+    String(configs.free_daily_credits ?? '').trim() || '150';
 
   useEffect(() => {
     fetchConfigs();
@@ -655,11 +657,19 @@ export function SignUser({
             <span className="inline-flex items-center gap-1.5">
               <BellRing className={cn('h-3.5 w-3.5', isMobileMenuAuth && 'h-4 w-4')} />
               {isMobileMenuAuth ? (
-                <span>{t('video_alerts_guide')}</span>
+                <span>{t('video_alerts_guide', { credits: freeDailyCreditsLabel })}</span>
               ) : (
                 <>
-                  <span className="hidden lg:inline">{t('video_alerts_guide')}</span>
-                  <span className="lg:hidden">{t('video_alerts_guide_short')}</span>
+                  <span className="hidden lg:inline">
+                    {t('video_alerts_guide', {
+                      credits: freeDailyCreditsLabel,
+                    })}
+                  </span>
+                  <span className="lg:hidden">
+                    {t('video_alerts_guide_short', {
+                      credits: freeDailyCreditsLabel,
+                    })}
+                  </span>
                 </>
               )}
             </span>

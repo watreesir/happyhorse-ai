@@ -45,10 +45,7 @@ const GUEST_TRIAL_MAX_NEW_TOKENS_PER_DEVICE_24H = parsePositiveInt(
 type GuestTrialQuotaRow = typeof guestTrialQuota.$inferSelect;
 
 function getGuestTrialTotalCredits() {
-  return parsePositiveInt(
-    process.env.GUEST_TRIAL_TOTAL_CREDITS,
-    getFreeDailyCreditsAmount()
-  );
+  return getFreeDailyCreditsAmount();
 }
 
 function hashValue(input: string) {

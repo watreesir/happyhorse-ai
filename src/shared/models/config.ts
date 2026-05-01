@@ -4,6 +4,7 @@ import { db } from '@/core/db';
 import { envConfigs } from '@/config';
 import { config } from '@/config/db/schema';
 import { isCloudflareWorker } from '@/shared/lib/env';
+import { getFreeDailyCreditsAmount } from '@/shared/services/pricing';
 import {
   getAllSettingNames,
   publicSettingNames,
@@ -148,6 +149,7 @@ export async function getPublicConfigs(): Promise<Configs> {
 
   const configs = {
     ...publicConfigs,
+    free_daily_credits: String(getFreeDailyCreditsAmount()),
   };
 
   return configs;
